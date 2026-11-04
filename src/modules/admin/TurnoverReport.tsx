@@ -124,7 +124,8 @@ export function TurnoverReport({ from, to, currency }: { from: string; to: strin
               : loading ? <p className="text-sm text-muted text-center py-6">{t.app.loading}</p>
               : visible.length === 0 ? <p className="text-sm text-muted text-center py-6">{t.admin.reports.noRows}</p>
               : (
-                <div className="overflow-x-auto print:overflow-visible">
+                <>
+                <div className="hidden sm:block print:block overflow-x-auto print:overflow-visible">
                   <table className="w-full text-sm">
                     <thead>
                       <tr>
@@ -155,6 +156,29 @@ export function TurnoverReport({ from, to, currency }: { from: string; to: strin
                     </tfoot>
                   </table>
                 </div>
+                <div className="sm:hidden print:hidden space-y-2">
+                  {visible.map((r) => (
+                    <div key={`c-${r.item_id}`} className="bg-app rounded-lg px-3 py-2.5">
+                      <div className="text-sm font-medium text-ink">{cat.itemName(r.item_name)}</div>
+                      <div className="text-xs text-muted">{cat.categoryName(r.category)}</div>
+                      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-xs">
+                        <Kv label={t.admin.reports.colInQty} value={n(String(r.in_qty))} />
+                        <Kv label={t.admin.reports.colOutQty} value={n(String(r.out_qty))} />
+                        <Kv label={t.admin.reports.colTransferInQty} value={n(String(r.transfer_in_qty))} />
+                        <Kv label={t.admin.reports.colTransferOutQty} value={n(String(r.transfer_out_qty))} />
+                        <Kv label={t.admin.reports.colInValue} value={money(r.in_value, currency)} />
+                        <Kv label={t.admin.reports.colOutValue} value={money(r.out_value, currency)} />
+                        <Kv label={t.admin.reports.colTransferInValue} value={money(r.transfer_in_value, currency)} />
+                        <Kv label={t.admin.reports.colTransferOutValue} value={money(r.transfer_out_value, currency)} />
+                      </dl>
+                    </div>
+                  ))}
+                  <div className="flex justify-between gap-2 px-1 pt-1 text-xs font-semibold text-ink">
+                    <span>{n(String(visible.length))}</span>
+                    <span>{money(totals.inValue, currency)} / {money(totals.outValue, currency)}</span>
+                  </div>
+                </div>
+                </>
               )}
           </>
         )}
@@ -165,3 +189,7 @@ export function TurnoverReport({ from, to, currency }: { from: string; to: strin
 
 function Th({ children }: { children: React.ReactNode }) { return <th className="text-left font-medium text-muted text-xs px-2 py-2 whitespace-nowrap">{children}</th> }
 function Td({ children }: { children: React.ReactNode }) { return <td className="px-2 py-2 text-ink whitespace-nowrap">{children}</td> }
+
+function Kv({ label, value }: { label: string; value: string }) {
+  return <div className="flex justify-between gap-2"><dt className="text-muted">{label}</dt><dd className="text-ink whitespace-nowrap">{value}</dd></div>
+}

@@ -133,7 +133,8 @@ export function ValuationReport({ currency }: { currency: string }) {
                 <div className="bg-app rounded-lg px-3 py-2.5"><div className="text-xs text-muted">{t.admin.reports.uncostedNote}</div><div className="text-base font-semibold text-warn">{n(String(totals.uncosted))}</div></div>
               </div>
               {visible.length === 0 ? <p className="text-sm text-muted text-center py-6">{t.admin.reports.noRows}</p> : (
-                <div className="overflow-x-auto print:overflow-visible">
+                <>
+                <div className="hidden sm:block print:block overflow-x-auto print:overflow-visible">
                   <table className="w-full text-sm">
                     <thead>
                       <tr>
@@ -157,6 +158,26 @@ export function ValuationReport({ currency }: { currency: string }) {
                     </tbody>
                   </table>
                 </div>
+                <div className="sm:hidden print:hidden space-y-2">
+                  {visible.map((r) => (
+                    <div key={`c-${r.owner_apartment_id ?? 'c'}-${r.item_id}`} className="bg-app rounded-lg px-3 py-2.5">
+                      <div className="flex justify-between gap-2">
+                        <span className="text-sm font-medium text-ink">{cat.itemName(r.name)}</span>
+                        <span className="text-sm text-ink whitespace-nowrap">{qtyLabel(r)}</span>
+                      </div>
+                      <div className="text-xs text-muted">{[cat.categoryName(r.category), scope === 'owner' ? owner(r) : ''].filter(Boolean).join(' · ')}</div>
+                      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-xs">
+                        <Kv label={t.admin.reports.colAvgCost} value={money(r.avg_cost, currency)} />
+                        <Kv label={t.admin.reports.colGuestPrice} value={money(r.guest_price, currency)} />
+                        <Kv label={t.admin.reports.colStockValue} value={money(r.stock_value, currency)} />
+                        <Kv label={t.admin.reports.colPotential} value={money(r.potential_revenue, currency)} />
+                        <Kv label={t.admin.reports.colMarkup} value={pct(r.markup_pct)} />
+                        <Kv label={t.admin.reports.colMargin} value={pct(r.margin_pct)} />
+                      </dl>
+                    </div>
+                  ))}
+                </div>
+                </>
               )}
             </>
           )}
@@ -167,3 +188,7 @@ export function ValuationReport({ currency }: { currency: string }) {
 
 function Th({ children }: { children: React.ReactNode }) { return <th className="text-left font-medium text-muted text-xs px-2 py-2 whitespace-nowrap">{children}</th> }
 function Td({ children }: { children: React.ReactNode }) { return <td className="px-2 py-2 text-ink whitespace-nowrap">{children}</td> }
+
+function Kv({ label, value }: { label: string; value: string }) {
+  return <div className="flex justify-between gap-2"><dt className="text-muted">{label}</dt><dd className="text-ink whitespace-nowrap">{value}</dd></div>
+}

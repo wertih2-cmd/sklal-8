@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { fetchWarehouseStock, fetchApartmentsAdmin, fetchAllStaff, fetchSuppliers, fetchItems, fetchOwnerStock, postDocument, postTransfer } from '@/modules/admin/api'
-import type { WarehouseStockRow, Apartment, Staff, Supplier, PostDocumentResult, OwnerStockRow, ItemKind } from '@/lib/database.types'
+import { fetchWarehouseStock, fetchApartmentsAdmin, fetchAllStaff, fetchSuppliers, fetchItems, fetchOwnerStock, fetchTrackedUnits, postDocument, postTransfer } from '@/modules/admin/api'
+import type { WarehouseStockRow, Apartment, Staff, Supplier, PostDocumentResult, OwnerStockRow, ItemKind, ItemUnit } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { formatQty } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
 import { lineSource, isTransferBlocked, transferOwnerFlags, buildOwnerStockMap, ownerAvailable, type MoveOp } from '@/modules/admin/moveRules'
+import { unitSource, candidateUnits, effectiveSelection, toggleUnit, isUnitOpSupported, type UnitLocation } from '@/modules/admin/unitSelection'
 import { Plus, Minus, Trash2, Loader as Loader2, Check, X, FileText, TriangleAlert as AlertTriangle, Info } from 'lucide-react'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 
@@ -35,6 +36,8 @@ interface CartLine {
   qty: string
   unitMode: 'packs' | 'base'
   unitCost: string
+  tracked: boolean
+  unitIds: string[]
 }
 
 type OwnershipMode = 'company' | 'owner'
@@ -77,12 +80,17 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   const [ownership, setOwnership] = useState<OwnershipMode>('company')
   const [ownerAptId, setOwnerAptId] = useState<number | null>(null)
   const [placeInApartment, setPlaceInApartment] = useState(false)
+  const [trackedItems, setTrackedItems] = useState<Set<number>>(new Set())
+  const [units, setUnits] = useState<ItemUnit[]>([])
+  const [unitLocs, setUnitLocs] = useState<Map<number, UnitLocation>>(new Map())
+  const [unitsLoading, setUnitsLoading] = useState(false)
 
   useEffect(() => {
     Promise.all([fetchWarehouseStock(), fetchApartmentsAdmin(), fetchAllStaff(), fetchSuppliers(), fetchItems(), fetchOwnerStock()])
       .then(([s, a, st, sup, its, os]) => {
         setStock(s)
         setItemMeta(new Map(its.map((i) => [i.id, { cost: i.default_cost, supplier: i.supplier_id }])))
+        setTrackedItems(new Set(its.filter((i) => i.track_units).map((i) => i.id)))
         setApartments(a)
         setStaffList(st.filter((x) => x.active))
         setSuppliers(sup)
@@ -131,8 +139,10 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
         kind: item.kind,
         stockQty: item.qty,
         qty: '1',
-        unitMode: item.pack_size > 1 ? 'packs' : 'base',
+        unitMode: item.pack_size > 1 && !trackedItems.has(item.item_id) ? 'packs' : 'base',
         unitCost: opDef.needsCost && meta?.cost != null ? String(Math.round(meta.cost * 1e6) / 1e6) : '',
+        tracked: trackedItems.has(item.item_id),
+        unitIds: [],
       }]
     })
   }
@@ -146,6 +156,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   }
 
   const getBaseQty = (line: CartLine): number => {
+    if (pickUnits(line)) return lineSelection(line).length
     const qtyNum = Number(line.qty)
     if (line.unitMode === 'packs') return qtyNum * line.packSize
     return qtyNum
@@ -180,6 +191,46 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   const ownerModeActive = showOwnershipToggle && ownership === 'owner'
   const ownerConsumableLine = useCallback((line: CartLine): boolean => ownerModeActive && line.kind === 'consumable', [ownerModeActive])
   const hasOwnerConsumable = cart.some(ownerConsumableLine)
+
+  // поштучный учёт: единицы выбираются для всех операций, кроме прихода (там коды создаются автоматически)
+  const unitOpSupported = isUnitOpSupported(op)
+  const trackedKey = cart.filter((l) => l.tracked).map((l) => l.itemId).sort((a, b) => a - b).join(',')
+  useEffect(() => {
+    if (!trackedKey || op === 'receipt') return
+    let cancelled = false
+    setUnitsLoading(true)
+    fetchTrackedUnits(trackedKey.split(',').map(Number))
+      .then((r) => {
+        if (cancelled) return
+        setUnits(r.units)
+        setUnitLocs(new Map(r.locations.map((l): [number, UnitLocation] => [l.id, l])))
+      })
+      .catch((e) => { if (!cancelled) toast(errorMessage(e), 'error') })
+      .finally(() => { if (!cancelled) setUnitsLoading(false) })
+    return () => { cancelled = true }
+  }, [trackedKey, op])
+
+  const lineUnitSource = useCallback((line: CartLine) => unitSource({
+    op,
+    apartmentId,
+    staffId,
+    ownerApartmentId: ownerAptId,
+    ownerMode: showOwnershipToggle && ownership === 'owner',
+    aptIsOwner: selectedAptIsOwner,
+    isAsset: line.kind === 'asset',
+  }), [op, apartmentId, staffId, ownerAptId, showOwnershipToggle, ownership, selectedAptIsOwner])
+
+  const lineCandidates = useCallback(
+    (line: CartLine) => candidateUnits(units, unitLocs, line.itemId, lineUnitSource(line)),
+    [units, unitLocs, lineUnitSource],
+  )
+  const lineSelection = useCallback(
+    (line: CartLine) => effectiveSelection(line.unitIds, lineCandidates(line)),
+    [lineCandidates],
+  )
+  const pickUnits = (line: CartLine) => line.tracked && op !== 'receipt' && unitOpSupported
+  const hasUnsupportedUnitLine = !unitOpSupported && cart.some((l) => l.tracked)
+  const hasEmptyUnitSelection = cart.some((l) => pickUnits(l) && lineSelection(l).length === 0)
 
   const handleOpChange = (nextOp: string) => {
     if (cart.length > 0) {
@@ -247,15 +298,29 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
       toast(t.admin.move.ownerConsumablesHidden, 'error')
       return
     }
+    if (hasUnsupportedUnitLine) {
+      toast(t.admin.move.unitsTransferUnsupported, 'error')
+      return
+    }
+    if (hasEmptyUnitSelection) {
+      toast(t.admin.move.unitsRequired, 'error')
+      return
+    }
+    if (cart.some((l) => l.tracked && !Number.isInteger(getBaseQty(l)))) {
+      toast(t.admin.move.unitsIntegerOnly, 'error')
+      return
+    }
     const lines = cart
       .map((line) => {
         const baseQty = getBaseQty(line)
         if (!baseQty || baseQty <= 0) return null
         const costNum = opDef.needsCost && line.unitCost ? Number(line.unitCost) : null
         if (costNum !== null && !(costNum >= 0)) return null
-        return { item_id: line.itemId, qty: baseQty, unit_cost: costNum }
+        return pickUnits(line)
+          ? { item_id: line.itemId, qty: baseQty, unit_cost: costNum, unit_ids: lineSelection(line) }
+          : { item_id: line.itemId, qty: baseQty, unit_cost: costNum }
       })
-      .filter((l): l is { item_id: number; qty: number; unit_cost: number | null } => l !== null)
+      .filter((l): l is { item_id: number; qty: number; unit_cost: number | null; unit_ids?: string[] } => l !== null)
     if (lines.length < cart.length) {
       toast(t.admin.move.invalidLines, 'error')
       return
@@ -543,7 +608,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
               {cart.map((line, idx) => {
                 const baseQty = getBaseQty(line)
                 const stockQty = effectiveStockQty(line)
-                const overStock = isOutbound && stockQty !== null && baseQty > stockQty
+                const overStock = !pickUnits(line) && isOutbound && stockQty !== null && baseQty > stockQty
                 const blocked = transferBlocked(line)
                 const src = (op === 'issue_apartment' || op === 'return_apartment') && selectedAptIsOwner
                   ? lineSource(op as MoveOp, true, line.kind)
@@ -603,6 +668,62 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
                         </button>
                       </div>
                     )}
+                    {line.tracked && (
+                      <p className="text-xs text-muted mb-2">{t.admin.move.unitsBadge}</p>
+                    )}
+                    {line.tracked && !unitOpSupported && (
+                      <div className="text-xs text-bad mb-2 bg-bad-soft rounded-lg px-2.5 py-1.5">
+                        {t.admin.move.unitsTransferUnsupported}
+                      </div>
+                    )}
+                    {line.tracked && op === 'receipt' && (
+                      <p className="text-xs text-muted mb-2">{t.admin.move.unitsReceiptHint}</p>
+                    )}
+                    {pickUnits(line) && (() => {
+                      const cands = lineCandidates(line)
+                      const sel = lineSelection(line)
+                      return (
+                        <div className="mb-2">
+                          {lineUnitSource(line) === null ? (
+                            <p className="text-xs text-muted">{t.admin.move.unitsPickContext}</p>
+                          ) : unitsLoading && cands.length === 0 ? (
+                            <p className="text-xs text-muted">{t.app.loading}</p>
+                          ) : cands.length === 0 ? (
+                            <p className="text-xs text-bad">{t.admin.move.unitsEmpty}</p>
+                          ) : (
+                            <>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-xs font-medium text-ink">
+                                  {t.admin.move.unitsPick}: {n(String(sel.length))} / {n(String(cands.length))}
+                                </span>
+                                <span className="flex gap-3">
+                                  <button type="button" onClick={() => updateLine(idx, { unitIds: cands.map((u) => u.id) })} className="text-xs text-accent">
+                                    {t.admin.move.unitsAll}
+                                  </button>
+                                  <button type="button" onClick={() => updateLine(idx, { unitIds: [] })} className="text-xs text-muted">
+                                    {t.admin.move.unitsNone}
+                                  </button>
+                                </span>
+                              </div>
+                              <div className="max-h-36 overflow-y-auto rounded-lg border border-line bg-app">
+                                {cands.map((u) => (
+                                  <label key={u.id} className="flex items-center gap-2 px-3 py-2 text-sm text-ink border-b border-line last:border-0 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={sel.includes(u.id)}
+                                      onChange={() => updateLine(idx, { unitIds: toggleUnit(sel, u.id) })}
+                                      className="w-4 h-4 rounded accent-accent"
+                                    />
+                                    <span className="truncate">{u.code}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )
+                    })()}
+                    {!pickUnits(line) && (
                     <div className="flex gap-2 items-center">
                       <div className="flex items-center bg-app rounded-lg">
                         <button
@@ -641,6 +762,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
                         />
                       )}
                     </div>
+                    )}
                     {opDef.needsCost && line.packSize > 1 && !line.unitCost && (
                       <p className="text-xs text-muted mt-1">
                         {t.admin.move.costHint} {t.common.units[line.baseUnit as keyof typeof t.common.units] ?? line.baseUnit}
@@ -696,7 +818,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
           </button>
           <button
             onClick={handlePost}
-            disabled={posting || cart.length === 0 || hasBlockedTransfer || hasOwnerConsumable}
+            disabled={posting || cart.length === 0 || hasBlockedTransfer || hasOwnerConsumable || hasUnsupportedUnitLine}
             className="flex-1 bg-accent text-white rounded-lg py-3 font-medium text-sm disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}

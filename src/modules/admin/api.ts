@@ -4,6 +4,7 @@ import { fetchAllPages, chunk } from '@/lib/paginate'
 import { resolveMime, extForMime, validateReceipt } from '@/lib/files'
 import { currentDict } from '@/i18n'
 import { useCatalogNames } from '@/modules/core/catalogNamesStore'
+import type { UnitLocation } from '@/modules/admin/unitSelection'
 import type {
   WarehouseStockRow,
   ReportStockMoveRow,
@@ -33,6 +34,7 @@ import type {
   ApproveIncidentResult,
   NormalizedShortageEvent,
   OwnerStockRow,
+  ItemUnit,
   AptType,
   IncidentCharge,
   IncidentChargePreview,
@@ -480,9 +482,32 @@ export async function postTransfer(params: {
   return data as PostDocumentResult
 }
 
+/** Единицы поштучного учёта, находящиеся на складе или выданные (для выбора в «Новой операции»). Только админ (RLS). */
+export async function fetchTrackedUnits(itemIds: number[]): Promise<{ units: ItemUnit[]; locations: UnitLocation[] }> {
+  if (itemIds.length === 0) return { units: [], locations: [] }
+  const units = await fetchAllPages<ItemUnit>((from, to) =>
+    supabase
+      .from('item_units')
+      .select('id,item_id,code,status,location_id,owner_apartment_id,unit_cost,created_at')
+      .in('item_id', itemIds)
+      .in('status', ['in_stock', 'issued'])
+      .order('id')
+      .range(from, to),
+  )
+  const locationIds = [...new Set(units.map((u) => u.location_id))]
+  const parts = await Promise.all(
+    chunk(locationIds).map(async (batch) => {
+      const { data, error, status } = await supabase.from('locations').select('id,type,apartment_id,staff_id').in('id', batch)
+      if (error) throw toApiError(error, status)
+      return (data ?? []) as UnitLocation[]
+    }),
+  )
+  return { units, locations: parts.flat() }
+}
+
 export async function postDocument(params: {
   op: string
-  lines: Array<{ item_id: number; qty: number; unit_cost?: number | null }>
+  lines: Array<{ item_id: number; qty: number; unit_cost?: number | null; unit_ids?: string[] }>
   apartment?: number | null
   staff?: number | null
   supplier?: number | null
@@ -1213,7 +1238,7 @@ export async function fetchItems(): Promise<Item[]> {
   const rows = await fetchAllPages<Item>((from, to) =>
     supabase
       .from('items')
-      .select('id,category_id,name,name_en,name_ar,base_unit,pack_size,pack_label,min_stock,target_stock,note,default_cost,track_on_hand,qr_code,photo_path,active,sort,supplier_id')
+      .select('id,category_id,name,name_en,name_ar,base_unit,pack_size,pack_label,min_stock,target_stock,note,default_cost,track_on_hand,track_units,qr_code,photo_path,active,sort,supplier_id')
       .order('sort')
       .order('name')
       .order('id')

@@ -14,9 +14,13 @@ import {
   type OwnershipFilter,
 } from '@/modules/admin/reportRules'
 import { useCatalogName } from '@/modules/core/useCatalogName'
+import { downloadCsv } from '@/modules/admin/reportExport'
+import { inclusiveEnd } from '@/modules/admin/reportView'
+import { ValuationReport } from '@/modules/admin/ValuationReport'
+import { TurnoverReport } from '@/modules/admin/TurnoverReport'
 
 type Period = 'today' | '7' | '30' | 'custom'
-type ReportTab = 'expense' | 'stock' | 'moves' | 'charges'
+type ReportTab = 'expense' | 'stock' | 'moves' | 'charges' | 'valuation' | 'turnover'
 type ChargeStatusFilter = 'all' | ChargeStatus
 
 interface CurrencySetting {
@@ -53,22 +57,6 @@ function packs(qty: number, packSize: number): number {
 
 function formatCurrency(value: number, currency: string): string {
   return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(value)
-}
-
-function csvCell(value: string | number | null): string {
-  const text = value == null ? '' : String(value)
-  return `"${text.replace(/"/g, '""')}"`
-}
-
-function downloadCsv(filename: string, headers: string[], rows: Array<Array<string | number | null>>): void {
-  const content = [headers, ...rows].map((row) => row.map(csvCell).join(';')).join('\r\n')
-  const blob = new Blob([`\uFEFF${content}`], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  link.click()
-  URL.revokeObjectURL(url)
 }
 
 export function ReportsPage() {
@@ -214,9 +202,9 @@ export function ReportsPage() {
       </div>
 
       <div className="flex gap-1 overflow-x-auto mb-4">
-        {(['expense', 'stock', 'moves', 'charges'] as ReportTab[]).map((value) => (
+        {(['expense', 'stock', 'moves', 'charges', 'valuation', 'turnover'] as ReportTab[]).map((value) => (
           <button key={value} onClick={() => setTab(value)} className={`px-3 py-2 text-sm whitespace-nowrap border-b-2 ${tab === value ? 'border-accent text-accent font-medium' : 'border-transparent text-muted'}`}>
-            {value === 'expense' ? t.admin.reports.expense : value === 'stock' ? t.admin.reports.currentStock : value === 'moves' ? t.admin.reports.moves : t.admin.reports.charges}
+            {value === 'expense' ? t.admin.reports.expense : value === 'stock' ? t.admin.reports.currentStock : value === 'moves' ? t.admin.reports.moves : value === 'charges' ? t.admin.reports.charges : value === 'valuation' ? t.admin.reports.valuationTab : t.admin.reports.turnoverTab}
           </button>
         ))}
       </div>
@@ -244,6 +232,10 @@ export function ReportsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3"><select value={itemFilter} onChange={(e) => setItemFilter(e.target.value)} className="bg-app border border-line rounded-lg px-2 py-2 text-sm text-ink"><option value="all">{t.admin.reports.allItems}</option>{itemOptions.map(([id, name]) => <option key={id} value={id}>{cat.itemName(name)}</option>)}</select><select value={apartmentFilter} onChange={(e) => setApartmentFilter(e.target.value)} className="bg-app border border-line rounded-lg px-2 py-2 text-sm text-ink"><option value="all">{t.admin.reports.allApartments}</option>{apartmentOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select><select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className="bg-app border border-line rounded-lg px-2 py-2 text-sm text-ink"><option value="all">{t.admin.reports.allSources}</option>{sourceOptions.map((source) => <option key={source} value={source}>{t.admin.stock.sourceTypes[source as keyof typeof t.admin.stock.sourceTypes] ?? source}</option>)}</select></div>
             <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr><Th>{t.admin.reports.date}</Th><Th>{t.admin.reports.item}</Th><Th>{t.admin.reports.apartment}</Th><Th>{t.admin.reports.sourceType}</Th><Th>{t.admin.reports.qty}</Th><Th>{t.admin.reports.unitCost}</Th></tr></thead><tbody>{filteredMoves.map((move) => <tr key={move.id} className="border-t border-line"><Td>{formatDateTime(move.moved_at)}</Td><Td>{cat.itemName(move.item_name)}</Td><Td>{move.apartment_code ?? '—'}{move.owner_apartment_id != null && <span className="ms-1 align-middle"><OwnerBadge /></span>}</Td><Td>{t.admin.stock.sourceTypes[move.source_type as keyof typeof t.admin.stock.sourceTypes] ?? move.source_type}</Td><Td>{n(formatNum(move.qty, { maximumFractionDigits: 3 }))}</Td><Td>{move.unit_cost == null ? '—' : formatCurrency(move.unit_cost, currency)}</Td></tr>)}</tbody></table>{filteredMoves.length === 0 && <Empty label={t.common.noResults} />}</div>
           </ReportCard>}
+          {tab === 'valuation' && <ValuationReport key={`val-${reloadToken}`} currency={currency} />}
+          {tab === 'turnover' && (range
+            ? <TurnoverReport key={`turn-${reloadToken}-${range.from}-${range.to}`} from={range.from} to={inclusiveEnd(range.to)} currency={currency} />
+            : <Empty label={t.admin.reports.invalidPeriod} />)}
           {tab === 'charges' && <ReportCard title={t.admin.reports.charges} onExport={exportCharges} exportLabel={t.admin.reports.export}>
             {chargesError ? <p className="text-sm text-bad text-center py-6">{chargesError}</p> : (<>
             <div className="flex gap-2 mb-3 flex-wrap">

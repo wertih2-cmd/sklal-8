@@ -35,6 +35,8 @@ import type {
   NormalizedShortageEvent,
   OwnerStockRow,
   ItemUnit,
+  StockTurnoverRow,
+  OwnerVsCompanyReport,
   AptType,
   IncidentCharge,
   IncidentChargePreview,
@@ -1366,6 +1368,39 @@ export async function fetchValuation(scope: 'company' | 'owner', ownerApartmentI
     markup_pct: r.markup_pct == null ? null : Number(r.markup_pct),
     margin_pct: r.margin_pct == null ? null : Number(r.margin_pct),
   }))
+}
+
+export async function fetchStockTurnover(
+  from: string,
+  to: string,
+  scope: 'company' | 'owner',
+  ownerApartmentId?: number | null,
+): Promise<StockTurnoverRow[]> {
+  const { data, error, status } = await supabase.rpc('report_stock_turnover', {
+    p_from: from,
+    p_to: to,
+    p_scope: scope,
+    p_owner_apartment: ownerApartmentId ?? null,
+  })
+  if (error) throw toApiError(error, status)
+  const rows = (data as unknown as StockTurnoverRow[]) ?? []
+  return rows.map((r) => ({
+    ...r,
+    in_qty: Number(r.in_qty),
+    out_qty: Number(r.out_qty),
+    transfer_in_qty: Number(r.transfer_in_qty),
+    transfer_out_qty: Number(r.transfer_out_qty),
+    in_value: Number(r.in_value),
+    out_value: Number(r.out_value),
+    transfer_in_value: Number(r.transfer_in_value),
+    transfer_out_value: Number(r.transfer_out_value),
+  }))
+}
+
+export async function fetchOwnerVsCompany(from: string | null, to: string | null): Promise<OwnerVsCompanyReport> {
+  const { data, error, status } = await supabase.rpc('report_owner_vs_company', { p_from: from, p_to: to })
+  if (error) throw toApiError(error, status)
+  return data as unknown as OwnerVsCompanyReport
 }
 
 export async function setGuestPrice(itemId: number, price: number | null): Promise<void> {

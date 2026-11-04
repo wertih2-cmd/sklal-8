@@ -533,6 +533,11 @@ export const en: Dict = {
       unitsIntegerOnly: 'Quantity must be a whole number for unit-tracked items',
       unitsReceiptHint: 'Each unit gets a code automatically (whole quantity)',
       unitsTransferUnsupported: 'Transfers between apartments are not yet available for unit-tracked items',
+      pickerSelected: 'Selected',
+      pickerSelectAll: 'Select all visible',
+      pickerClear: 'Clear selection',
+      pickerHide: 'Hide list',
+      pickerShow: 'Show list',
     },
     apartments: {
       title: 'Apartments',

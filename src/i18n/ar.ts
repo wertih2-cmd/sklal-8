@@ -534,6 +534,11 @@ export const ar: Dict = {
       unitsIntegerOnly: 'الكمية لازم تكون عدد صحيح للأصناف المتتبعة بالوحدة',
       unitsReceiptHint: 'كل وحدة هتاخد كود تلقائي (كمية صحيحة)',
       unitsTransferUnsupported: 'النقل بين الشقق مش متاح لسه للأصناف المتتبعة بالوحدة',
+      pickerSelected: 'المختار',
+      pickerSelectAll: 'اختيار كل الظاهر',
+      pickerClear: 'مسح الاختيار',
+      pickerHide: 'إخفاء القائمة',
+      pickerShow: 'إظهار القائمة',
     },
     apartments: {
       title: 'الشقق',

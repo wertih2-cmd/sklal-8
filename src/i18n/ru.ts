@@ -531,6 +531,11 @@ export const ru = {
       unitsIntegerOnly: 'Для поштучного учёта количество должно быть целым',
       unitsReceiptHint: 'Каждая единица получит код автоматически (целое количество)',
       unitsTransferUnsupported: 'Для товаров с поштучным учётом перенос между квартирами пока недоступен',
+      pickerSelected: 'Выбрано',
+      pickerSelectAll: 'Выбрать все видимые',
+      pickerClear: 'Снять выбор',
+      pickerHide: 'Скрыть список',
+      pickerShow: 'Показать список',
     },
     apartments: {
       title: 'Квартиры',

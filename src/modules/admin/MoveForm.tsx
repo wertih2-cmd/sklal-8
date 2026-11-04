@@ -84,6 +84,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   const [units, setUnits] = useState<ItemUnit[]>([])
   const [unitLocs, setUnitLocs] = useState<Map<number, UnitLocation>>(new Map())
   const [unitsLoading, setUnitsLoading] = useState(false)
+  const [showPicker, setShowPicker] = useState(true)
 
   useEffect(() => {
     Promise.all([fetchWarehouseStock(), fetchApartmentsAdmin(), fetchAllStaff(), fetchSuppliers(), fetchItems(), fetchOwnerStock()])
@@ -122,7 +123,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
     if (op === 'writeoff_warehouse' && ownership === 'owner') {
       list = list.filter((s) => ownerAvailable(ownerStockMap, ownerAptId ?? -1, s.item_id) > 0)
     }
-    return list.slice(0, 20)
+    return list.slice(0, 100)
   }, [stock, search, showOwnershipToggle, ownership, op, ownerStockMap, ownerAptId, cat])
 
   const addToCart = (item: WarehouseStockRow) => {
@@ -149,6 +150,17 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
 
   const updateLine = (idx: number, patch: Partial<CartLine>) => {
     setCart((prev) => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)))
+  }
+
+  const cartIds = useMemo(() => new Set(cart.map((l) => l.itemId)), [cart])
+  const toggleItem = (item: WarehouseStockRow) => {
+    if (cartIds.has(item.item_id)) setCart((prev) => prev.filter((l) => l.itemId !== item.item_id))
+    else addToCart(item)
+  }
+  const selectAllVisible = () => { for (const s of filteredStock) addToCart(s) }
+  const clearVisible = () => {
+    const ids = new Set(filteredStock.map((s) => s.item_id))
+    setCart((prev) => prev.filter((l) => !ids.has(l.itemId)))
   }
 
   const removeLine = (idx: number) => {
@@ -578,8 +590,22 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
               placeholder={t.admin.stock.search}
               className="w-full bg-surface rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none mb-2"
             />
-            {(search.trim() || cart.length === 0) && (
-              <div className="bg-surface rounded-lg border border-line max-h-48 overflow-y-auto">
+            <div className="flex items-center justify-between mb-1.5 gap-2">
+              <span className="text-xs text-muted">{t.admin.move.pickerSelected}: {n(String(cart.length))}</span>
+              <span className="flex gap-3">
+                {showPicker && filteredStock.length > 0 && (
+                  <button type="button" onClick={selectAllVisible} className="text-xs text-accent">{t.admin.move.pickerSelectAll}</button>
+                )}
+                {showPicker && filteredStock.some((s) => cartIds.has(s.item_id)) && (
+                  <button type="button" onClick={clearVisible} className="text-xs text-muted">{t.admin.move.pickerClear}</button>
+                )}
+                <button type="button" onClick={() => setShowPicker((v) => !v)} className="text-xs text-muted">
+                  {showPicker ? t.admin.move.pickerHide : t.admin.move.pickerShow}
+                </button>
+              </span>
+            </div>
+            {showPicker && (
+              <div className="bg-surface rounded-lg border border-line max-h-56 overflow-y-auto">
                 {filteredStock.length === 0 && (
                   <p className="px-4 py-2.5 text-sm text-muted">{t.common.noResults}</p>
                 )}
@@ -588,14 +614,19 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
                     ? ownerAvailable(ownerStockMap, ownerAptId, s.item_id)
                     : s.qty
                   return (
-                    <button
+                    <label
                       key={s.item_id}
-                      onClick={() => { addToCart(s); setSearch('') }}
-                      className="w-full px-4 py-2.5 flex items-center justify-between text-start hover:bg-app border-b border-line last:border-0"
+                      className="w-full px-4 py-2.5 flex items-center gap-2.5 text-start hover:bg-app border-b border-line last:border-0 cursor-pointer"
                     >
-                      <span className="text-sm text-ink truncate">{cat.itemName(s.name)}</span>
+                      <input
+                        type="checkbox"
+                        checked={cartIds.has(s.item_id)}
+                        onChange={() => toggleItem(s)}
+                        className="w-4 h-4 rounded accent-accent shrink-0"
+                      />
+                      <span className="text-sm text-ink truncate flex-1">{cat.itemName(s.name)}</span>
                       <span className="text-xs text-muted shrink-0 ms-2">{n(formatQty(availLabel, s))}</span>
-                    </button>
+                    </label>
                   )
                 })}
               </div>

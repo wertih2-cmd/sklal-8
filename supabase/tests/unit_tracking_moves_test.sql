@@ -268,7 +268,8 @@ begin
   v_msg := '';
   begin perform void_document((v_doc->>'doc_id')::uuid, 'тест');
   exception when others then v_msg := sqlerrm; end;
-  rep := rep || pg_temp.r('W11 void документа с поштучным товаром отклонён текстом «Поштучный учёт»', v_msg like '%Поштучный учёт%');
+  select count(*) into v_cnt from item_units where id = v_u1 and location_id = v_wh and status = 'in_stock';
+  rep := rep || pg_temp.r('W11 void документа с поштучным товаром возвращает единицу на склад (миграция 1b2b)', v_msg = '' and v_cnt = 1);
 
   -- =========================================================
   -- W12 обычный товар работает как раньше

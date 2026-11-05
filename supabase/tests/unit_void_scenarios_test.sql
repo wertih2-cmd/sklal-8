@@ -70,10 +70,18 @@ begin
   perform post_move(p_op => 'return_apartment', p_item => v_item, p_qty => 1, p_apartment => v_apt, p_unit_ids => array[v_u2]);
   v_msg := '';
   begin perform void_document(v_id, 'тест V2'); exception when others then v_msg := sqlerrm; end;
-  rep := rep || pg_temp.r('V2 отмена отклонена: единица в более поздней операции', v_msg like '%более поздней операции%');
+  rep := rep || pg_temp.r('V2 отмена отклонена: единица возвращена, остаток в квартире 0', v_msg like '%более поздней операции%' or v_msg like '%уже израсходован%');
   select count(*) into v_cnt from item_units where id = v_u2 and location_id = v_wh and status = 'in_stock';
   rep := rep || pg_temp.r('V2 после отказа единица на месте', v_cnt = 1);
   rep := rep || pg_temp.r('V2 документ остался posted', (select status from documents where id = v_id) = 'posted');
+
+  -- V2b: остаток в квартире совпадает (1), но единица в документе уже другая: проверка по единицам
+  perform post_move(p_op => 'issue_apartment', p_item => v_item, p_qty => 1, p_apartment => v_apt, p_unit_ids => array[v_u3]);
+  v_msg := '';
+  begin perform void_document(v_id, 'тест V2b'); exception when others then v_msg := sqlerrm; end;
+  rep := rep || pg_temp.r('V2b отмена отклонена текстом про более позднюю операцию', v_msg like '%более поздней операции%');
+  rep := rep || pg_temp.r('V2b документ остался posted', (select status from documents where id = v_id) = 'posted');
+  perform post_move(p_op => 'return_apartment', p_item => v_item, p_qty => 1, p_apartment => v_apt, p_unit_ids => array[v_u3]);
 
   -- V3: отмена документа прихода списывает единицы
   v_doc2 := post_document(p_op => 'receipt',

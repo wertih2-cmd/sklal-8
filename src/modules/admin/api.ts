@@ -1370,6 +1370,18 @@ export async function fetchValuation(scope: 'company' | 'owner', ownerApartmentI
   }))
 }
 
+export interface EnableUnitTrackingResult {
+  item_id: number
+  units_created: number
+  by_location: Array<{ location: string; qty: number }>
+}
+
+export async function enableUnitTracking(itemId: number): Promise<EnableUnitTrackingResult> {
+  const { data, error, status } = await supabase.rpc('enable_unit_tracking', { p_item: itemId })
+  if (error) throw toApiError(error, status)
+  return data as unknown as EnableUnitTrackingResult
+}
+
 export async function fetchStockTurnover(
   from: string,
   to: string,

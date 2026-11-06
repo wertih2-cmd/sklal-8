@@ -12,6 +12,7 @@ import {
   postDocument,
   itemHasHistory,
   fetchItemStockSummary,
+  enableUnitTracking,
 } from '@/modules/admin/api'
 import type { Category, Item, ItemKind, BaseUnit, Supplier } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
@@ -285,6 +286,7 @@ export function CatalogPage() {
           categories={categories}
           defaultCategoryId={addingItem ?? editingItem?.categoryId ?? categories[0]?.id ?? 0}
           onClose={() => { setEditingItem(null); setAddingItem(null) }}
+          onTrackingEnabled={() => load(true)}
           onSave={async (formValues) => {
             const { opening_qty: openingQty, ...params } = formValues
             try {
@@ -409,11 +411,13 @@ function ItemEditor({
   defaultCategoryId,
   onClose,
   onSave,
+  onTrackingEnabled,
 }: {
   item: Item | null
   categories: Category[]
   defaultCategoryId: number
   onClose: () => void
+  onTrackingEnabled: () => void
   onSave: (params: {
     category_id: number
     name: string
@@ -456,6 +460,9 @@ function ItemEditor({
   const [trackOnHand, setTrackOnHand] = useState(item?.track_on_hand ?? false)
   const [active, setActive] = useState(item?.active ?? true)
   const [unitLocked, setUnitLocked] = useState(false)
+  const [unitTracked, setUnitTracked] = useState(item?.track_units ?? false)
+  const [trackConfirm, setTrackConfirm] = useState(false)
+  const [trackBusy, setTrackBusy] = useState(false)
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [supplierId, setSupplierId] = useState<number | null>(item?.supplier_id ?? null)
 
@@ -580,6 +587,19 @@ function ItemEditor({
             className="w-4 h-4 accent-[var(--accent)]" />
           <span className="text-sm text-ink">{t.admin.catalog.trackOnHand}</span>
         </label>
+        {item && selectedCat?.kind === 'asset' && (
+          unitTracked ? (
+            <p className="text-sm text-ink flex items-center gap-2"><Check className="w-4 h-4 text-ok" />{t.admin.catalog.trackUnitsOn}</p>
+          ) : (
+            <div>
+              <button type="button" disabled={trackBusy} onClick={() => setTrackConfirm(true)}
+                className="text-sm text-accent hover:underline disabled:opacity-50">
+                {t.admin.catalog.trackUnitsEnable}
+              </button>
+              <p className="text-xs text-muted mt-0.5">{t.admin.catalog.trackUnitsHint}</p>
+            </div>
+          )
+        )}
         {item && (
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)}
@@ -588,6 +608,29 @@ function ItemEditor({
           </label>
         )}
       </div>
+      <ConfirmDialog
+        open={trackConfirm}
+        title={t.admin.catalog.trackUnitsConfirmTitle}
+        message={t.admin.catalog.trackUnitsConfirmMessage}
+        confirmLabel={t.admin.catalog.trackUnitsEnable}
+        tone="warn"
+        onCancel={() => setTrackConfirm(false)}
+        onConfirm={async () => {
+          if (!item) return
+          setTrackConfirm(false)
+          setTrackBusy(true)
+          try {
+            const res = await enableUnitTracking(item.id)
+            setUnitTracked(true)
+            toast(t.admin.catalog.trackUnitsDone.replace('{{count}}', n(String(res.units_created))), 'success')
+            onTrackingEnabled()
+          } catch (e) {
+            toast(errorMessage(e), 'error')
+          } finally {
+            setTrackBusy(false)
+          }
+        }}
+      />
       <Actions
         onClose={onClose}
         onSave={() => onSave({

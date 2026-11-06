@@ -19,6 +19,8 @@ export interface TransferCandidate {
 export interface TransferSelectionEntry {
   row: TransferCandidate
   qty: number
+  /** Для товаров с поштучным учётом: выбранные единицы (количество равно их числу). */
+  unitIds?: string[]
 }
 
 export type TransferSelection = TransferSelectionEntry[]
@@ -27,7 +29,7 @@ export type IneligibleReason = 'consumable' | 'noStock' | 'otherApartment'
 
 export type TransferValidation =
   | { ok: true; lines: TransferLine[] }
-  | { ok: false; error: 'empty' | 'qty' | 'exceeds' }
+  | { ok: false; error: 'empty' | 'qty' | 'exceeds' | 'units' }
 
 const MAX_DECIMALS = 3
 
@@ -52,7 +54,13 @@ export function validateLines(selection: TransferSelection): TransferValidation 
   if (selection.length === 0) return { ok: false, error: 'empty' }
 
   const lines: TransferLine[] = []
-  for (const { row, qty } of selection) {
+  for (const { row, qty, unitIds } of selection) {
+    if (unitIds !== undefined) {
+      if (unitIds.length === 0) return { ok: false, error: 'units' }
+      if (unitIds.length > row.qty) return { ok: false, error: 'exceeds' }
+      lines.push({ item_id: row.item_id, qty: unitIds.length, unit_ids: unitIds })
+      continue
+    }
     if (!Number.isFinite(qty) || qty <= 0 || !hasAtMostDecimals(qty, MAX_DECIMALS)) {
       return { ok: false, error: 'qty' }
     }

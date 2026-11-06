@@ -468,7 +468,7 @@ export async function postTransfer(params: {
   fromKind: 'apartment' | 'holder'
   fromId: number
   toApartment: number
-  lines: Array<{ item_id: number; qty: number }>
+  lines: Array<{ item_id: number; qty: number; unit_ids?: string[] }>
   note?: string | null
   doc_date?: string | null
 }): Promise<PostDocumentResult> {

@@ -563,6 +563,7 @@ export type TransferDirection = 'to_owner' | 'to_company'
 export interface TransferLine {
   item_id: number
   qty: number
+  unit_ids?: string[]
 }
 
 export interface TransferCompanyOwnerResult {

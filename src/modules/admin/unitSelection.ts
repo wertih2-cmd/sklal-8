@@ -24,16 +24,9 @@ export type UnitSource =
   | { kind: 'apartment'; apartmentId: number }
   | { kind: 'holder'; staffId: number }
 
-/** Операции, которые база не умеет проводить для товаров с поштучным учётом (защитный триггер). */
-const UNIT_UNSUPPORTED_OPS = ['transfer_apartment', 'transfer_holder']
-
-export function isUnitOpSupported(op: string): boolean {
-  return !UNIT_UNSUPPORTED_OPS.includes(op)
-}
-
 /**
  * Откуда брать единицы: зеркало логики post_move.
- * null — единицы выбирать не нужно (приход, перенос) или не хватает данных (квартира/сотрудник не выбраны).
+ * null — единицы выбирать не нужно (приход) или не хватает данных (квартира/сотрудник не выбраны).
  */
 export function unitSource(ctx: UnitSourceCtx): UnitSource | null {
   switch (ctx.op) {
@@ -48,6 +41,10 @@ export function unitSource(ctx: UnitSourceCtx): UnitSource | null {
       return { kind: 'warehouse' }
     case 'issue_holder':
       return { kind: 'warehouse' }
+    case 'transfer_apartment':
+      return ctx.apartmentId != null ? { kind: 'apartment', apartmentId: ctx.apartmentId } : null
+    case 'transfer_holder':
+      return ctx.staffId != null ? { kind: 'holder', staffId: ctx.staffId } : null
     case 'return_holder':
     case 'writeoff_holder':
       return ctx.staffId != null ? { kind: 'holder', staffId: ctx.staffId } : null

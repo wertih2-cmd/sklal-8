@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { ItemUnit } from '@/lib/database.types'
-import { unitSource, candidateUnits, effectiveSelection, toggleUnit, isUnitOpSupported, type UnitLocation, type UnitSourceCtx } from './unitSelection'
+import { unitSource, candidateUnits, effectiveSelection, toggleUnit, type UnitLocation, type UnitSourceCtx } from './unitSelection'
 
 const ctx = (p: Partial<UnitSourceCtx>): UnitSourceCtx => ({
   op: 'issue_apartment', apartmentId: null, staffId: null, ownerApartmentId: null, ownerMode: false, aptIsOwner: false, isAsset: true, ...p,
@@ -55,18 +55,14 @@ describe('unitSource', () => {
     expect(unitSource(ctx({ op: 'return_holder', staffId: 7 }))).toEqual({ kind: 'holder', staffId: 7 })
     expect(unitSource(ctx({ op: 'writeoff_holder' }))).toBeNull()
   })
-  it('receipt and transfers need no unit choice', () => {
+  it('receipt needs no unit choice', () => {
     expect(unitSource(ctx({ op: 'receipt' }))).toBeNull()
-    expect(unitSource(ctx({ op: 'transfer_apartment', apartmentId: 10 }))).toBeNull()
   })
-})
-
-describe('isUnitOpSupported', () => {
-  it('rejects transfers only', () => {
-    expect(isUnitOpSupported('transfer_apartment')).toBe(false)
-    expect(isUnitOpSupported('transfer_holder')).toBe(false)
-    expect(isUnitOpSupported('issue_apartment')).toBe(true)
-    expect(isUnitOpSupported('receipt')).toBe(true)
+  it('transfers take units from the source apartment or holder', () => {
+    expect(unitSource(ctx({ op: 'transfer_apartment', apartmentId: 10 }))).toEqual({ kind: 'apartment', apartmentId: 10 })
+    expect(unitSource(ctx({ op: 'transfer_apartment' }))).toBeNull()
+    expect(unitSource(ctx({ op: 'transfer_holder', staffId: 7 }))).toEqual({ kind: 'holder', staffId: 7 })
+    expect(unitSource(ctx({ op: 'transfer_holder' }))).toBeNull()
   })
 })
 

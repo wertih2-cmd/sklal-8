@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchApartmentsAdmin, transferCompanyOwner } from '@/modules/admin/api'
-import type { Apartment, TransferDirection } from '@/lib/database.types'
+import { fetchApartmentsAdmin, fetchItems, fetchTrackedUnits, transferCompanyOwner } from '@/modules/admin/api'
+import type { Apartment, ItemUnit, TransferDirection } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { formatQty } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 import { validateLines, type TransferSelection } from './transferSelection'
+import { candidateUnits, toggleUnit, type UnitLocation, type UnitSource } from './unitSelection'
 
-type ValidationKey = 'transferErrEmpty' | 'transferErrQty' | 'transferErrExceeds'
+type ValidationKey = 'transferErrEmpty' | 'transferErrQty' | 'transferErrExceeds' | 'transferErrUnits'
 
-const VALIDATION_KEY: Record<'empty' | 'qty' | 'exceeds', ValidationKey> = {
+const VALIDATION_KEY: Record<'empty' | 'qty' | 'exceeds' | 'units', ValidationKey> = {
   empty: 'transferErrEmpty',
   qty: 'transferErrQty',
   exceeds: 'transferErrExceeds',
+  units: 'transferErrUnits',
 }
 
 function parseQty(text: string): number {
@@ -41,6 +43,29 @@ export function TransferModal({
   const [apartments, setApartments] = useState<Apartment[] | null>(null)
   const [apartmentsError, setApartmentsError] = useState<string | null>(null)
   const [pickedApartmentId, setPickedApartmentId] = useState<number | null>(null)
+  const [trackedIds, setTrackedIds] = useState<Set<number>>(new Set())
+  const [units, setUnits] = useState<ItemUnit[]>([])
+  const [unitLocs, setUnitLocs] = useState<Map<number, UnitLocation>>(new Map())
+  const [unitsReady, setUnitsReady] = useState(false)
+  const [unitPick, setUnitPick] = useState<Record<string, string[]>>({})
+
+  const itemIdsKey = selection.map((e) => e.row.item_id).join(',')
+  useEffect(() => {
+    let cancelled = false
+    const ids = new Set(itemIdsKey.split(',').filter(Boolean).map(Number))
+    fetchItems()
+      .then(async (items) => {
+        const tracked = new Set(items.filter((i) => i.track_units && ids.has(i.id)).map((i) => i.id))
+        const loaded = tracked.size > 0 ? await fetchTrackedUnits([...tracked]) : { units: [], locations: [] }
+        if (cancelled) return
+        setTrackedIds(tracked)
+        setUnits(loaded.units)
+        setUnitLocs(new Map(loaded.locations.map((l): [number, UnitLocation] => [l.id, l])))
+        setUnitsReady(true)
+      })
+      .catch((e) => { if (!cancelled) toast(errorMessage(e), 'error') })
+    return () => { cancelled = true }
+  }, [itemIdsKey])
 
   useEffect(() => {
     if (!isToOwner) return
@@ -51,16 +76,27 @@ export function TransferModal({
     return () => { cancelled = true }
   }, [isToOwner])
 
-  const entries = useMemo(
-    () => selection.map((e) => ({ row: e.row, qty: parseQty(qtyTexts[e.row.key] ?? '') })),
-    [selection, qtyTexts],
+  const apartmentId = isToOwner ? pickedApartmentId : selection[0]?.row.apartment_id ?? null
+  const unitSrc = useMemo<UnitSource | null>(
+    () => (isToOwner ? { kind: 'warehouse' } : apartmentId != null ? { kind: 'owner_stock', apartmentId } : null),
+    [isToOwner, apartmentId],
+  )
+  const entries = useMemo<TransferSelection>(
+    () => selection.map((e) => {
+      if (trackedIds.has(e.row.item_id)) {
+        const ok = new Set(candidateUnits(units, unitLocs, e.row.item_id, unitSrc).map((u) => u.id))
+        const unitIds = (unitPick[e.row.key] ?? []).filter((id) => ok.has(id))
+        return { row: e.row, qty: unitIds.length, unitIds }
+      }
+      return { row: e.row, qty: parseQty(qtyTexts[e.row.key] ?? '') }
+    }),
+    [selection, qtyTexts, trackedIds, units, unitLocs, unitSrc, unitPick],
   )
   const validation = useMemo(() => validateLines(entries), [entries])
 
-  const apartmentId = isToOwner ? pickedApartmentId : selection[0]?.row.apartment_id ?? null
   const noOwnerApartments = isToOwner && apartments !== null && apartments.length === 0
   const apartmentReady = isToOwner ? apartments !== null && apartmentsError === null : apartmentId != null
-  const canConfirm = !saving && validation.ok && apartmentReady && apartmentId != null && !noOwnerApartments
+  const canConfirm = !saving && unitsReady && validation.ok && apartmentReady && apartmentId != null && !noOwnerApartments
 
   const handleConfirm = async () => {
     if (!canConfirm || !validation.ok || apartmentId == null) return
@@ -94,6 +130,49 @@ export function TransferModal({
 
         <div className="space-y-2 mb-3">
           {selection.map((entry) => {
+            if (trackedIds.has(entry.row.item_id)) {
+              const cands = candidateUnits(units, unitLocs, entry.row.item_id, unitSrc)
+              const picked = entries.find((e) => e.row.key === entry.row.key)?.unitIds ?? []
+              return (
+                <div key={entry.row.key} className="bg-app rounded-lg px-3 py-2">
+                  <div className="text-sm text-ink truncate">{cat.itemName(entry.row.name)}</div>
+                  <div className="text-xs text-muted mb-1.5">{t.admin.move.unitsBadge}</div>
+                  {cands.length === 0 ? (
+                    <p className="text-xs text-bad">{t.admin.move.unitsEmpty}</p>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-medium text-ink">
+                          {t.admin.move.unitsPick}: {n(String(picked.length))} / {n(String(cands.length))}
+                        </span>
+                        <span className="flex gap-3">
+                          <button type="button" disabled={saving} onClick={() => setUnitPick((prev) => ({ ...prev, [entry.row.key]: cands.map((u) => u.id) }))} className="text-xs text-accent">
+                            {t.admin.move.unitsAll}
+                          </button>
+                          <button type="button" disabled={saving} onClick={() => setUnitPick((prev) => ({ ...prev, [entry.row.key]: [] }))} className="text-xs text-muted">
+                            {t.admin.move.unitsNone}
+                          </button>
+                        </span>
+                      </div>
+                      <div className="max-h-32 overflow-y-auto rounded-lg border border-line bg-surface">
+                        {cands.map((u) => (
+                          <label key={u.id} className="flex items-center gap-2 px-3 py-2 text-sm text-ink border-b border-line last:border-0 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={picked.includes(u.id)}
+                              disabled={saving}
+                              onChange={() => setUnitPick((prev) => ({ ...prev, [entry.row.key]: toggleUnit(picked, u.id) }))}
+                              className="w-4 h-4 rounded accent-accent"
+                            />
+                            <span className="truncate">{u.code}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )
+            }
             const qtyText = qtyTexts[entry.row.key] ?? ''
             return (
               <div key={entry.row.key} className="flex items-center justify-between gap-3 bg-app rounded-lg px-3 py-2">

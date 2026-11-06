@@ -466,6 +466,7 @@ export const ru = {
       transferErrEmpty: 'Выберите хотя бы одну позицию',
       transferErrQty: 'Введите количество больше 0 (до 3 знаков после запятой)',
       transferErrExceeds: 'Количество больше остатка',
+      transferErrUnits: 'Выберите хотя бы одну единицу',
     },
     move: {
       title: 'Новая операция',
@@ -530,7 +531,6 @@ export const ru = {
       unitsRequired: 'Выберите хотя бы одну единицу для каждого поштучного товара',
       unitsIntegerOnly: 'Для поштучного учёта количество должно быть целым',
       unitsReceiptHint: 'Каждая единица получит код автоматически (целое количество)',
-      unitsTransferUnsupported: 'Для товаров с поштучным учётом перенос между квартирами пока недоступен',
       pickerSelected: 'Выбрано',
       pickerSelectAll: 'Выбрать все видимые',
       pickerClear: 'Снять выбор',

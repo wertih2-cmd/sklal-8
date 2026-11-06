@@ -468,6 +468,7 @@ export const en: Dict = {
       transferErrEmpty: 'Select at least one item',
       transferErrQty: 'Enter a quantity greater than 0 (up to 3 decimals)',
       transferErrExceeds: 'Quantity exceeds the available stock',
+      transferErrUnits: 'Select at least one unit',
     },
     move: {
       title: 'New operation',
@@ -532,7 +533,6 @@ export const en: Dict = {
       unitsRequired: 'Select at least one unit for each unit-tracked item',
       unitsIntegerOnly: 'Quantity must be a whole number for unit-tracked items',
       unitsReceiptHint: 'Each unit gets a code automatically (whole quantity)',
-      unitsTransferUnsupported: 'Transfers between apartments are not yet available for unit-tracked items',
       pickerSelected: 'Selected',
       pickerSelectAll: 'Select all visible',
       pickerClear: 'Clear selection',

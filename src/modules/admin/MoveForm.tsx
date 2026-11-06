@@ -6,7 +6,7 @@ import { useI18n } from '@/i18n'
 import { formatQty } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
 import { lineSource, isTransferBlocked, transferOwnerFlags, buildOwnerStockMap, ownerAvailable, type MoveOp } from '@/modules/admin/moveRules'
-import { unitSource, candidateUnits, effectiveSelection, toggleUnit, isUnitOpSupported, type UnitLocation } from '@/modules/admin/unitSelection'
+import { unitSource, candidateUnits, effectiveSelection, toggleUnit, type UnitLocation } from '@/modules/admin/unitSelection'
 import { Plus, Minus, Trash2, Loader as Loader2, Check, X, FileText, TriangleAlert as AlertTriangle, Info } from 'lucide-react'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 
@@ -205,7 +205,6 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   const hasOwnerConsumable = cart.some(ownerConsumableLine)
 
   // поштучный учёт: единицы выбираются для всех операций, кроме прихода (там коды создаются автоматически)
-  const unitOpSupported = isUnitOpSupported(op)
   const trackedKey = cart.filter((l) => l.tracked).map((l) => l.itemId).sort((a, b) => a - b).join(',')
   useEffect(() => {
     if (!trackedKey || op === 'receipt') return
@@ -240,8 +239,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
     (line: CartLine) => effectiveSelection(line.unitIds, lineCandidates(line)),
     [lineCandidates],
   )
-  const pickUnits = (line: CartLine) => line.tracked && op !== 'receipt' && unitOpSupported
-  const hasUnsupportedUnitLine = !unitOpSupported && cart.some((l) => l.tracked)
+  const pickUnits = (line: CartLine) => line.tracked && op !== 'receipt'
   const hasEmptyUnitSelection = cart.some((l) => pickUnits(l) && lineSelection(l).length === 0)
 
   const handleOpChange = (nextOp: string) => {
@@ -310,10 +308,6 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
       toast(t.admin.move.ownerConsumablesHidden, 'error')
       return
     }
-    if (hasUnsupportedUnitLine) {
-      toast(t.admin.move.unitsTransferUnsupported, 'error')
-      return
-    }
     if (hasEmptyUnitSelection) {
       toast(t.admin.move.unitsRequired, 'error')
       return
@@ -348,7 +342,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
             fromKind: op === 'transfer_holder' ? 'holder' : 'apartment',
             fromId: (op === 'transfer_holder' ? staffId : apartmentId) as number,
             toApartment: (op === 'transfer_holder' ? apartmentId : toApartmentId) as number,
-            lines: lines.map((l) => ({ item_id: l.item_id, qty: l.qty })),
+            lines: lines.map((l) => (l.unit_ids ? { item_id: l.item_id, qty: l.qty, unit_ids: l.unit_ids } : { item_id: l.item_id, qty: l.qty })),
             note: note.trim() || null,
             doc_date: docDateArg,
           })
@@ -702,11 +696,6 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
                     {line.tracked && (
                       <p className="text-xs text-muted mb-2">{t.admin.move.unitsBadge}</p>
                     )}
-                    {line.tracked && !unitOpSupported && (
-                      <div className="text-xs text-bad mb-2 bg-bad-soft rounded-lg px-2.5 py-1.5">
-                        {t.admin.move.unitsTransferUnsupported}
-                      </div>
-                    )}
                     {line.tracked && op === 'receipt' && (
                       <p className="text-xs text-muted mb-2">{t.admin.move.unitsReceiptHint}</p>
                     )}
@@ -849,7 +838,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
           </button>
           <button
             onClick={handlePost}
-            disabled={posting || cart.length === 0 || hasBlockedTransfer || hasOwnerConsumable || hasUnsupportedUnitLine}
+            disabled={posting || cart.length === 0 || hasBlockedTransfer || hasOwnerConsumable}
             className="flex-1 bg-accent text-white rounded-lg py-3 font-medium text-sm disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}

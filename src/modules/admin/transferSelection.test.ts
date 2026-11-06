@@ -79,3 +79,31 @@ describe('validateLines', () => {
     })
   })
 })
+
+describe('validateLines with units', () => {
+  it('requires at least one unit for a tracked entry', () => {
+    const selection: TransferSelection = [{ row: asset(), qty: 0, unitIds: [] }]
+    expect(validateLines(selection)).toEqual({ ok: false, error: 'units' })
+  })
+
+  it('uses the unit count as quantity and passes unit_ids', () => {
+    const selection: TransferSelection = [{ row: asset(), qty: 0, unitIds: ['u1', 'u2'] }]
+    expect(validateLines(selection)).toEqual({ ok: true, lines: [{ item_id: 1, qty: 2, unit_ids: ['u1', 'u2'] }] })
+  })
+
+  it('rejects more units than stock', () => {
+    const selection: TransferSelection = [{ row: asset({ qty: 1 }), qty: 0, unitIds: ['u1', 'u2'] }]
+    expect(validateLines(selection)).toEqual({ ok: false, error: 'exceeds' })
+  })
+
+  it('keeps plain entries unchanged next to tracked ones', () => {
+    const selection: TransferSelection = [
+      { row: asset({ key: 'a', item_id: 1 }), qty: 0, unitIds: ['u1'] },
+      { row: asset({ key: 'b', item_id: 2 }), qty: 3 },
+    ]
+    expect(validateLines(selection)).toEqual({
+      ok: true,
+      lines: [{ item_id: 1, qty: 1, unit_ids: ['u1'] }, { item_id: 2, qty: 3 }],
+    })
+  })
+})

@@ -469,6 +469,7 @@ export const ar: Dict = {
       transferErrEmpty: 'اختر صنفًا واحدًا على الأقل',
       transferErrQty: 'أدخل كمية أكبر من 0 (حتى 3 منازل عشرية)',
       transferErrExceeds: 'الكمية أكبر من الرصيد المتاح',
+      transferErrUnits: 'اختار وحدة واحدة على الأقل',
     },
     move: {
       title: 'عملية جديدة',
@@ -533,7 +534,6 @@ export const ar: Dict = {
       unitsRequired: 'اختار وحدة واحدة على الأقل لكل صنف متتبع بالوحدة',
       unitsIntegerOnly: 'الكمية لازم تكون عدد صحيح للأصناف المتتبعة بالوحدة',
       unitsReceiptHint: 'كل وحدة هتاخد كود تلقائي (كمية صحيحة)',
-      unitsTransferUnsupported: 'النقل بين الشقق مش متاح لسه للأصناف المتتبعة بالوحدة',
       pickerSelected: 'المختار',
       pickerSelectAll: 'اختيار كل الظاهر',
       pickerClear: 'مسح الاختيار',

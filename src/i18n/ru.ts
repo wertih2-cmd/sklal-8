@@ -440,6 +440,13 @@ export const ru = {
         showMore: 'Показать ещё',
         empty: 'Ничего не найдено',
       },
+      reportsBlock: {
+        title: 'Отчёты',
+        periodLabel: 'Период',
+        hintPeriod: 'За выбранный период',
+        hintNow: 'На текущий момент',
+        printNote: 'Печать и CSV доступны на странице отчёта',
+      },
     },
     stock: {
       title: 'Склад',

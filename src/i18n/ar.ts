@@ -443,6 +443,13 @@ export const ar: Dict = {
         showMore: 'عرض المزيد',
         empty: 'لا توجد نتائج',
       },
+      reportsBlock: {
+        title: 'التقارير',
+        periodLabel: 'الفترة',
+        hintPeriod: 'عن الفترة المحددة',
+        hintNow: 'حتى الآن',
+        printNote: 'الطباعة وتصدير CSV متاحان في صفحة التقرير',
+      },
     },
     stock: {
       title: 'المخزن',

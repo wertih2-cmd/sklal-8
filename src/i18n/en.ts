@@ -442,6 +442,13 @@ export const en: Dict = {
         showMore: 'Show more',
         empty: 'Nothing found',
       },
+      reportsBlock: {
+        title: 'Reports',
+        periodLabel: 'Period',
+        hintPeriod: 'For the selected period',
+        hintNow: 'As of now',
+        printNote: 'Print and CSV are available on the report page',
+      },
     },
     stock: {
       title: 'Stock',

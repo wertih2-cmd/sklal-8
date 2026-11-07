@@ -37,7 +37,7 @@ function Card({ title, caption, action, children }: { title: string; caption?: s
 }
 
 export function DashboardAnalytics({ incidents, currency }: { incidents: Incident[]; currency: string }) {
-  const { t, lang } = useI18n()
+  const { t, lang, n } = useI18n()
   const a = t.admin.dashboard.analytics
   const cat = useCatalogName()
   const navigate = useNavigate()
@@ -65,10 +65,14 @@ export function DashboardAnalytics({ incidents, currency }: { incidents: Inciden
   const summary = useMemo(() => (moves ? summarizeExpense(moves, days) : null), [moves, days])
   const incidentDays = useMemo(() => incidentsByDay(incidents, days), [incidents, days])
 
-  const locale = lang === 'ar' ? 'ar-EG' : 'ru-RU'
+  const weekdayLocale = lang === 'ar' ? 'ar-EG' : lang === 'en' ? 'en-GB' : 'ru-RU'
   const money = (v: number) => formatNum(v, { style: 'currency', currency, maximumFractionDigits: 0 })
-  const dayShort = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateString(locale, { timeZone: 'UTC', day: '2-digit', month: '2-digit' })
-  const dayLong = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateString(locale, { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: '2-digit' })
+  // dd.mm built by hand: locale date formats insert direction marks that scramble the order in Arabic
+  const dayShort = (day: string) => n(`${day.slice(8, 10)}.${day.slice(5, 7)}`)
+  const dayLong = (day: string) => {
+    const weekday = new Date(`${day}T12:00:00Z`).toLocaleDateString(weekdayLocale, { timeZone: 'UTC', weekday: 'short' })
+    return `${weekday} ${dayShort(day)}`
+  }
 
   const statusLabel: Record<IncidentStatus, string> = {
     new: t.incidents.statusNew,
@@ -187,7 +191,7 @@ export function DashboardAnalytics({ incidents, currency }: { incidents: Inciden
                     <span className="block text-[11px] text-warn">{a.unpricedNote}: {formatNum(summary.unpricedMoves)}</span>
                   )}
                 </div>
-                <ColumnChart columns={expenseColumns} hint={a.tapHint} groupLabel={a.expenseByDay} />
+                <ColumnChart columns={expenseColumns} hint={a.tapHint} groupLabel={a.expenseByDay} emptyLabel={a.noData} />
               </>
             ),
           )}
@@ -198,7 +202,7 @@ export function DashboardAnalytics({ incidents, currency }: { incidents: Inciden
             <span className="text-muted text-xs">{a.incidentsTotal}: </span>
             <b>{formatNum(incidentTotal)}</b>
           </div>
-          <ColumnChart columns={incidentColumns} hint={a.tapHint} groupLabel={a.incidentsByDay} />
+          <ColumnChart columns={incidentColumns} hint={a.tapHint} groupLabel={a.incidentsByDay} emptyLabel={a.noData} />
           <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
             {INCIDENT_STATUSES.map((s) => (
               <span key={s} className="inline-flex items-center gap-1 text-[11px] text-muted">

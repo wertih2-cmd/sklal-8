@@ -696,6 +696,8 @@ export const ar: Dict = {
       history: 'السجل',
     },
     reports: {
+      tableSearch: 'بحث: الشقة، الصنف، الفئة',
+      searchPrint: 'بحث',
       title: 'التقارير',
       expense: 'المصروف (التنظيف والخصم والبلاغات)',
       costPartialNote: '* الإجمالي ناقص: بعض الحركات من غير سعر (خصومات قديمة أو أصناف من غير استلام بسعر).',

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
-import { Download, Printer, RefreshCw } from 'lucide-react'
+import { Download, Printer, RefreshCw, Search } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { useI18n } from '@/i18n'
 import { supabase } from '@/lib/supabase'
@@ -16,6 +16,7 @@ import {
 } from '@/modules/admin/reportRules'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 import { downloadCsv, printReport } from '@/modules/admin/reportExport'
+import { SEARCH_TABS, chargeFields, expenseFields, moveFields, searchRows, stockFields } from '@/modules/admin/reportSearch'
 import { parseReportPeriod, parseReportTab, type ReportPeriod as Period, type ReportTab } from '@/modules/admin/reportLinks'
 import { inclusiveEnd } from '@/modules/admin/reportView'
 import { ValuationReport } from '@/modules/admin/ValuationReport'
@@ -81,6 +82,7 @@ export function ReportsPage() {
   const [ownershipFilter, setOwnershipFilter] = useState<OwnershipFilter>('company')
   const [chargeStatusFilter, setChargeStatusFilter] = useState<ChargeStatusFilter>('all')
   const [reloadToken, setReloadToken] = useState(0)
+  const [query, setQuery] = useState('')
 
   const range = useMemo(() => rangeFor(period, from, to), [period, from, to, reloadToken])
   const requestId = useRef(0)
@@ -125,20 +127,30 @@ export function ReportsPage() {
   useEffect(() => { loadData() }, [loadData, reloadToken])
   useLiveRefresh(['stock_moves', 'cleaning_events', 'incidents', 'items', 'incident_charges'], () => loadData(true))
 
+  const searchCtx = useMemo(() => ({
+    itemMatches: (token: string, base: string) => cat.matches(token, base, 'item'),
+    categoryMatches: (token: string, base: string) => cat.matches(token, base, 'category'),
+  }), [cat])
+
   const filteredMoves = useMemo(() => {
     const byOwnership = filterByOwnership(moves, ownershipFilter)
-    return byOwnership.filter((move) => {
+    const filtered = byOwnership.filter((move) => {
       if (itemFilter !== 'all' && String(move.item_id) !== itemFilter) return false
       if (apartmentFilter !== 'all' && String(move.apartment_id ?? '') !== apartmentFilter) return false
       if (sourceFilter !== 'all' && move.source_type !== sourceFilter) return false
       return true
     })
-  }, [moves, ownershipFilter, itemFilter, apartmentFilter, sourceFilter])
+    // the table shows a localized source name, so search by that as well as by the raw code
+    const sourceName = (source: string) => t.admin.stock.sourceTypes[source as keyof typeof t.admin.stock.sourceTypes] ?? source
+    return searchRows(filtered, query, searchCtx, (row) => [...moveFields(row), { text: sourceName(row.source_type) }])
+  }, [moves, ownershipFilter, itemFilter, apartmentFilter, sourceFilter, query, searchCtx, t])
 
   const expenseRows = useMemo(() => {
     const byOwnership = filterByOwnership(moves, ownershipFilter)
-    return groupExpense(byOwnership)
-  }, [moves, ownershipFilter])
+    return searchRows(groupExpense(byOwnership), query, searchCtx, expenseFields)
+  }, [moves, ownershipFilter, query, searchCtx])
+
+  const visibleStock = useMemo(() => searchRows(stock, query, searchCtx, stockFields), [stock, query, searchCtx])
 
   const itemOptions = useMemo(() => Array.from(new Map(moves.map((move) => [move.item_id, move.item_name])).entries()).sort((a, b) => a[1].localeCompare(b[1])), [moves])
   const apartmentOptions = useMemo(() => Array.from(new Map(moves.filter((move) => move.apartment_id !== null).map((move) => [move.apartment_id!, move.apartment_code ?? '—'])).entries()).sort((a, b) => a[1].localeCompare(b[1])), [moves])
@@ -147,9 +159,9 @@ export function ReportsPage() {
   const chargesTotalsData = useMemo(() => chargesTotals(charges), [charges])
 
   const filteredCharges = useMemo(() => {
-    if (chargeStatusFilter === 'all') return charges
-    return charges.filter((c) => c.status === chargeStatusFilter)
-  }, [charges, chargeStatusFilter])
+    const byStatus = chargeStatusFilter === 'all' ? charges : charges.filter((c) => c.status === chargeStatusFilter)
+    return searchRows(byStatus, query, searchCtx, chargeFields)
+  }, [charges, chargeStatusFilter, query, searchCtx])
 
   const dateLabel = range ? `${formatDate(cairoLocalToISO(`${range.from}T00:00`))} — ${formatDate(cairoLocalToISO(`${period === 'custom' ? to : shiftDate(range.to, -1)}T00:00`))}` : '—'
 
@@ -161,7 +173,7 @@ export function ReportsPage() {
   const exportExpense = () => downloadCsv('expense-by-apartments.csv',
     [t.admin.reports.apartment, t.admin.reports.item, t.admin.reports.category, t.admin.reports.qtyPacks, t.admin.reports.cost, t.admin.reports.ownership],
     expenseRows.map((row) => [row.apartment, row.item, row.category, row.qtyPacks, row.cost == null ? null : row.cost, ownershipCol(row.isOwner, row.ownerCode)]))
-  const exportStock = () => downloadCsv('warehouse-current.csv', [t.admin.reports.item, t.admin.reports.category, t.admin.reports.qtyPacks, t.admin.reports.minimum, t.admin.reports.belowMinimum], stock.map((row) => [row.name, row.category, packs(row.qty, row.pack_size), row.min_stock, row.below_min ? t.admin.reports.yes : t.admin.reports.no]))
+  const exportStock = () => downloadCsv('warehouse-current.csv', [t.admin.reports.item, t.admin.reports.category, t.admin.reports.qtyPacks, t.admin.reports.minimum, t.admin.reports.belowMinimum], visibleStock.map((row) => [row.name, row.category, packs(row.qty, row.pack_size), row.min_stock, row.below_min ? t.admin.reports.yes : t.admin.reports.no]))
   const exportMoves = () => downloadCsv('stock-moves.csv',
     [t.admin.reports.date, t.admin.reports.item, t.admin.reports.apartment, t.admin.reports.sourceType, t.admin.reports.qty, t.admin.reports.unitCost, t.admin.reports.ownership],
     filteredMoves.map((move) => [move.moved_at, move.item_name, move.apartment_code, move.source_type, move.qty, move.unit_cost, ownershipCol(move.owner_apartment_id != null, move.owner_code)]))
@@ -205,11 +217,29 @@ export function ReportsPage() {
 
       <div className="flex gap-1 overflow-x-auto mb-4 no-print">
         {(['expense', 'stock', 'moves', 'charges', 'valuation', 'turnover', 'units'] as ReportTab[]).map((value) => (
-          <button key={value} onClick={() => setTab(value)} className={`px-3 py-2 text-sm whitespace-nowrap border-b-2 ${tab === value ? 'border-accent text-accent font-medium' : 'border-transparent text-muted'}`}>
+          <button key={value} onClick={() => { setTab(value); setQuery('') }} className={`px-3 py-2 text-sm whitespace-nowrap border-b-2 ${tab === value ? 'border-accent text-accent font-medium' : 'border-transparent text-muted'}`}>
             {value === 'expense' ? t.admin.reports.expense : value === 'stock' ? t.admin.reports.currentStock : value === 'moves' ? t.admin.reports.moves : value === 'charges' ? t.admin.reports.charges : value === 'valuation' ? t.admin.reports.valuationTab : value === 'turnover' ? t.admin.reports.turnoverTab : t.admin.reports.unitsTab}
           </button>
         ))}
       </div>
+
+      {SEARCH_TABS.includes(tab) && !loading && !error && (
+        <>
+          <div className="relative mb-4 no-print">
+            <Search className="w-4 h-4 text-muted absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t.admin.reports.tableSearch}
+              aria-label={t.admin.reports.tableSearch}
+              data-testid="reports-search"
+              className="w-full bg-surface border border-line rounded-lg ps-9 pe-3 py-2 text-sm text-ink focus:outline-none focus:border-accent"
+            />
+          </div>
+          {query.trim() && <p className="print-only text-xs text-muted mb-2">{t.admin.reports.searchPrint}: {query.trim()}</p>}
+        </>
+      )}
 
       {/* Ownership filter — visible on expense and moves tabs */}
       {showOwnershipFilter && !loading && !error && (
@@ -228,7 +258,7 @@ export function ReportsPage() {
             <div className="overflow-x-auto print:overflow-visible"><table className="w-full text-sm"><thead><tr><Th>{t.admin.reports.apartment}</Th><Th>{t.admin.reports.item}</Th><Th>{t.admin.reports.category}</Th><Th>{t.admin.reports.qtyPacks}</Th><Th>{t.admin.reports.cost}</Th></tr></thead><tbody>{expenseRows.map((row) => <tr key={`${row.apartment}-${row.item}-${row.isOwner ? 'o' : 'c'}`} className="border-t border-line"><Td>{row.apartment}{row.isOwner && <span className="ms-1 align-middle"><OwnerBadge /></span>}</Td><Td>{cat.itemName(row.item)}</Td><Td>{cat.categoryName(row.category)}</Td><Td>{n(formatNum(row.qtyPacks, { maximumFractionDigits: 2 }))}</Td><Td>{row.cost == null ? '—' : `${formatCurrency(row.cost, currency)}${row.partial ? ' *' : ''}`}</Td></tr>)}</tbody></table>{expenseRows.length === 0 && <Empty label={t.common.noResults} />}{expenseRows.some((row) => row.partial && row.cost != null) && <p className="text-xs text-muted mt-2">{t.admin.reports.costPartialNote}</p>}</div>
           </ReportCard>}
           {tab === 'stock' && <ReportCard title={t.admin.reports.currentStock} onExport={exportStock} exportLabel={t.admin.reports.export}>
-            <div className="overflow-x-auto print:overflow-visible"><table className="w-full text-sm"><thead><tr><Th>{t.admin.reports.item}</Th><Th>{t.admin.reports.category}</Th><Th>{t.admin.reports.qtyPacks}</Th><Th>{t.admin.reports.minimum}</Th><Th>{t.common.status}</Th></tr></thead><tbody>{stock.map((row) => <tr key={row.item_id} className="border-t border-line"><Td>{cat.itemName(row.name)}</Td><Td>{cat.categoryName(row.category)}</Td><Td>{n(formatNum(packs(row.qty, row.pack_size), { maximumFractionDigits: 2 }))}</Td><Td>{row.min_stock == null ? '—' : n(formatNum(row.min_stock, { maximumFractionDigits: 2 }))}</Td><Td><span className={row.below_min ? 'text-bad' : 'text-ok'}>{row.below_min ? t.admin.reports.belowMinimum : t.admin.reports.ok}</span></Td></tr>)}</tbody></table>{stock.length === 0 && <Empty label={t.common.noResults} />}</div>
+            <div className="overflow-x-auto print:overflow-visible"><table className="w-full text-sm"><thead><tr><Th>{t.admin.reports.item}</Th><Th>{t.admin.reports.category}</Th><Th>{t.admin.reports.qtyPacks}</Th><Th>{t.admin.reports.minimum}</Th><Th>{t.common.status}</Th></tr></thead><tbody>{visibleStock.map((row) => <tr key={row.item_id} className="border-t border-line"><Td>{cat.itemName(row.name)}</Td><Td>{cat.categoryName(row.category)}</Td><Td>{n(formatNum(packs(row.qty, row.pack_size), { maximumFractionDigits: 2 }))}</Td><Td>{row.min_stock == null ? '—' : n(formatNum(row.min_stock, { maximumFractionDigits: 2 }))}</Td><Td><span className={row.below_min ? 'text-bad' : 'text-ok'}>{row.below_min ? t.admin.reports.belowMinimum : t.admin.reports.ok}</span></Td></tr>)}</tbody></table>{visibleStock.length === 0 && <Empty label={t.common.noResults} />}</div>
           </ReportCard>}
           {tab === 'moves' && <ReportCard title={t.admin.reports.moves} onExport={exportMoves} exportLabel={t.admin.reports.export}>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3 no-print"><select value={itemFilter} onChange={(e) => setItemFilter(e.target.value)} className="bg-app border border-line rounded-lg px-2 py-2 text-sm text-ink"><option value="all">{t.admin.reports.allItems}</option>{itemOptions.map(([id, name]) => <option key={id} value={id}>{cat.itemName(name)}</option>)}</select><select value={apartmentFilter} onChange={(e) => setApartmentFilter(e.target.value)} className="bg-app border border-line rounded-lg px-2 py-2 text-sm text-ink"><option value="all">{t.admin.reports.allApartments}</option>{apartmentOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select><select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className="bg-app border border-line rounded-lg px-2 py-2 text-sm text-ink"><option value="all">{t.admin.reports.allSources}</option>{sourceOptions.map((source) => <option key={source} value={source}>{t.admin.stock.sourceTypes[source as keyof typeof t.admin.stock.sourceTypes] ?? source}</option>)}</select></div>
@@ -253,7 +283,7 @@ export function ReportsPage() {
               <SummaryCard label={t.admin.reports.chargesPaid} amount={chargesTotalsData.paid.sum} count={chargesTotalsData.paid.count} currency={currency} tone="ok" />
               <SummaryCard label={t.admin.reports.chargesWaived} amount={chargesTotalsData.waived.sum} count={chargesTotalsData.waived.count} currency={currency} tone="muted" />
             </div>
-            <div className="overflow-x-auto print:overflow-visible"><table className="w-full text-sm"><thead><tr><Th>{t.admin.reports.chargesDate}</Th><Th>{t.admin.reports.chargesApartment}</Th><Th>{t.admin.reports.chargesItem}</Th><Th>{t.admin.reports.chargesKind}</Th><Th>{t.admin.reports.chargesQty}</Th><Th>{t.admin.reports.chargesTenant}</Th><Th>{t.admin.reports.chargesBaseCost}</Th><Th>{t.admin.reports.chargesCoef}</Th><Th>{t.admin.reports.chargesAmount}</Th><Th>{t.admin.reports.chargesStatus}</Th></tr></thead><tbody>{filteredCharges.map((row) => <tr key={row.incident_id} className="border-t border-line"><Td>{formatDateTime(row.date)}</Td><Td>{row.apartment_code}{row.owner_code != null && <span className="ms-1 align-middle"><OwnerBadge /></span>}</Td><Td>{cat.itemName(row.item_name)}</Td><Td>{row.kind}</Td><Td>{n(formatNum(row.qty, { maximumFractionDigits: 3 }))}</Td><Td>{row.tenant_note ?? '—'}</Td><Td>{formatCurrency(row.base_cost, currency)}</Td><Td>{n(formatNum(row.coef, { maximumFractionDigits: 3 }))}</Td><Td>{formatCurrency(row.amount, currency)}</Td><Td>{row.status === 'pending' ? t.admin.reports.chargesPending : row.status === 'paid' ? t.admin.reports.chargesPaid : t.admin.reports.chargesWaived}</Td></tr>)}</tbody></table>{filteredCharges.length === 0 && <Empty label={t.admin.reports.chargesEmpty} />}</div>
+            <div className="overflow-x-auto print:overflow-visible"><table className="w-full text-sm"><thead><tr><Th>{t.admin.reports.chargesDate}</Th><Th>{t.admin.reports.chargesApartment}</Th><Th>{t.admin.reports.chargesItem}</Th><Th>{t.admin.reports.chargesKind}</Th><Th>{t.admin.reports.chargesQty}</Th><Th>{t.admin.reports.chargesTenant}</Th><Th>{t.admin.reports.chargesBaseCost}</Th><Th>{t.admin.reports.chargesCoef}</Th><Th>{t.admin.reports.chargesAmount}</Th><Th>{t.admin.reports.chargesStatus}</Th></tr></thead><tbody>{filteredCharges.map((row) => <tr key={row.incident_id} className="border-t border-line"><Td>{formatDateTime(row.date)}</Td><Td>{row.apartment_code}{row.owner_code != null && <span className="ms-1 align-middle"><OwnerBadge /></span>}</Td><Td>{cat.itemName(row.item_name)}</Td><Td>{row.kind}</Td><Td>{n(formatNum(row.qty, { maximumFractionDigits: 3 }))}</Td><Td>{row.tenant_note ?? '—'}</Td><Td>{formatCurrency(row.base_cost, currency)}</Td><Td>{n(formatNum(row.coef, { maximumFractionDigits: 3 }))}</Td><Td>{formatCurrency(row.amount, currency)}</Td><Td>{row.status === 'pending' ? t.admin.reports.chargesPending : row.status === 'paid' ? t.admin.reports.chargesPaid : t.admin.reports.chargesWaived}</Td></tr>)}</tbody></table>{filteredCharges.length === 0 && <Empty label={query.trim() ? t.common.noResults : t.admin.reports.chargesEmpty} />}</div>
           
             </>)}
           </ReportCard>}

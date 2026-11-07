@@ -695,6 +695,8 @@ export const en: Dict = {
       history: 'History',
     },
     reports: {
+      tableSearch: 'Search: apartment, item, category',
+      searchPrint: 'Search',
       title: 'Reports',
       expense: 'Expense (cleanings, write-offs, incidents)',
       costPartialNote: '* The total is incomplete: some movements have no price (older write-offs or items with no priced receipt).',

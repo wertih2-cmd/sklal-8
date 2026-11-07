@@ -118,8 +118,11 @@ body {
   .anim-drawer, .anim-scrim, .anim-sheet { animation: none; }
 }
 
+.print-only { display: none; }
+
 @media print {
   .no-print { display: none !important; }
+  .print-only { display: block !important; }
   body { background: #fff !important; color: #000 !important; font-size: 12px; }
   .bg-app, .bg-surface { background: #fff !important; }
   .text-ink { color: #000 !important; }

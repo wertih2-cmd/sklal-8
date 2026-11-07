@@ -142,6 +142,9 @@ body {
     padding: 12px;
     border-radius: 8px;
   }
+  /* the screen layout reserves a full viewport and space for the bottom bar: on paper that spills onto an empty page */
+  html, body, #root, .min-h-screen { min-height: 0 !important; }
+  main, .pb-28 { padding-bottom: 0 !important; }
   table { font-size: 11px; }
   th, td { white-space: normal !important; }
   .qr-print-img { width: 150px; height: 150px; }

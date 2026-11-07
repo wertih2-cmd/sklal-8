@@ -392,7 +392,6 @@ export const en: Dict = {
       quickActions: 'Quick actions',
       issue: 'Issue',
       writeoff: 'Write off',
-      assemble: 'Complete apartments',
       ackAll: 'Mark all processed',
       ackOne: 'Mark processed',
       statusClear: 'All clear',

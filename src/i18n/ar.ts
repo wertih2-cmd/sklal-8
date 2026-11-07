@@ -393,7 +393,6 @@ export const ar: Dict = {
       quickActions: 'إجراءات سريعة',
       issue: 'صرف',
       writeoff: 'خصم',
-      assemble: 'تجهيز الشقق',
       ackAll: 'علّم الكل كتمام',
       ackOne: 'تمام',
       statusClear: 'كله تمام',

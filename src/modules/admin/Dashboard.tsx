@@ -5,7 +5,7 @@ import { useI18n } from '@/i18n'
 import { friendlyMessage } from '@/lib/errors'
 import { toast } from '@/lib/toast'
 import { formatQty, relativeTime } from '@/lib/format'
-import { TriangleAlert as AlertTriangle, TrendingDown, PackageX, ClipboardList, Boxes, Wallet, Wrench, ArrowDownToLine, Trash2, CircleCheck as CheckCircle2, X, CheckCheck } from 'lucide-react'
+import { TriangleAlert as AlertTriangle, TrendingDown, PackageX, ClipboardList, Boxes, Wallet, Wrench, ArrowDownToLine, Trash2, X, CheckCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { ErrorState } from '@/components/ErrorState'
 import { useLiveRefresh } from '@/lib/realtime'
@@ -212,15 +212,7 @@ export function Dashboard() {
 
   return (
     <div className="px-4 pt-5 pb-28 lg:px-0 lg:pt-0">
-      <div className="flex items-center gap-3 mb-5">
-        <h1 className="text-xl font-semibold text-ink">{t.admin.nav.home}</h1>
-        <button
-          onClick={() => navigate('/admin/move')}
-          className="ml-auto bg-accent text-white rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5 transition-opacity hover:opacity-90"
-        >
-          {t.admin.move.title}
-        </button>
-      </div>
+      <h1 className="text-xl font-semibold text-ink mb-5">{t.admin.nav.home}</h1>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 mb-5">
         {cards.map(({ key, label, count, icon: Icon, to, badge, hint }) => (
@@ -274,11 +266,10 @@ export function Dashboard() {
 
       <section className="bg-surface border border-line rounded-xl p-4 mb-5">
         <h2 className="text-sm font-semibold text-ink mb-3">{t.admin.dashboard.quickActions}</h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <button onClick={() => navigate('/admin/move?op=receipt')} className="flex items-center gap-2 bg-app rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><ArrowDownToLine className="w-4 h-4 text-accent" />{t.admin.move.receipt}</button>
           <button onClick={() => navigate('/admin/move?op=issue_apartment')} className="flex items-center gap-2 bg-app rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><Wrench className="w-4 h-4 text-accent" />{t.admin.dashboard.issue}</button>
-          <button onClick={() => navigate('/admin/move?op=writeoff_warehouse')} className="flex items-center gap-2 bg-app rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><Trash2 className="w-4 h-4 text-accent" />{t.admin.dashboard.writeoff}</button>
-          <button onClick={() => navigate('/admin/apartments')} className="flex items-center gap-2 bg-app rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><CheckCircle2 className="w-4 h-4 text-accent" />{t.admin.dashboard.assemble}</button>
+          <button onClick={() => navigate('/admin/move?op=writeoff_warehouse')} className="col-span-2 sm:col-span-1 flex items-center gap-2 bg-app rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><Trash2 className="w-4 h-4 text-accent" />{t.admin.dashboard.writeoff}</button>
         </div>
       </section>
 
@@ -308,12 +299,6 @@ export function Dashboard() {
                   </div>
                 )
               })}
-              <button
-                onClick={() => navigate('/admin/move')}
-                className="mt-3 bg-surface border border-line text-ink rounded-lg px-3.5 py-2 text-sm font-medium transition-colors hover:bg-app"
-              >
-                {t.admin.move.receipt}
-              </button>
             </>
           )}
         </section>

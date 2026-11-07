@@ -390,7 +390,6 @@ export const ru = {
       quickActions: 'Быстрые действия',
       issue: 'Выдача',
       writeoff: 'Списание',
-      assemble: 'Комплектовать',
       ackAll: 'Отметить все обработанными',
       ackOne: 'Обработано',
       statusClear: 'Всё в порядке',

@@ -8,6 +8,7 @@ import { formatDate } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
 import { useLiveRefresh } from '@/lib/realtime'
 import { FileText, ChevronRight, Loader } from 'lucide-react'
+import { OwnerBadge } from '@/components/OwnerBadge'
 
 const PAGE_SIZE = 50
 
@@ -124,6 +125,7 @@ export function DocumentsPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-ink">{doc.number}</span>
                     <span className="text-xs text-muted">{typeLabels[doc.doc_type] ?? doc.doc_type}</span>
+                    {doc.has_owner && <OwnerBadge />}
                   </div>
                   <div className="text-xs text-muted">
                     {formatDate(doc.doc_date)}

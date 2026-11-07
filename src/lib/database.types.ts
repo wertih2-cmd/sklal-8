@@ -468,6 +468,8 @@ export interface DocumentRow {
 
 export interface DocumentWithSupplier extends DocumentRow {
   supplier_name: string | null
+  /** Есть движения по owner-складу (метка Owner в списке документов). */
+  has_owner?: boolean
 }
 
 export interface AttachmentRow {

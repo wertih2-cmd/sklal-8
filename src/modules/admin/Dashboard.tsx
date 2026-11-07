@@ -242,7 +242,7 @@ export function Dashboard() {
       </div>
 
       {finance && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-5">
           {[
             { key: 'stockValue', label: t.admin.dashboard.stockValue, value: finance.company.stockValue, hint: finance.company.uncosted > 0 ? `${t.admin.dashboard.uncosted}: ${n(String(finance.company.uncosted))}` : undefined },
             { key: 'ownerValue', label: t.admin.dashboard.ownerStockValue, value: finance.owner.stockValue, hint: finance.ownerApartments > 0 ? `${t.admin.dashboard.ownerApartments}: ${n(String(finance.ownerApartments))}` : undefined },
@@ -252,10 +252,10 @@ export function Dashboard() {
               key={key}
               data-testid={`dash-finance-${key}`}
               onClick={() => navigate('/admin/more/reports?tab=valuation')}
-              className="bg-surface border border-line rounded-xl px-3.5 py-3 text-left transition-colors hover:border-accent"
+              className={`bg-surface border border-line rounded-xl px-3.5 py-3 text-left transition-colors hover:border-accent ${key === 'stockValue' ? 'col-span-2 sm:col-span-1' : ''}`}
             >
               <Wallet className="w-5 h-5 text-muted mb-2" />
-              <b className="text-xl font-semibold text-ink block">{new Intl.NumberFormat(undefined, { style: 'currency', currency: finance.currency }).format(value)}</b>
+              <b className="text-lg sm:text-xl font-semibold text-ink block break-words">{new Intl.NumberFormat(undefined, { style: 'currency', currency: finance.currency }).format(value)}</b>
               <span className="text-muted text-xs block">{label}</span>
               {hint && <span className="text-warn text-[11px] block mt-1">{hint}</span>}
             </button>

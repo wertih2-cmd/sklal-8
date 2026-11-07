@@ -559,7 +559,23 @@ export async function fetchDocuments(docType?: string, offset = 0, limit = 50): 
     for (const r of supResults) if (r.error) throw toApiError(r.error, r.status)
     supplierMap = new Map(supResults.flatMap((r) => (r.data ?? []).map((s: { id: number; name: string }) => [s.id, s.name])))
   }
-  return rows.map((r) => ({ ...r, supplier_name: r.supplier_id ? supplierMap.get(r.supplier_id) ?? null : null }))
+  const ownerDocIds = new Set<string>()
+  if (rows.length) {
+    const ownerResults = await Promise.all(
+      chunk(rows.map((r) => r.id)).map((batch) =>
+        supabase.from('stock_moves').select('doc_id').in('doc_id', batch).not('owner_apartment_id', 'is', null).limit(1000),
+      ),
+    )
+    for (const r of ownerResults) {
+      if (r.error) throw toApiError(r.error, r.status)
+      for (const m of (r.data ?? []) as Array<{ doc_id: string | null }>) if (m.doc_id) ownerDocIds.add(m.doc_id)
+    }
+  }
+  return rows.map((r) => ({
+    ...r,
+    supplier_name: r.supplier_id ? supplierMap.get(r.supplier_id) ?? null : null,
+    has_owner: ownerDocIds.has(r.id),
+  }))
 }
 
 export type InventoryStatus = 'open' | 'closed' | 'void'

@@ -1370,6 +1370,57 @@ export async function fetchValuation(scope: 'company' | 'owner', ownerApartmentI
   }))
 }
 
+export interface UnitHistoryEvent {
+  at: string
+  event: string
+  from_location: string | null
+  to_location: string | null
+  doc_number: string | null
+  move_id: number | null
+  note: string | null
+}
+
+export interface UnitHistory {
+  unit: {
+    id: string
+    code: string
+    item_id: number
+    item_name: string
+    status: string
+    location: string
+    owner_apartment: string | null
+    unit_cost: number | null
+    created_at: string
+  }
+  events: UnitHistoryEvent[]
+}
+
+/** Все единицы поштучного учёта с названиями расположений. Только админ (RLS). */
+export async function fetchUnitsList(): Promise<{ units: ItemUnit[]; locations: Array<{ id: number; name: string }> }> {
+  const units = await fetchAllPages<ItemUnit>((from, to) =>
+    supabase
+      .from('item_units')
+      .select('id,item_id,code,status,location_id,owner_apartment_id,unit_cost,created_at')
+      .order('id')
+      .range(from, to),
+  )
+  const locationIds = [...new Set(units.map((u) => u.location_id))]
+  const parts = await Promise.all(
+    chunk(locationIds).map(async (batch) => {
+      const { data, error, status } = await supabase.from('locations').select('id,name').in('id', batch)
+      if (error) throw toApiError(error, status)
+      return (data ?? []) as Array<{ id: number; name: string }>
+    }),
+  )
+  return { units, locations: parts.flat() }
+}
+
+export async function fetchUnitHistory(unitId: string): Promise<UnitHistory | null> {
+  const { data, error, status } = await supabase.rpc('report_unit_history', { p_unit: unitId })
+  if (error) throw toApiError(error, status)
+  return (data as unknown as UnitHistory | null) ?? null
+}
+
 export interface EnableUnitTrackingResult {
   item_id: number
   units_created: number

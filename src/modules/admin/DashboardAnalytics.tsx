@@ -10,7 +10,7 @@ import { ColumnChart, HBarList, type BarColumn, type HBarRow } from '@/modules/a
 import {
   PERIOD_OPTIONS, INCIDENT_STATUSES, cairoDay, shiftDay, lastDays, summarizeExpense, topBuckets,
   incidentsByDay, type PeriodDays,
-} from '@/modules/admin/dashboardAnalytics'
+} from '@/modules/admin/dashboardStats'
 
 const STATUS_COLOR: Record<IncidentStatus, string> = {
   new: 'var(--warn)',

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   cairoDay, shiftDay, lastDays, summarizeExpense, topBuckets, incidentsByDay, type Bucket,
-} from './dashboardAnalytics'
+} from './dashboardStats'
 import type { ReportStockMoveRow } from '@/lib/database.types'
 
 function move(partial: Partial<ReportStockMoveRow>): ReportStockMoveRow {

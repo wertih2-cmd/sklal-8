@@ -7,6 +7,7 @@ import type { Incident, IncidentStatus, ReportStockMoveRow } from '@/lib/databas
 import { cairoLocalToISO, formatNum } from '@/lib/format'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 import { ColumnChart, HBarList, type BarColumn, type HBarRow } from '@/modules/admin/charts'
+import { reportLink, type PresetPeriod } from '@/modules/admin/reportLinks'
 import {
   PERIOD_OPTIONS, INCIDENT_STATUSES, cairoDay, shiftDay, lastDays, summarizeExpense, topBuckets,
   incidentsByDay, type PeriodDays,
@@ -128,15 +129,8 @@ export function DashboardAnalytics({ incidents, currency }: { incidents: Inciden
       }))
     : []
 
-  const openReport = (
-    <button
-      type="button"
-      onClick={() => navigate('/admin/more/reports?tab=expense')}
-      className="text-xs text-accent hover:underline"
-    >
-      {a.openReport}
-    </button>
-  )
+  // the reports page has presets for today / 7 / 30 days only, so a 90-day view opens the report with its default period
+  const reportPeriod: PresetPeriod | undefined = period === 7 ? '7' : period === 30 ? '30' : undefined
 
   const loading = moves == null && !error
 
@@ -151,7 +145,15 @@ export function DashboardAnalytics({ incidents, currency }: { incidents: Inciden
     <section className="mb-5" data-testid="dash-analytics">
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <h2 className="text-base font-semibold text-ink">{a.title}</h2>
-        <div className="ms-auto flex items-center gap-2">
+        <div className="ms-auto flex items-center gap-3">
+          <button
+            type="button"
+            data-testid="dash-analytics-open-report"
+            onClick={() => navigate(reportLink('expense', reportPeriod))}
+            className="text-xs text-accent hover:underline"
+          >
+            {a.openReport}
+          </button>
           <div role="group" aria-label={a.title} className="flex rounded-lg border border-line overflow-hidden">
             {PERIOD_OPTIONS.map((p) => (
               <button
@@ -179,7 +181,7 @@ export function DashboardAnalytics({ incidents, currency }: { incidents: Inciden
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card title={a.expenseByDay} caption={a.expenseCaption} action={openReport}>
+        <Card title={a.expenseByDay} caption={a.expenseCaption}>
           {expenseBody(
             false,
             summary && (
@@ -213,11 +215,11 @@ export function DashboardAnalytics({ incidents, currency }: { incidents: Inciden
           </div>
         </Card>
 
-        <Card title={a.expenseByCategory} caption={a.expenseCaption} action={openReport}>
+        <Card title={a.expenseByCategory} caption={a.expenseCaption}>
           {expenseBody(categoryRows.length === 0, <HBarList rows={categoryRows} partialMark={a.partialMark} />)}
         </Card>
 
-        <Card title={a.expenseByApartment} caption={a.expenseCaption} action={openReport}>
+        <Card title={a.expenseByApartment} caption={a.expenseCaption}>
           {expenseBody(apartmentRows.length === 0, <HBarList rows={apartmentRows} partialMark={a.partialMark} />)}
         </Card>
       </div>

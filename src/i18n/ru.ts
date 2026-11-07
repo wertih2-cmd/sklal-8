@@ -399,6 +399,11 @@ export const ru = {
       statusNeedOrder: 'Нужен заказ',
       statusIncomplete: 'Неполные',
       statusUnprocessed: 'Не обработано',
+      stockValue: 'Стоимость склада',
+      ownerStockValue: 'Склады owner',
+      potentialRevenue: 'Потенциальная выручка',
+      uncosted: 'Без закупочной цены',
+      ownerApartments: 'Квартир owner с остатком',
       oldest: 'Самая старая',
     },
     stock: {

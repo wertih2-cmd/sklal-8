@@ -1,15 +1,16 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { fetchToOrder, fetchApartmentGaps, fetchShortageEvents, fetchApartmentsAdmin, fetchBuildings, fetchAllIncidents, fetchPendingCleanings, ackEvents } from '@/modules/admin/api'
+import { fetchToOrder, fetchApartmentGaps, fetchShortageEvents, fetchApartmentsAdmin, fetchBuildings, fetchAllIncidents, fetchPendingCleanings, ackEvents, fetchValuation, fetchCurrency } from '@/modules/admin/api'
 import type { ToOrderRow, ApartmentGapRow, Apartment, Building, AptType, Incident, NormalizedShortageEvent } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { friendlyMessage } from '@/lib/errors'
 import { toast } from '@/lib/toast'
 import { formatQty, relativeTime } from '@/lib/format'
-import { TriangleAlert as AlertTriangle, TrendingDown, PackageX, ClipboardList, Boxes, Wrench, ArrowDownToLine, Trash2, CircleCheck as CheckCircle2, X, CheckCheck } from 'lucide-react'
+import { TriangleAlert as AlertTriangle, TrendingDown, PackageX, ClipboardList, Boxes, Wallet, Wrench, ArrowDownToLine, Trash2, CircleCheck as CheckCircle2, X, CheckCheck } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { ErrorState } from '@/components/ErrorState'
 import { useLiveRefresh } from '@/lib/realtime'
 import { useCatalogName } from '@/modules/core/useCatalogName'
+import { valuationTotals, type ValuationTotals } from '@/modules/admin/reportView'
 
 function pctColor(p: number): string {
   if (p >= 100) return 'var(--ok)'
@@ -61,6 +62,7 @@ export function Dashboard() {
   const [incidents, setIncidents] = useState<Incident[]>([])
   const [pendingCleanings, setPendingCleanings] = useState(0)
   const [oldestPendingCleaning, setOldestPendingCleaning] = useState<string | null>(null)
+  const [finance, setFinance] = useState<{ company: ValuationTotals; owner: ValuationTotals; ownerApartments: number; currency: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
 
@@ -68,7 +70,7 @@ export function Dashboard() {
     const quiet = silent === true
     if (!quiet) { setLoading(true); setLoadError(false) }
     try {
-      const [to, ga, sh, ap, bl, inc, pc] = await Promise.all([fetchToOrder(), fetchApartmentGaps(), fetchShortageEvents(), fetchApartmentsAdmin(), fetchBuildings(), fetchAllIncidents(), fetchPendingCleanings().catch(() => [])])
+      const [to, ga, sh, ap, bl, inc, pc, valCompany, valOwner, currency] = await Promise.all([fetchToOrder(), fetchApartmentGaps(), fetchShortageEvents(), fetchApartmentsAdmin(), fetchBuildings(), fetchAllIncidents(), fetchPendingCleanings().catch(() => []), fetchValuation('company').catch(() => null), fetchValuation('owner').catch(() => null), fetchCurrency().catch(() => 'EGP')])
       setToOrder(to)
       setGaps(ga)
       setShortages(sh)
@@ -77,6 +79,14 @@ export function Dashboard() {
       setIncidents(inc)
       setPendingCleanings(pc.length)
       setOldestPendingCleaning(oldestOf(pc.map((c) => c.created_at)))
+      setFinance(valCompany && valOwner
+        ? {
+            company: valuationTotals(valCompany),
+            owner: valuationTotals(valOwner),
+            ownerApartments: new Set(valOwner.filter((r) => r.on_hand > 0).map((r) => r.owner_apartment_id)).size,
+            currency,
+          }
+        : null)
     } catch {
       if (!quiet) setLoadError(true)
     } finally {
@@ -230,6 +240,28 @@ export function Dashboard() {
           </button>
         ))}
       </div>
+
+      {finance && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-5">
+          {[
+            { key: 'stockValue', label: t.admin.dashboard.stockValue, value: finance.company.stockValue, hint: finance.company.uncosted > 0 ? `${t.admin.dashboard.uncosted}: ${n(String(finance.company.uncosted))}` : undefined },
+            { key: 'ownerValue', label: t.admin.dashboard.ownerStockValue, value: finance.owner.stockValue, hint: finance.ownerApartments > 0 ? `${t.admin.dashboard.ownerApartments}: ${n(String(finance.ownerApartments))}` : undefined },
+            { key: 'potential', label: t.admin.dashboard.potentialRevenue, value: finance.company.potentialRevenue + finance.owner.potentialRevenue, hint: undefined },
+          ].map(({ key, label, value, hint }) => (
+            <button
+              key={key}
+              data-testid={`dash-finance-${key}`}
+              onClick={() => navigate('/admin/more/reports?tab=valuation')}
+              className="bg-surface border border-line rounded-xl px-3.5 py-3 text-left transition-colors hover:border-accent"
+            >
+              <Wallet className="w-5 h-5 text-muted mb-2" />
+              <b className="text-xl font-semibold text-ink block">{new Intl.NumberFormat(undefined, { style: 'currency', currency: finance.currency }).format(value)}</b>
+              <span className="text-muted text-xs block">{label}</span>
+              {hint && <span className="text-warn text-[11px] block mt-1">{hint}</span>}
+            </button>
+          ))}
+        </div>
+      )}
 
       <section className="bg-surface border border-line rounded-xl p-4 mb-5">
         <h2 className="text-sm font-semibold text-ink mb-3">{t.admin.dashboard.quickActions}</h2>

@@ -401,6 +401,11 @@ export const en: Dict = {
       statusNeedOrder: 'Reorder needed',
       statusIncomplete: 'Incomplete',
       statusUnprocessed: 'Unprocessed',
+      stockValue: 'Stock value',
+      ownerStockValue: 'Owner warehouses',
+      potentialRevenue: 'Potential revenue',
+      uncosted: 'Without purchase cost',
+      ownerApartments: 'Owner apartments with stock',
       oldest: 'Oldest',
     },
     stock: {

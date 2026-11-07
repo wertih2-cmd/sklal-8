@@ -402,6 +402,11 @@ export const ar: Dict = {
       statusNeedOrder: 'محتاج طلب',
       statusIncomplete: 'ناقصة',
       statusUnprocessed: 'لسه متعالجش',
+      stockValue: 'قيمة المخزن',
+      ownerStockValue: 'مخازن المالك',
+      potentialRevenue: 'الإيراد المتوقع',
+      uncosted: 'بدون سعر شراء',
+      ownerApartments: 'شقق المالك التي بها رصيد',
       oldest: 'الأقدم',
     },
     stock: {

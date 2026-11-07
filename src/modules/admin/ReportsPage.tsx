@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { Download, RefreshCw } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { useI18n } from '@/i18n'
 import { supabase } from '@/lib/supabase'
 import { fetchReportStockMoves, fetchReportWarehouseStock, fetchChargesReport } from '@/modules/admin/api'
@@ -66,7 +67,12 @@ export function ReportsPage() {
   const [period, setPeriod] = useState<Period>('7')
   const [from, setFrom] = useState(() => shiftDate(cairoDateString(), -6))
   const [to, setTo] = useState(() => cairoDateString())
-  const [tab, setTab] = useState<ReportTab>('expense')
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState<ReportTab>(() => {
+    const requested = searchParams.get('tab')
+    const known: ReportTab[] = ['expense', 'stock', 'moves', 'charges', 'valuation', 'turnover', 'units']
+    return known.find((k) => k === requested) ?? 'expense'
+  })
   const [moves, setMoves] = useState<ReportStockMoveRow[]>([])
   const [stock, setStock] = useState<WarehouseStockRow[]>([])
   const [charges, setCharges] = useState<ChargesReportRow[]>([])

@@ -1370,6 +1370,17 @@ export async function fetchValuation(scope: 'company' | 'owner', ownerApartmentI
   }))
 }
 
+/** Валюта из настроек (три буквы), по умолчанию EGP. */
+export async function fetchCurrency(): Promise<string> {
+  const { data, error, status } = await supabase.from('settings').select('value').eq('key', 'currency').maybeSingle()
+  if (error) throw toApiError(error, status)
+  const value = data?.value as unknown
+  const configured = typeof value === 'string'
+    ? value
+    : value && typeof value === 'object' && 'currency' in value ? (value as { currency: unknown }).currency : null
+  return typeof configured === 'string' && configured.length === 3 ? configured : 'EGP'
+}
+
 export interface UnitHistoryEvent {
   at: string
   event: string

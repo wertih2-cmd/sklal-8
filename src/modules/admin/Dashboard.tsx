@@ -12,6 +12,7 @@ import { useLiveRefresh } from '@/lib/realtime'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 import { valuationTotals, type ValuationTotals } from '@/modules/admin/reportView'
 import { DashboardAnalytics } from '@/modules/admin/DashboardAnalytics'
+import { DashboardIncidentFeed } from '@/modules/admin/DashboardIncidentFeed'
 
 function pctColor(p: number): string {
   if (p >= 100) return 'var(--ok)'
@@ -265,6 +266,8 @@ export function Dashboard() {
       )}
 
       <DashboardAnalytics incidents={incidents} currency={finance?.currency ?? 'EGP'} />
+
+      <DashboardIncidentFeed incidents={incidents} apartments={apartments} />
 
       <section className="bg-surface border border-line rounded-xl p-4 mb-5">
         <h2 className="text-sm font-semibold text-ink mb-3">{t.admin.dashboard.quickActions}</h2>

@@ -3,7 +3,7 @@ import { Download, Printer, RefreshCw, Search } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { useI18n } from '@/i18n'
 import { supabase } from '@/lib/supabase'
-import { fetchReportStockMoves, fetchReportWarehouseStock, fetchChargesReport } from '@/modules/admin/api'
+import { fetchReportStockMoves, fetchReportWarehouseStock, fetchChargesReport, fetchApartmentsAdmin, fetchBuildings } from '@/modules/admin/api'
 import type { ReportStockMoveRow, WarehouseStockRow, ChargesReportRow, ChargeStatus } from '@/lib/database.types'
 import { cairoLocalToISO, formatDate, formatDateTime, formatNum } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
@@ -22,6 +22,9 @@ import { inclusiveEnd } from '@/modules/admin/reportView'
 import { ValuationReport } from '@/modules/admin/ValuationReport'
 import { TurnoverReport } from '@/modules/admin/TurnoverReport'
 import { UnitsReport } from '@/modules/admin/UnitsReport'
+import { PurchasesReport } from '@/modules/admin/PurchasesReport'
+import { ExpenseGroupsTable } from '@/modules/admin/ExpenseGroupsTable'
+import { EXPENSE_VIEWS, groupByApartment, groupByBuilding, type ExpenseView } from '@/modules/admin/expenseGroups'
 
 type ChargeStatusFilter = 'all' | ChargeStatus
 
@@ -83,6 +86,8 @@ export function ReportsPage() {
   const [chargeStatusFilter, setChargeStatusFilter] = useState<ChargeStatusFilter>('all')
   const [reloadToken, setReloadToken] = useState(0)
   const [query, setQuery] = useState('')
+  const [expenseView, setExpenseView] = useState<ExpenseView>('rows')
+  const [buildingByApartment, setBuildingByApartment] = useState<Map<string, string>>(new Map())
 
   const range = useMemo(() => rangeFor(period, from, to), [period, from, to, reloadToken])
   const requestId = useRef(0)
@@ -127,6 +132,24 @@ export function ReportsPage() {
   useEffect(() => { loadData() }, [loadData, reloadToken])
   useLiveRefresh(['stock_moves', 'cleaning_events', 'incidents', 'items', 'incident_charges'], () => loadData(true))
 
+  // apartment code -> building name, for the per-building expense view (unknown apartments fall into "no building")
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([fetchApartmentsAdmin(), fetchBuildings()])
+      .then(([apartments, buildings]) => {
+        if (cancelled) return
+        const names = new Map(buildings.map((b) => [b.id, b.name]))
+        const byCode = new Map<string, string>()
+        for (const a of apartments) {
+          const name = names.get(a.building_id)
+          if (name) byCode.set(a.code, name)
+        }
+        setBuildingByApartment(byCode)
+      })
+      .catch(() => { /* the building view then groups everything under "no building" */ })
+    return () => { cancelled = true }
+  }, [])
+
   const searchCtx = useMemo(() => ({
     itemMatches: (token: string, base: string) => cat.matches(token, base, 'item'),
     categoryMatches: (token: string, base: string) => cat.matches(token, base, 'category'),
@@ -152,6 +175,12 @@ export function ReportsPage() {
 
   const visibleStock = useMemo(() => searchRows(stock, query, searchCtx, stockFields), [stock, query, searchCtx])
 
+  const expenseGroups = useMemo(() => {
+    if (expenseView === 'apartments') return groupByApartment(expenseRows)
+    if (expenseView === 'buildings') return groupByBuilding(expenseRows, (code) => buildingByApartment.get(code))
+    return []
+  }, [expenseView, expenseRows, buildingByApartment])
+
   const itemOptions = useMemo(() => Array.from(new Map(moves.map((move) => [move.item_id, move.item_name])).entries()).sort((a, b) => a[1].localeCompare(b[1])), [moves])
   const apartmentOptions = useMemo(() => Array.from(new Map(moves.filter((move) => move.apartment_id !== null).map((move) => [move.apartment_id!, move.apartment_code ?? '—'])).entries()).sort((a, b) => a[1].localeCompare(b[1])), [moves])
   const sourceOptions = useMemo(() => Array.from(new Set(moves.map((move) => move.source_type))).sort(), [moves])
@@ -170,9 +199,30 @@ export function ReportsPage() {
   const ownershipCol = (isOwner: boolean, ownerCode: string | null) =>
     ownershipLabel(isOwner, ownerCode, t.admin.reports.ownershipCompany, t.admin.reports.ownershipOwner)
 
-  const exportExpense = () => downloadCsv('expense-by-apartments.csv',
-    [t.admin.reports.apartment, t.admin.reports.item, t.admin.reports.category, t.admin.reports.qtyPacks, t.admin.reports.cost, t.admin.reports.ownership],
-    expenseRows.map((row) => [row.apartment, row.item, row.category, row.qtyPacks, row.cost == null ? null : row.cost, ownershipCol(row.isOwner, row.ownerCode)]))
+  const exportExpense = () => {
+    const r = t.admin.reports
+    if (expenseView === 'apartments') {
+      downloadCsv('expense-apartment-totals.csv', [r.apartment, r.groupLines, r.cost],
+        expenseGroups.map((g) => [g.label || r.groupNoApartment, g.lines, g.priced ? g.cost : null]))
+      return
+    }
+    if (expenseView === 'buildings') {
+      downloadCsv('expense-building-totals.csv', [r.groupBuilding, r.apartment, r.groupLines, r.cost],
+        expenseGroups.flatMap((g) => [
+          [g.label || r.groupNoBuilding, '', g.lines, g.priced ? g.cost : null],
+          ...g.children.map((c) => ['', c.label || r.groupNoApartment, c.lines, c.priced ? c.cost : null]),
+        ]))
+      return
+    }
+    downloadCsv('expense-by-apartments.csv',
+      [r.apartment, r.item, r.category, r.qtyPacks, r.cost, r.ownership],
+      expenseRows.map((row) => [row.apartment, row.item, row.category, row.qtyPacks, row.cost == null ? null : row.cost, ownershipCol(row.isOwner, row.ownerCode)]))
+  }
+  const expenseViewLabel: Record<ExpenseView, string> = {
+    rows: t.admin.reports.expenseViewRows,
+    apartments: t.admin.reports.expenseViewApartments,
+    buildings: t.admin.reports.expenseViewBuildings,
+  }
   const exportStock = () => downloadCsv('warehouse-current.csv', [t.admin.reports.item, t.admin.reports.category, t.admin.reports.qtyPacks, t.admin.reports.minimum, t.admin.reports.belowMinimum], visibleStock.map((row) => [row.name, row.category, packs(row.qty, row.pack_size), row.min_stock, row.below_min ? t.admin.reports.yes : t.admin.reports.no]))
   const exportMoves = () => downloadCsv('stock-moves.csv',
     [t.admin.reports.date, t.admin.reports.item, t.admin.reports.apartment, t.admin.reports.sourceType, t.admin.reports.qty, t.admin.reports.unitCost, t.admin.reports.ownership],
@@ -216,9 +266,9 @@ export function ReportsPage() {
       </div>
 
       <div className="flex gap-1 overflow-x-auto mb-4 no-print">
-        {(['expense', 'stock', 'moves', 'charges', 'valuation', 'turnover', 'units'] as ReportTab[]).map((value) => (
+        {(['expense', 'stock', 'purchases', 'moves', 'charges', 'valuation', 'turnover', 'units'] as ReportTab[]).map((value) => (
           <button key={value} onClick={() => { setTab(value); setQuery('') }} className={`px-3 py-2 text-sm whitespace-nowrap border-b-2 ${tab === value ? 'border-accent text-accent font-medium' : 'border-transparent text-muted'}`}>
-            {value === 'expense' ? t.admin.reports.expense : value === 'stock' ? t.admin.reports.currentStock : value === 'moves' ? t.admin.reports.moves : value === 'charges' ? t.admin.reports.charges : value === 'valuation' ? t.admin.reports.valuationTab : value === 'turnover' ? t.admin.reports.turnoverTab : t.admin.reports.unitsTab}
+            {value === 'expense' ? t.admin.reports.expense : value === 'stock' ? t.admin.reports.currentStock : value === 'purchases' ? t.admin.reports.purchasesTab : value === 'moves' ? t.admin.reports.moves : value === 'charges' ? t.admin.reports.charges : value === 'valuation' ? t.admin.reports.valuationTab : value === 'turnover' ? t.admin.reports.turnoverTab : t.admin.reports.unitsTab}
           </button>
         ))}
       </div>
@@ -255,7 +305,14 @@ export function ReportsPage() {
       {loading ? <p className="text-sm text-muted text-center py-8">{t.app.loading}</p> : error ? <ErrorState message={error} onRetry={() => setReloadToken((k) => k + 1)} /> : (
         <>
           {tab === 'expense' && <ReportCard title={t.admin.reports.expense} onExport={exportExpense} exportLabel={t.admin.reports.export}>
+            <div className="flex gap-2 flex-wrap mb-3 no-print">
+              {EXPENSE_VIEWS.map((view) => (
+                <button key={view} onClick={() => setExpenseView(view)} className={`px-3 py-1.5 rounded-lg text-sm ${expenseView === view ? 'bg-accent text-white' : 'bg-app text-muted'}`}>{expenseViewLabel[view]}</button>
+              ))}
+            </div>
+            {expenseView !== 'rows' ? <ExpenseGroupsTable groups={expenseGroups} view={expenseView} currency={currency} /> : (
             <div className="overflow-x-auto print:overflow-visible"><table className="w-full text-sm"><thead><tr><Th>{t.admin.reports.apartment}</Th><Th>{t.admin.reports.item}</Th><Th>{t.admin.reports.category}</Th><Th>{t.admin.reports.qtyPacks}</Th><Th>{t.admin.reports.cost}</Th></tr></thead><tbody>{expenseRows.map((row) => <tr key={`${row.apartment}-${row.item}-${row.isOwner ? 'o' : 'c'}`} className="border-t border-line"><Td>{row.apartment}{row.isOwner && <span className="ms-1 align-middle"><OwnerBadge /></span>}</Td><Td>{cat.itemName(row.item)}</Td><Td>{cat.categoryName(row.category)}</Td><Td>{n(formatNum(row.qtyPacks, { maximumFractionDigits: 2 }))}</Td><Td>{row.cost == null ? '—' : `${formatCurrency(row.cost, currency)}${row.partial ? ' *' : ''}`}</Td></tr>)}</tbody></table>{expenseRows.length === 0 && <Empty label={t.common.noResults} />}{expenseRows.some((row) => row.partial && row.cost != null) && <p className="text-xs text-muted mt-2">{t.admin.reports.costPartialNote}</p>}</div>
+            )}
           </ReportCard>}
           {tab === 'stock' && <ReportCard title={t.admin.reports.currentStock} onExport={exportStock} exportLabel={t.admin.reports.export}>
             <div className="overflow-x-auto print:overflow-visible"><table className="w-full text-sm"><thead><tr><Th>{t.admin.reports.item}</Th><Th>{t.admin.reports.category}</Th><Th>{t.admin.reports.qtyPacks}</Th><Th>{t.admin.reports.minimum}</Th><Th>{t.common.status}</Th></tr></thead><tbody>{visibleStock.map((row) => <tr key={row.item_id} className="border-t border-line"><Td>{cat.itemName(row.name)}</Td><Td>{cat.categoryName(row.category)}</Td><Td>{n(formatNum(packs(row.qty, row.pack_size), { maximumFractionDigits: 2 }))}</Td><Td>{row.min_stock == null ? '—' : n(formatNum(row.min_stock, { maximumFractionDigits: 2 }))}</Td><Td><span className={row.below_min ? 'text-bad' : 'text-ok'}>{row.below_min ? t.admin.reports.belowMinimum : t.admin.reports.ok}</span></Td></tr>)}</tbody></table>{visibleStock.length === 0 && <Empty label={t.common.noResults} />}</div>
@@ -264,6 +321,9 @@ export function ReportsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3 no-print"><select value={itemFilter} onChange={(e) => setItemFilter(e.target.value)} className="bg-app border border-line rounded-lg px-2 py-2 text-sm text-ink"><option value="all">{t.admin.reports.allItems}</option>{itemOptions.map(([id, name]) => <option key={id} value={id}>{cat.itemName(name)}</option>)}</select><select value={apartmentFilter} onChange={(e) => setApartmentFilter(e.target.value)} className="bg-app border border-line rounded-lg px-2 py-2 text-sm text-ink"><option value="all">{t.admin.reports.allApartments}</option>{apartmentOptions.map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select><select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className="bg-app border border-line rounded-lg px-2 py-2 text-sm text-ink"><option value="all">{t.admin.reports.allSources}</option>{sourceOptions.map((source) => <option key={source} value={source}>{t.admin.stock.sourceTypes[source as keyof typeof t.admin.stock.sourceTypes] ?? source}</option>)}</select></div>
             <div className="overflow-x-auto print:overflow-visible"><table className="w-full text-sm"><thead><tr><Th>{t.admin.reports.date}</Th><Th>{t.admin.reports.item}</Th><Th>{t.admin.reports.apartment}</Th><Th>{t.admin.reports.sourceType}</Th><Th>{t.admin.reports.qty}</Th><Th>{t.admin.reports.unitCost}</Th></tr></thead><tbody>{filteredMoves.map((move) => <tr key={move.id} className="border-t border-line"><Td>{formatDateTime(move.moved_at)}</Td><Td>{cat.itemName(move.item_name)}</Td><Td>{move.apartment_code ?? '—'}{move.owner_apartment_id != null && <span className="ms-1 align-middle"><OwnerBadge /></span>}</Td><Td>{t.admin.stock.sourceTypes[move.source_type as keyof typeof t.admin.stock.sourceTypes] ?? move.source_type}</Td><Td>{n(formatNum(move.qty, { maximumFractionDigits: 3 }))}</Td><Td>{move.unit_cost == null ? '—' : formatCurrency(move.unit_cost, currency)}</Td></tr>)}</tbody></table>{filteredMoves.length === 0 && <Empty label={t.common.noResults} />}</div>
           </ReportCard>}
+          {tab === 'purchases' && (range
+            ? <PurchasesReport key={`purch-${reloadToken}`} range={range} currency={currency} />
+            : <Empty label={t.admin.reports.invalidPeriod} />)}
           {tab === 'units' && <UnitsReport key={`units-${reloadToken}`} currency={currency} />}
           {tab === 'valuation' && <ValuationReport key={`val-${reloadToken}`} currency={currency} />}
           {tab === 'turnover' && (range

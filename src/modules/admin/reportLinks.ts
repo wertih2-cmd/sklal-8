@@ -1,14 +1,14 @@
-export type ReportTab = 'expense' | 'stock' | 'moves' | 'charges' | 'valuation' | 'turnover' | 'units'
+export type ReportTab = 'expense' | 'stock' | 'moves' | 'charges' | 'valuation' | 'turnover' | 'units' | 'purchases'
 export type ReportPeriod = 'today' | '7' | '30' | 'custom'
 /** periods that can be passed in a link (a custom range needs explicit dates) */
 export type PresetPeriod = Exclude<ReportPeriod, 'custom'>
 
 export const REPORTS_PATH = '/admin/more/reports'
-export const REPORT_TABS: ReportTab[] = ['expense', 'stock', 'moves', 'charges', 'valuation', 'turnover', 'units']
+export const REPORT_TABS: ReportTab[] = ['expense', 'stock', 'moves', 'charges', 'valuation', 'turnover', 'units', 'purchases']
 export const PRESET_PERIODS: PresetPeriod[] = ['today', '7', '30']
 
 /** Tabs whose content depends on the selected period (the others show the current state). */
-export const PERIOD_TABS: ReportTab[] = ['expense', 'moves', 'charges', 'turnover']
+export const PERIOD_TABS: ReportTab[] = ['expense', 'moves', 'charges', 'turnover', 'purchases']
 
 export function parseReportTab(value: string | null): ReportTab {
   return REPORT_TABS.find((tab) => tab === value) ?? 'expense'

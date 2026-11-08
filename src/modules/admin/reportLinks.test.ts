@@ -38,6 +38,11 @@ describe('reportLink', () => {
     expect(reportLink('expense', '30')).toBe('/admin/more/reports?tab=expense&period=30')
   })
 
+  it('links to the purchases tab', () => {
+    expect(reportLink('purchases', '7')).toBe('/admin/more/reports?tab=purchases&period=7')
+    expect(parseReportTab('purchases')).toBe('purchases')
+  })
+
   it('round-trips through the parsers', () => {
     const params = new URLSearchParams(reportLink('charges', 'today').split('?')[1])
     expect(parseReportTab(params.get('tab'))).toBe('charges')

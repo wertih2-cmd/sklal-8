@@ -5,6 +5,7 @@ import { resolveMime, extForMime, validateReceipt } from '@/lib/files'
 import { currentDict } from '@/i18n'
 import { useCatalogNames } from '@/modules/core/catalogNamesStore'
 import type { UnitLocation } from '@/modules/admin/unitSelection'
+import type { PurchaseDoc } from '@/modules/admin/purchaseReport'
 import type {
   WarehouseStockRow,
   ReportStockMoveRow,
@@ -576,6 +577,40 @@ export async function fetchDocuments(docType?: string, offset = 0, limit = 50): 
     supplier_name: r.supplier_id ? supplierMap.get(r.supplier_id) ?? null : null,
     has_owner: ownerDocIds.has(r.id),
   }))
+}
+
+/**
+ * Posted receipt documents with a document date in [fromDate, toDateExclusive), company stock only
+ * (receipts that put goods on an owner shelf are left out). Dates are calendar dates, YYYY-MM-DD.
+ */
+export async function fetchReceiptDocuments(fromDate: string, toDateExclusive: string): Promise<PurchaseDoc[]> {
+  const rows = await fetchAllPages<Omit<PurchaseDoc, 'total_cost'> & { total_cost: number | string | null }>((from, to) =>
+    supabase
+      .from('documents')
+      .select('id,number,doc_date,supplier_id,total_cost,note')
+      .eq('doc_type', 'receipt')
+      .eq('status', 'posted')
+      .gte('doc_date', fromDate)
+      .lt('doc_date', toDateExclusive)
+      .order('doc_date', { ascending: false })
+      .order('id', { ascending: false })
+      .range(from, to),
+  )
+  const ownerDocIds = new Set<string>()
+  if (rows.length) {
+    const ownerResults = await Promise.all(
+      chunk(rows.map((r) => r.id), 50).map((batch) =>
+        supabase.from('stock_moves').select('doc_id').in('doc_id', batch).not('owner_apartment_id', 'is', null).limit(1000),
+      ),
+    )
+    for (const r of ownerResults) {
+      if (r.error) throw toApiError(r.error, r.status)
+      for (const m of (r.data ?? []) as Array<{ doc_id: string | null }>) if (m.doc_id) ownerDocIds.add(m.doc_id)
+    }
+  }
+  return rows
+    .filter((r) => !ownerDocIds.has(r.id))
+    .map((r) => ({ ...r, total_cost: r.total_cost == null ? null : Number(r.total_cost) }))
 }
 
 export type InventoryStatus = 'open' | 'closed' | 'void'

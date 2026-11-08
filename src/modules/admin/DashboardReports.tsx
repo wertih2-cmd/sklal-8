@@ -1,6 +1,6 @@
 import { useState, type ComponentType } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Boxes, ClipboardList, CreditCard, History, Package, Receipt, RefreshCw } from 'lucide-react'
+import { Boxes, ClipboardList, CreditCard, History, Package, Receipt, RefreshCw, ShoppingCart } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import {
   PERIOD_TABS, PRESET_PERIODS, reportLink, type PresetPeriod, type ReportTab,
@@ -14,9 +14,10 @@ const TILE_ICON: Record<ReportTab, ComponentType<{ className?: string }>> = {
   valuation: ClipboardList,
   turnover: RefreshCw,
   units: Package,
+  purchases: ShoppingCart,
 }
 
-const TILE_ORDER: ReportTab[] = ['expense', 'stock', 'moves', 'charges', 'valuation', 'turnover', 'units']
+const TILE_ORDER: ReportTab[] = ['expense', 'purchases', 'stock', 'moves', 'charges', 'valuation', 'turnover', 'units']
 
 export function DashboardReports() {
   const { t } = useI18n()
@@ -33,6 +34,7 @@ export function DashboardReports() {
     valuation: r.valuationTab,
     turnover: r.turnoverTab,
     units: r.unitsTab,
+    purchases: r.purchasesTab,
   }
   const periodLabel: Record<PresetPeriod, string> = { today: r.today, '7': r.days7, '30': r.days30 }
 

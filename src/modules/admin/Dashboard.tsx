@@ -13,6 +13,7 @@ import { useCatalogName } from '@/modules/core/useCatalogName'
 import { valuationTotals, type ValuationTotals } from '@/modules/admin/reportView'
 import { DashboardAnalytics } from '@/modules/admin/DashboardAnalytics'
 import { DashboardIncidentFeed } from '@/modules/admin/DashboardIncidentFeed'
+import { DashboardCleaningFeed } from '@/modules/admin/DashboardCleaningFeed'
 import { DashboardReports } from '@/modules/admin/DashboardReports'
 
 function pctColor(p: number): string {
@@ -261,6 +262,8 @@ export function Dashboard() {
       <DashboardAnalytics incidents={incidents} currency={finance?.currency ?? 'EGP'} />
 
       <DashboardIncidentFeed incidents={incidents} apartments={apartments} />
+
+      <DashboardCleaningFeed apartments={apartments} />
 
       <DashboardReports />
 

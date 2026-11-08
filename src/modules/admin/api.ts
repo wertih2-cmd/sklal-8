@@ -6,6 +6,7 @@ import { currentDict } from '@/i18n'
 import { useCatalogNames } from '@/modules/core/catalogNamesStore'
 import type { UnitLocation } from '@/modules/admin/unitSelection'
 import type { PurchaseDoc } from '@/modules/admin/purchaseReport'
+import type { CleaningFeedRow } from '@/modules/admin/cleaningFeed'
 import type {
   WarehouseStockRow,
   ReportStockMoveRow,
@@ -1050,6 +1051,44 @@ export async function fetchPendingCleanings(): Promise<PendingCleaning[]> {
     .order('created_at', { ascending: true })
   if (error) throw toApiError(error, status)
   return (data ?? []) as PendingCleaning[]
+}
+
+export const CLEANING_FEED_LIMIT = 300
+
+/** Cleanings since the given instant, newest first (at most CLEANING_FEED_LIMIT rows), with the staff names. */
+export async function fetchCleaningFeed(sinceISO: string): Promise<CleaningFeedRow[]> {
+  const { data, error, status } = await supabase
+    .from('cleaning_events')
+    .select('id,apartment_id,cleaned_at,status,posting_status,note,media_paths,cleaning_event_staff(staff(full_name))')
+    .gte('cleaned_at', sinceISO)
+    .order('cleaned_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(CLEANING_FEED_LIMIT)
+  if (error) throw toApiError(error, status)
+  const rows = (data ?? []) as unknown as Array<{
+    id: string
+    apartment_id: number
+    cleaned_at: string
+    status: CleaningFeedRow['status']
+    posting_status: CleaningFeedRow['posting_status']
+    note: string | null
+    media_paths: string[] | null
+    cleaning_event_staff: Array<{ staff: { full_name: string } | Array<{ full_name: string }> | null }> | null
+  }>
+  return rows.map((r) => ({
+    id: r.id,
+    apartment_id: r.apartment_id,
+    cleaned_at: r.cleaned_at,
+    status: r.status,
+    posting_status: r.posting_status,
+    note: r.note,
+    media_count: r.media_paths?.length ?? 0,
+    staff_names: (r.cleaning_event_staff ?? []).flatMap((entry) => {
+      const staff = entry.staff
+      if (!staff) return []
+      return Array.isArray(staff) ? staff.map((x) => x.full_name) : [staff.full_name]
+    }),
+  }))
 }
 
 export async function fetchStaffNames(): Promise<Map<number, string>> {

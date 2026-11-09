@@ -86,7 +86,7 @@ function SetCostModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" onClick={onClose}>
+    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" onClick={onClose}>
       <div
         className="bg-surface border border-line rounded-xl p-4 mx-4 max-w-sm w-full"
         onClick={(e) => e.stopPropagation()}

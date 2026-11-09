@@ -43,7 +43,7 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 bg-black/45 z-[70] flex items-center justify-center anim-scrim"
+      className="fixed inset-0 bg-black/45 z-confirm flex items-center justify-center anim-scrim"
       onClick={onCancel}
       role="dialog"
       aria-modal="true"

@@ -170,8 +170,8 @@ function StartModal({ onClose, onStarted }: { onClose: () => void; onStarted: (i
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-[60]" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[61] bg-surface rounded-2xl w-full max-w-sm p-5 border border-line max-h-[90vh] overflow-auto max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-t-2xl max-md:rounded-b-none">
+      <div className="fixed inset-0 bg-black/50 z-modal" onClick={onClose} />
+      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal bg-surface rounded-2xl w-full max-w-sm p-5 border border-line max-h-[90vh] overflow-auto max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-t-2xl max-md:rounded-b-none">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-semibold text-ink">{t.admin.inventory.startTitle}</h3>
           <button onClick={onClose}><X className="w-5 h-5 text-muted" /></button>
@@ -292,8 +292,8 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-[60]" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[61] bg-surface rounded-2xl w-full max-w-lg p-5 border border-line max-h-[90vh] overflow-auto max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-t-2xl max-md:rounded-b-none max-md:max-h-[85vh]">
+      <div className="fixed inset-0 bg-black/50 z-modal" onClick={onClose} />
+      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal bg-surface rounded-2xl w-full max-w-lg p-5 border border-line max-h-[90vh] overflow-auto max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-t-2xl max-md:rounded-b-none max-md:max-h-[85vh]">
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-base font-semibold text-ink">{title}</h3>
           <button onClick={onClose}><X className="w-5 h-5 text-muted" /></button>

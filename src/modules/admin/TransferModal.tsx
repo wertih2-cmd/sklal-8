@@ -116,7 +116,7 @@ export function TransferModal({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-modal flex items-center justify-center bg-black/40"
       role="dialog"
       aria-modal="true"
       onClick={closeIfIdle}

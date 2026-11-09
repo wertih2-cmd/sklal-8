@@ -175,8 +175,8 @@ export function AdminApartmentDetail() {
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/45 z-[60] anim-scrim" onClick={close} />
-      <aside className="fixed top-0 right-0 bottom-0 w-full max-w-[440px] bg-surface z-[61] overflow-auto border-l border-line anim-drawer">
+      <div className="fixed inset-0 bg-black/45 z-drawer anim-scrim" onClick={close} />
+      <aside className="fixed top-0 right-0 bottom-0 w-full max-w-[440px] bg-surface z-drawer overflow-auto border-l border-line anim-drawer">
         {loading ? (
           <div className="p-6 text-center text-muted text-sm">{t.app.loading}</div>
         ) : loadError ? (
@@ -284,8 +284,8 @@ export function AdminApartmentDetail() {
       {/* Issue result sheet */}
       {issueResult && (
         <>
-          <div className="fixed inset-0 bg-black/50 z-[70]" onClick={() => setIssueResult(null)} />
-          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[71] bg-surface rounded-2xl w-full max-w-sm p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet">
+          <div className="fixed inset-0 bg-black/50 z-modal" onClick={() => setIssueResult(null)} />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal bg-surface rounded-2xl w-full max-w-sm p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-ink">{t.admin.apartments.issueAll}</h2>
               <button onClick={() => setIssueResult(null)} className="p-1">
@@ -431,8 +431,8 @@ function TabButton({ active, onClick, icon: Icon, label }: { active: boolean; on
 function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-[70]" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[71] bg-surface rounded-2xl w-full max-w-sm p-5 border border-line">
+      <div className="fixed inset-0 bg-black/50 z-modal" onClick={onClose} />
+      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal bg-surface rounded-2xl w-full max-w-sm p-5 border border-line">
         <h3 className="text-base font-semibold text-ink mb-4">{title}</h3>
         {children}
       </div>

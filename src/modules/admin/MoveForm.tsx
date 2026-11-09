@@ -367,8 +367,8 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   if (loading) {
     return (
       <>
-        <div className="fixed inset-0 bg-black/45 z-[60] anim-scrim" onClick={onClose} />
-        <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[61] bg-surface rounded-2xl p-6 max-w-sm w-full">
+        <div className="fixed inset-0 bg-black/45 z-modal anim-scrim" onClick={onClose} />
+        <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal bg-surface rounded-2xl p-6 max-w-sm w-full">
           <div className="text-center text-muted text-sm">{t.app.loading}</div>
         </div>
       </>
@@ -378,8 +378,8 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   if (result) {
     return (
       <>
-        <div className="fixed inset-0 bg-black/45 z-[60] anim-scrim" onClick={onClose} />
-        <div className="fixed z-[61] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm bg-surface rounded-2xl p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet">
+        <div className="fixed inset-0 bg-black/45 z-modal anim-scrim" onClick={onClose} />
+        <div className="fixed z-modal left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm bg-surface rounded-2xl p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-ink">{t.admin.move.resultTitle}</h2>
             <button onClick={onClose} className="p-1" aria-label={t.common.close}>
@@ -413,9 +413,9 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/45 z-[60] anim-scrim" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/45 z-modal anim-scrim" onClick={onClose} />
       <div
-        className="fixed z-[61] left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm max-h-[90dvh] overflow-auto bg-surface rounded-2xl p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet max-md:max-h-[85dvh]"
+        className="fixed z-modal left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm max-h-[90dvh] overflow-auto bg-surface rounded-2xl p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet max-md:max-h-[85dvh]"
         role="dialog"
         aria-modal="true"
         aria-label={t.admin.move.title}

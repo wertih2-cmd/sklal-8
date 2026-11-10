@@ -1053,6 +1053,19 @@ export async function fetchPendingCleanings(): Promise<PendingCleaning[]> {
   return (data ?? []) as PendingCleaning[]
 }
 
+export interface PendingCounts { incidents: number; cleanings: number }
+
+/** Numbers for the navigation badges: new incidents and cleanings waiting for approval (counts only, no rows). */
+export async function fetchPendingCounts(): Promise<PendingCounts> {
+  const [inc, cl] = await Promise.all([
+    supabase.from('incidents').select('id', { count: 'exact', head: true }).eq('status', 'new'),
+    supabase.from('cleaning_events').select('id', { count: 'exact', head: true }).eq('posting_status', 'pending').eq('status', 'done'),
+  ])
+  if (inc.error) throw toApiError(inc.error, inc.status)
+  if (cl.error) throw toApiError(cl.error, cl.status)
+  return { incidents: inc.count ?? 0, cleanings: cl.count ?? 0 }
+}
+
 export const CLEANING_FEED_LIMIT = 300
 
 /** Cleanings since the given instant, newest first (at most CLEANING_FEED_LIMIT rows), with the staff names. */

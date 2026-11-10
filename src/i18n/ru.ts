@@ -376,6 +376,12 @@ export const ru = {
       move: 'Операция',
       apartments: 'Квартиры',
       more: 'Ещё',
+      groupWork: 'Работа',
+      groupControl: 'Контроль',
+      incidents: 'Заявки',
+      cleanings: 'Уборки',
+      reports: 'Отчёты',
+      newOperation: 'Новая операция',
     },
     dashboard: {
       toOrder: 'К заказу',

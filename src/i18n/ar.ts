@@ -379,6 +379,12 @@ export const ar: Dict = {
       move: 'عملية',
       apartments: 'الشقق',
       more: 'كمان',
+      groupWork: 'العمل',
+      groupControl: 'المتابعة',
+      incidents: 'الأعطال',
+      cleanings: 'التنظيف',
+      reports: 'التقارير',
+      newOperation: 'عملية جديدة',
     },
     dashboard: {
       toOrder: 'يُطلب',

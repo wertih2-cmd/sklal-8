@@ -378,6 +378,12 @@ export const en: Dict = {
       move: 'Operation',
       apartments: 'Apartments',
       more: 'More',
+      groupWork: 'Work',
+      groupControl: 'Control',
+      incidents: 'Requests',
+      cleanings: 'Cleanings',
+      reports: 'Reports',
+      newOperation: 'New operation',
     },
     dashboard: {
       toOrder: 'To order',

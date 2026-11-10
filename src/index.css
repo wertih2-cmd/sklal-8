@@ -152,6 +152,14 @@ body {
       radial-gradient(55% 50% at 60% 100%, var(--glow-3), transparent 70%);
     background-attachment: fixed;
   }
+  /* A fixed background is heavy on phones: let it scroll with the page there. */
+  @media (max-width: 1023px) {
+    .app-glow { background-attachment: scroll; }
+  }
+  /* Without backdrop-filter the translucent glass would show the content behind it: use a solid surface. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass { background: var(--surface); }
+  }
 }
 
 /* Solid status fills carry their own readable text color (dark text on the bright dark-theme tones).

@@ -39,7 +39,7 @@ export function DashboardReports() {
   const periodLabel: Record<PresetPeriod, string> = { today: r.today, '7': r.days7, '30': r.days30 }
 
   return (
-    <section className="bg-surface border border-line rounded-xl p-4 mb-5" data-testid="dash-reports">
+    <section className="panel rounded-[20px] p-4 mb-5" data-testid="dash-reports">
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <h2 className="text-base font-semibold text-ink">{b.title}</h2>
         <div role="group" aria-label={b.periodLabel} className="ms-auto flex rounded-lg border border-line overflow-hidden">
@@ -50,7 +50,7 @@ export function DashboardReports() {
               aria-pressed={period === p}
               data-testid={`dash-reports-period-${p}`}
               onClick={() => setPeriod(p)}
-              className={`px-3 py-1.5 text-xs ${period === p ? 'bg-accent text-white font-medium' : 'bg-surface text-muted hover:text-ink'}`}
+              className={`px-3 py-1.5 text-xs ${period === p ? 'bg-accent text-on-accent font-medium' : 'bg-surface text-muted hover:text-ink'}`}
             >
               {periodLabel[p]}
             </button>

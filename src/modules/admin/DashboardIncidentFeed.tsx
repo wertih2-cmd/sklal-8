@@ -99,7 +99,7 @@ export function DashboardIncidentFeed({ incidents, apartments }: { incidents: In
   const selectClass = 'bg-app rounded-lg px-2.5 py-2 text-sm text-ink border border-line focus:outline-none focus:border-accent'
 
   return (
-    <section className="bg-surface border border-line rounded-xl p-4 mb-5" data-testid="dash-incident-feed">
+    <section className="panel rounded-[20px] p-4 mb-5" data-testid="dash-incident-feed">
       <div className="flex items-center gap-2 mb-3">
         <h2 className="text-base font-semibold text-ink">{f.title}</h2>
         <button

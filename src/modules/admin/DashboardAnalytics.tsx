@@ -24,7 +24,7 @@ const TOP_ROWS = 8
 
 function Card({ title, caption, action, children }: { title: string; caption?: string; action?: ReactNode; children: ReactNode }) {
   return (
-    <div className="bg-surface border border-line rounded-xl p-4">
+    <div className="panel rounded-[20px] p-4">
       <div className="flex items-start gap-2 mb-3">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-ink">{title}</h3>
@@ -162,7 +162,7 @@ export function DashboardAnalytics({ incidents, currency }: { incidents: Inciden
                 data-testid={`dash-period-${p}`}
                 aria-pressed={period === p}
                 onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 text-xs ${period === p ? 'bg-accent text-white font-medium' : 'bg-surface text-muted hover:text-ink'}`}
+                className={`px-3 py-1.5 text-xs ${period === p ? 'bg-accent text-on-accent font-medium' : 'bg-surface text-muted hover:text-ink'}`}
               >
                 {p === 7 ? a.period7 : p === 30 ? a.period30 : a.period90}
               </button>

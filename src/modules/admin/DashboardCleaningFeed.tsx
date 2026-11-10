@@ -74,7 +74,7 @@ export function DashboardCleaningFeed({ apartments }: { apartments: Apartment[] 
     navigate(cleaningState(row) === 'pending' ? '/admin/more/cleaning-approvals' : `/admin/apartments/${row.apartment_id}`)
 
   return (
-    <section className="bg-surface border border-line rounded-xl p-4 mb-5" data-testid="dash-cleaning-feed">
+    <section className="panel rounded-[20px] p-4 mb-5" data-testid="dash-cleaning-feed">
       <div className="flex items-center gap-2 mb-3">
         <h2 className="text-base font-semibold text-ink">{f.title}</h2>
         <span className="text-xs text-muted">{f.period}</span>

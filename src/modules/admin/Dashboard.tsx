@@ -221,12 +221,12 @@ export function Dashboard() {
             key={key}
             data-testid={`dash-card-${key}`}
             onClick={() => navigate(to)}
-            className="bg-surface border border-line rounded-xl px-3.5 py-3 text-left transition-colors hover:border-accent"
+            className="panel rounded-[20px] px-3.5 py-3 text-start transition-colors hover:border-accent"
             style={badge.tone === 'bad' ? { borderColor: 'var(--bad)' } : undefined}
           >
-            <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 mb-2">
               <Icon className="w-5 h-5 text-muted shrink-0" />
-              <span className={`text-[11px] leading-tight px-2 py-0.5 rounded-full font-medium text-center ${BADGE_CLASS[badge.tone]}`}>
+              <span className={`text-[11px] leading-tight px-2 py-0.5 rounded-full font-medium text-center whitespace-nowrap ${BADGE_CLASS[badge.tone]}`}>
                 {badge.text}
               </span>
             </div>
@@ -236,6 +236,15 @@ export function Dashboard() {
           </button>
         ))}
       </div>
+
+      <section className="panel rounded-[20px] p-4 mb-5">
+        <h2 className="text-sm font-semibold text-ink mb-3">{t.admin.dashboard.quickActions}</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <button onClick={() => navigate('/admin/move?op=receipt')} className="flex items-center gap-2 well rounded-xl px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><ArrowDownToLine className="w-4 h-4 text-accent" />{t.admin.move.receipt}</button>
+          <button onClick={() => navigate('/admin/move?op=issue_apartment')} className="flex items-center gap-2 well rounded-xl px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><Wrench className="w-4 h-4 text-accent" />{t.admin.dashboard.issue}</button>
+          <button onClick={() => navigate('/admin/move?op=writeoff_warehouse')} className="col-span-2 sm:col-span-1 flex items-center gap-2 well rounded-xl px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><Trash2 className="w-4 h-4 text-accent" />{t.admin.dashboard.writeoff}</button>
+        </div>
+      </section>
 
       {finance && (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-5">
@@ -248,7 +257,7 @@ export function Dashboard() {
               key={key}
               data-testid={`dash-finance-${key}`}
               onClick={() => navigate('/admin/more/reports?tab=valuation')}
-              className={`bg-surface border border-line rounded-xl px-3.5 py-3 text-left transition-colors hover:border-accent ${key === 'stockValue' ? 'col-span-2 sm:col-span-1' : ''}`}
+              className={`panel rounded-[20px] px-3.5 py-3 text-start transition-colors hover:border-accent ${key === 'stockValue' ? 'col-span-2 sm:col-span-1' : ''}`}
             >
               <Wallet className="w-5 h-5 text-muted mb-2" />
               <b className="text-lg sm:text-xl font-semibold text-ink block break-words">{new Intl.NumberFormat(undefined, { style: 'currency', currency: finance.currency }).format(value)}</b>
@@ -267,18 +276,9 @@ export function Dashboard() {
 
       <DashboardReports />
 
-      <section className="bg-surface border border-line rounded-xl p-4 mb-5">
-        <h2 className="text-sm font-semibold text-ink mb-3">{t.admin.dashboard.quickActions}</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          <button onClick={() => navigate('/admin/move?op=receipt')} className="flex items-center gap-2 bg-app rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><ArrowDownToLine className="w-4 h-4 text-accent" />{t.admin.move.receipt}</button>
-          <button onClick={() => navigate('/admin/move?op=issue_apartment')} className="flex items-center gap-2 bg-app rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><Wrench className="w-4 h-4 text-accent" />{t.admin.dashboard.issue}</button>
-          <button onClick={() => navigate('/admin/move?op=writeoff_warehouse')} className="col-span-2 sm:col-span-1 flex items-center gap-2 bg-app rounded-lg px-3 py-2.5 text-sm text-ink hover:bg-accent-soft"><Trash2 className="w-4 h-4 text-accent" />{t.admin.dashboard.writeoff}</button>
-        </div>
-      </section>
-
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-5">
         {/* Left: to-order */}
-        <section className="bg-surface border border-line rounded-xl p-4">
+        <section className="panel rounded-[20px] p-4">
           <h2 className="text-base font-semibold text-ink mb-3 flex items-center gap-2">
             <TrendingDown className="w-4 h-4 text-bad" />
             {t.admin.dashboard.toOrder}
@@ -307,7 +307,7 @@ export function Dashboard() {
         </section>
 
         {/* Right: apartment tiles by type */}
-        <section className="bg-surface border border-line rounded-xl p-4">
+        <section className="panel rounded-[20px] p-4">
           <h2 className="text-base font-semibold text-ink mb-3 flex items-center gap-2">
             <PackageX className="w-4 h-4 text-warn" />
             {t.admin.apartments.completeness}
@@ -326,7 +326,7 @@ export function Dashboard() {
                     <button
                       key={apt.id}
                       onClick={() => navigate(`/admin/apartments/${apt.id}`)}
-                      className="text-left bg-surface border border-line rounded-lg px-3 py-2.5 transition-colors hover:border-accent"
+                      className="well text-start rounded-xl px-3 py-2.5 transition-colors hover:border-accent"
                     >
                       <b className="text-base text-ink">{apt.code}</b>
                       <div className="text-muted text-xs">{buildingMap.get(apt.building_id) ?? '?'}</div>
@@ -361,7 +361,7 @@ export function Dashboard() {
           </div>
           <div className="space-y-2">
             {shortages.map((ev) => (
-              <div key={ev.id} className="bg-surface rounded-xl border border-line px-4 py-3">
+              <div key={ev.id} className="panel rounded-2xl px-4 py-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     {ev.items.map((it, i) => (

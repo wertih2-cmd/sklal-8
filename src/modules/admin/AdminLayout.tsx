@@ -1,6 +1,7 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useI18n, useDocumentDir } from '@/i18n'
 import { LangSwitcher } from '@/components/LangSwitcher'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { Chrome as Home, Package, Plus, Building2, MoveHorizontal as MoreHorizontal, ArrowLeft } from 'lucide-react'
 
 
@@ -24,9 +25,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-app flex flex-col lg:grid lg:grid-cols-[208px_1fr]">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex flex-col bg-surface border-r border-line sticky top-0 h-screen p-5 pb-8 no-print">
-        <div className="flex items-center justify-between px-2.5 pb-4.5">
+        <div className="flex flex-col gap-3 px-2.5 pb-4.5">
           <span className="font-semibold text-lg text-ink">{t.app.name}</span>
-          <LangSwitcher compact />
+          <div className="flex items-stretch gap-2"><ThemeToggle compact /><LangSwitcher compact /></div>
         </div>
         <nav className="flex flex-col gap-0.5">
           {tabs.map((tab) => {
@@ -56,7 +57,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         {/* Mobile top bar with language switcher */}
         <div className="lg:hidden flex items-center justify-between px-4 h-11 bg-surface border-b border-line sticky top-0 z-30 no-print">
           <span className="font-semibold text-ink text-sm">{t.app.name}</span>
-          <LangSwitcher compact />
+          <div className="flex items-center gap-2"><ThemeToggle /><LangSwitcher compact /></div>
         </div>
         {showBack && (
           <button
@@ -88,7 +89,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             >
               {isPlus ? (
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center -mt-1 transition-colors ${active ? 'bg-accent' : 'bg-[var(--line)]'}`}>
-                  <Icon className="w-5 h-5 text-white" strokeWidth={2.5} />
+                  <Icon className={`w-5 h-5 ${active ? 'text-on-accent' : 'text-ink'}`} strokeWidth={2.5} />
                 </div>
               ) : (
                 <Icon

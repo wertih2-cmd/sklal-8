@@ -227,6 +227,8 @@ export const ru = {
     loadFailed: 'Не удалось загрузить данные',
   },
   common: {
+    themeToLight: 'Светлая тема',
+    themeToDark: 'Тёмная тема',
     back: 'Назад',
     notFound: 'Не найдено',
     noResults: 'Ничего не найдено',

@@ -13,7 +13,7 @@ export function ProfilePage() {
     <div className="px-4 pt-8 pb-28">
       <div className="flex flex-col items-center mb-8">
         <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mb-3">
-          <Package className="w-8 h-8 text-white" />
+          <Package className="w-8 h-8 text-on-accent" />
         </div>
         <h1 className="text-xl font-semibold text-ink">{profile.full_name}</h1>
         <span className="text-sm text-muted mt-1">{roleLabel}</span>

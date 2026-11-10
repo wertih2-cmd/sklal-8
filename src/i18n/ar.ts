@@ -230,6 +230,8 @@ export const ar: Dict = {
     loadFailed: 'فشل تحميل البيانات',
   },
   common: {
+    themeToLight: 'السمة الفاتحة',
+    themeToDark: 'السمة الداكنة',
     back: 'رجوع',
     notFound: 'مش موجود',
     noResults: 'مفيش نتائج',

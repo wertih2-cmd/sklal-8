@@ -4,7 +4,51 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/*
+ * Design tokens. Dark is the default theme and does NOT follow the OS setting;
+ * the light theme is switched on with data-theme="light" on <html> (see src/lib/theme.ts).
+ * A wrapper can force a theme locally with data-theme="dark" | "light".
+ */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0c0e10;
+  --surface: #15191d;
+  --ink: #e8ecef;
+  --muted: #8d98a1;
+  --line: rgba(255, 255, 255, 0.1);
+  --accent: #3ee7ff;
+  --accent-soft: rgba(62, 231, 255, 0.14);
+  --on-accent: #04141a;
+  --bad: #ff6b6b;
+  --bad-soft: rgba(255, 107, 107, 0.15);
+  --on-bad: #1a0505;
+  --warn: #ffb84d;
+  --warn-soft: rgba(255, 184, 77, 0.15);
+  --on-warn: #1a1000;
+  --ok: #3dffa0;
+  --ok-soft: rgba(61, 255, 160, 0.13);
+  --on-ok: #04110a;
+  --owner: #ffb84d;
+  --owner-soft: rgba(255, 184, 77, 0.15);
+  --glass-bg: linear-gradient(160deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.015));
+  --glass-border: rgba(255, 255, 255, 0.22);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), inset 0 -1px 0 rgba(255, 255, 255, 0.04), 0 22px 48px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --glass-inset: rgba(0, 0, 0, 0.28);
+  --glass-inset-line: rgba(255, 255, 255, 0.07);
+  --glass-blur: blur(38px) saturate(180%);
+  --glow-1: rgba(62, 231, 255, 0.4);
+  --glow-2: rgba(61, 255, 160, 0.22);
+  --glow-3: rgba(0, 0, 0, 0);
+  --glass-accent: #3ee7ff;
+  --glass-ok: #3dffa0;
+  --glass-warn: #ffb84d;
+  --glass-bad: #ff8a80;
+}
+
+:root[data-theme="light"],
+[data-theme="light"] {
+  color-scheme: light;
   --bg: #eef1f4;
   --surface: #ffffff;
   --ink: #14202b;
@@ -33,70 +77,10 @@
   --glass-ok: #12b76a;
   --glass-warn: #f5a524;
   --glass-bad: #d92d20;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0f161d;
-    --surface: #18222c;
-    --ink: #e6edf3;
-    --muted: #93a1ae;
-    --line: #2a3846;
-    --accent: #4cc3cd;
-    --accent-soft: #17363a;
-    --bad: #ff8077;
-    --bad-soft: #3a1d1b;
-    --warn: #f0b64a;
-    --warn-soft: #3a2d0f;
-    --ok: #6fd09a;
-    --ok-soft: #173424;
-    --owner: #f0b64a;
-    --owner-soft: #3a2d0f;
-    --glass-bg: linear-gradient(160deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.015));
-    --glass-border: rgba(255, 255, 255, 0.22);
-    --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), inset 0 -1px 0 rgba(255, 255, 255, 0.04), 0 22px 48px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
-    --glass-inset: rgba(0, 0, 0, 0.28);
-    --glass-inset-line: rgba(255, 255, 255, 0.07);
-    --glass-blur: blur(38px) saturate(180%);
-    --glow-1: rgba(62, 231, 255, 0.4);
-    --glow-2: rgba(61, 255, 160, 0.22);
-    --glow-3: rgba(0, 0, 0, 0);
-    --glass-accent: #3ee7ff;
-    --glass-ok: #3dffa0;
-    --glass-warn: #ffb84d;
-    --glass-bad: #ff8a80;
-  }
-}
-
-:root[data-theme="dark"] {
-  --bg: #0f161d;
-  --surface: #18222c;
-  --ink: #e6edf3;
-  --muted: #93a1ae;
-  --line: #2a3846;
-  --accent: #4cc3cd;
-  --accent-soft: #17363a;
-  --bad: #ff8077;
-  --bad-soft: #3a1d1b;
-  --warn: #f0b64a;
-  --warn-soft: #3a2d0f;
-  --ok: #6fd09a;
-  --ok-soft: #173424;
-  --owner: #f0b64a;
-  --owner-soft: #3a2d0f;
-  --glass-bg: linear-gradient(160deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.015));
-  --glass-border: rgba(255, 255, 255, 0.22);
-  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), inset 0 -1px 0 rgba(255, 255, 255, 0.04), 0 22px 48px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.35);
-  --glass-inset: rgba(0, 0, 0, 0.28);
-  --glass-inset-line: rgba(255, 255, 255, 0.07);
-  --glass-blur: blur(38px) saturate(180%);
-  --glow-1: rgba(62, 231, 255, 0.4);
-  --glow-2: rgba(61, 255, 160, 0.22);
-  --glow-3: rgba(0, 0, 0, 0);
-  --glass-accent: #3ee7ff;
-  --glass-ok: #3dffa0;
-  --glass-warn: #ffb84d;
-  --glass-bad: #ff8a80;
+  --on-accent: #ffffff;
+  --on-bad: #ffffff;
+  --on-warn: #ffffff;
+  --on-ok: #ffffff;
 }
 
 html, body, #root {
@@ -132,6 +116,17 @@ body {
   .text-owner { color: var(--owner); }
   .bg-owner-soft { background-color: var(--owner-soft); }
   .ring-accent { --tw-ring-color: var(--accent); }
+  .text-on-accent { color: var(--on-accent); }
+  .divide-line > :not([hidden]) ~ :not([hidden]) { border-color: var(--line); }
+  .bg-ok { background-color: var(--ok); }
+  .bg-warn { background-color: var(--warn); }
+  .border-bad { border-color: var(--bad); }
+  .border-ok { border-color: var(--ok); }
+  .border-warn { border-color: var(--warn); }
+  /* opacity variants: Tailwind cannot generate them for colors held in CSS variables */
+  .bg-surface\/95 { background-color: color-mix(in srgb, var(--surface) 95%, transparent); }
+  .bg-accent\/30 { background-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+  .bg-warn-soft\/50 { background-color: color-mix(in srgb, var(--warn-soft) 50%, transparent); }
 
   /* Glass surfaces. Opt-in: nothing uses them until a page adds the class. */
   .glass {
@@ -158,6 +153,13 @@ body {
     background-attachment: fixed;
   }
 }
+
+/* Solid status fills carry their own readable text color (dark text on the bright dark-theme tones).
+   Unlayered on purpose: it comes after Tailwind's utilities, so it wins over a stray text-white. */
+.bg-accent { color: var(--on-accent); }
+.bg-bad { color: var(--on-bad); }
+.bg-warn { color: var(--on-warn); }
+.bg-ok { color: var(--on-ok); }
 
 @keyframes slide-in-right {
   from { transform: translateX(24px); opacity: 0; }
@@ -188,6 +190,13 @@ body {
   .no-print { display: none !important; }
   .print-only { display: block !important; }
   body { background: #fff !important; color: #000 !important; font-size: 12px; }
+  :root, [data-theme] {
+    --bg: #fff; --surface: #fff; --ink: #000; --muted: #555; --line: #ccc;
+    --accent: #0e7c86; --accent-soft: #d9f0f1; --on-accent: #fff;
+    --bad: #c8382f; --bad-soft: #fbe4e2; --on-bad: #fff;
+    --warn: #a86b00; --warn-soft: #fdf0d6; --on-warn: #fff;
+    --ok: #2a7d4f; --ok-soft: #dff3e7; --on-ok: #fff;
+  }
   .bg-app, .bg-surface, .glass { background: #fff !important; box-shadow: none !important; backdrop-filter: none !important; }
   .app-glow { background-image: none !important; }
   .text-ink { color: #000 !important; }

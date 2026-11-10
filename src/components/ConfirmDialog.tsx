@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useI18n } from '@/i18n'
+import { useModalLayer } from '@/components/useModalLayer'
 import { TriangleAlert as AlertTriangle } from 'lucide-react'
 
 interface ConfirmDialogProps {
@@ -26,15 +27,12 @@ export function ConfirmDialog({
   const { t } = useI18n()
   const confirmRef = useRef<HTMLButtonElement>(null)
 
+  // Escape cancels only when this dialog is the topmost one (see useModalLayer)
+  useModalLayer(open, onCancel)
+
   useEffect(() => {
-    if (!open) return
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel()
-    }
-    document.addEventListener('keydown', handler)
-    confirmRef.current?.focus()
-    return () => document.removeEventListener('keydown', handler)
-  }, [open, onCancel])
+    if (open) confirmRef.current?.focus()
+  }, [open])
 
   if (!open) return null
 

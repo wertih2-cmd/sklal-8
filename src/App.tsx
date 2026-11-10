@@ -57,7 +57,7 @@ function App() {
     content = (
       <div className="min-h-screen bg-app flex flex-col items-center justify-center" data-theme="dark">
         <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center mb-4 animate-pulse">
-          <Package className="w-7 h-7 text-white" />
+          <Package className="w-7 h-7 text-on-accent" />
         </div>
         <p className="text-sm text-muted">{t.app.loading}</p>
       </div>

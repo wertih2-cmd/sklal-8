@@ -65,7 +65,7 @@ export function LoginScreen({ title, subtitle }: { title?: string; subtitle?: st
         </div>
         <div className="flex flex-col items-center gap-3 mb-8">
           <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center">
-            <Package className="w-7 h-7 text-white" />
+            <Package className="w-7 h-7 text-on-accent" />
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-ink">{title ?? t.auth.loginTitle}</h1>

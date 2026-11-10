@@ -297,7 +297,7 @@ export function CleaningSheet({ backTo }: { backTo?: string }) {
                     <div key={s.id} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors ${selected ? 'border-accent bg-accent-soft' : 'border-line'}`}>
                       <button onClick={() => toggleStaff(s.id)} aria-label={s.full_name} aria-pressed={selected} className="min-w-11 min-h-11 flex items-center justify-center shrink-0 -ml-2.5 transition-colors">
                         <span className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${selected ? 'border-accent bg-accent' : 'border-[var(--line)]'}`}>
-                          {selected && <Check className="w-4 h-4 text-white" />}
+                          {selected && <Check className="w-4 h-4 text-on-accent" />}
                         </span>
                       </button>
                       <span className="flex-1 text-sm text-ink">{s.full_name}</span>

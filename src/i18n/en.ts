@@ -229,6 +229,8 @@ export const en: Dict = {
     loadFailed: 'Failed to load data',
   },
   common: {
+    themeToLight: 'Light theme',
+    themeToDark: 'Dark theme',
     back: 'Back',
     notFound: 'Not found',
     noResults: 'Nothing found',

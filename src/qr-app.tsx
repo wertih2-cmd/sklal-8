@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './lib/theme'
 import { HashRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { QrLayout } from '@/modules/qr/QrLayout'
 import { QrIndexPage } from '@/modules/qr/QrIndexPage'
@@ -65,7 +66,7 @@ function QrApp() {
     content = (
       <div className="min-h-screen bg-app flex flex-col items-center justify-center">
         <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center mb-4 animate-pulse">
-          <Package className="w-7 h-7 text-white" />
+          <Package className="w-7 h-7 text-on-accent" />
         </div>
         <p className="text-sm text-muted">{t.app.loading}</p>
       </div>

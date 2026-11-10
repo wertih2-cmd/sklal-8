@@ -1,6 +1,7 @@
 import { useI18n, useDocumentDir } from '@/i18n'
 import { useAuth } from '@/modules/core/store'
 import { LangSwitcher } from '@/components/LangSwitcher'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { getOutboxSummary } from '@/lib/outbox'
 import { LogOut, Shield } from 'lucide-react'
@@ -38,7 +39,7 @@ export function QrLayout({ children }: { children: React.ReactNode }) {
       <div className="flex items-center justify-between px-4 h-11 bg-surface border-b border-line sticky top-0 z-30 max-w-lg mx-auto w-full">
         <span className="font-semibold text-ink text-sm">{t.app.name}</span>
         <div className="flex items-center gap-3">
-          <LangSwitcher compact />
+          <div className="flex items-center gap-2"><ThemeToggle /><LangSwitcher compact /></div>
           <button onClick={handleLogout} className="text-muted hover:text-bad">
             <LogOut className="w-4 h-4" />
           </button>

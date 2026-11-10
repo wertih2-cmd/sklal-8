@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { useI18n, useDocumentDir } from '@/i18n'
 import { LangSwitcher } from '@/components/LangSwitcher'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { Building2, Wrench, Phone, User, LayoutDashboard, QrCode } from 'lucide-react'
 
 import { useAuth } from '@/modules/core/store'
@@ -48,7 +49,7 @@ export function SvLayout({ children }: { children: React.ReactNode }) {
               </NavLink>
             )
           )}
-          <LangSwitcher compact />
+          <div className="flex items-center gap-2"><ThemeToggle /><LangSwitcher compact /></div>
         </div>
       </div>
       <main className="flex-1 pb-20 max-w-lg mx-auto w-full">{children}</main>

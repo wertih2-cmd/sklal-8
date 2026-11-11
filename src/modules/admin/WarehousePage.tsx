@@ -7,6 +7,7 @@ import { formatQty, formatDateTime, formatEGP } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
 import { useLiveRefresh } from '@/lib/realtime'
 import { ArrowLeftRight, Search } from 'lucide-react'
+import { Modal } from '@/components/Modal'
 import { OwnerBadge } from '@/components/OwnerBadge'
 import { ErrorState } from '@/components/ErrorState'
 import { useCatalogName } from '@/modules/core/useCatalogName'
@@ -30,7 +31,7 @@ function ProgressBar({ value, color }: { value: number; color: string }) {
 
 function SummaryTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-surface border border-line rounded-xl px-3 py-2.5">
+    <div className="tile rounded-2xl px-3 py-2.5">
       <div className="text-xs text-muted mb-0.5">{label}</div>
       <div className="text-sm font-semibold text-ink">{value}</div>
     </div>
@@ -86,51 +87,45 @@ function SetCostModal({
   }
 
   return (
-    <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" onClick={onClose}>
-      <div
-        className="bg-surface border border-line rounded-xl p-4 mx-4 max-w-sm w-full"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="text-sm font-semibold text-ink mb-1">{target.itemName}</div>
-        <div className="text-xs text-muted mb-3">{labels.scopeLabel}</div>
-        <input
-          ref={inputRef}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleApply() } if (e.key === 'Escape') onClose() }}
-          inputMode="decimal"
+    <Modal open title={target.itemName} onClose={onClose} size="sm">
+      <div className="text-xs text-muted mb-3">{labels.scopeLabel}</div>
+      <input
+        ref={inputRef}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleApply() } }}
+        inputMode="decimal"
+        disabled={saving}
+        placeholder="0"
+        className="w-full min-h-[44px] bg-app rounded-lg px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none mb-2"
+      />
+      <p className="text-xs text-muted mb-3">{labels.explanation}</p>
+      <input
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        disabled={saving}
+        placeholder={labels.note}
+        className="w-full min-h-[44px] bg-app rounded-lg px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none mb-3"
+      />
+      <div className="flex gap-2 justify-end">
+        <button
+          type="button"
+          onClick={onClose}
           disabled={saving}
-          placeholder="0"
-          className="w-full min-h-[44px] bg-app rounded-lg px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none mb-2"
-        />
-        <p className="text-xs text-muted mb-3">{labels.explanation}</p>
-        <input
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
+          className="min-h-[44px] px-4 rounded-lg text-sm font-medium bg-surface border border-line text-muted disabled:opacity-50"
+        >
+          {labels.cancel}
+        </button>
+        <button
+          type="button"
+          onClick={handleApply}
           disabled={saving}
-          placeholder={labels.note}
-          className="w-full min-h-[44px] bg-app rounded-lg px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none mb-3"
-        />
-        <div className="flex gap-2 justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="min-h-[44px] px-4 rounded-lg text-sm font-medium bg-surface border border-line text-muted disabled:opacity-50"
-          >
-            {labels.cancel}
-          </button>
-          <button
-            type="button"
-            onClick={handleApply}
-            disabled={saving}
-            className="min-h-[44px] px-4 rounded-lg text-sm font-medium bg-accent text-white disabled:opacity-50"
-          >
-            {labels.apply}
-          </button>
-        </div>
+          className="min-h-[44px] px-4 rounded-lg text-sm font-medium bg-accent text-on-accent disabled:opacity-50"
+        >
+          {labels.apply}
+        </button>
       </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -207,7 +202,7 @@ function GuestPriceCell({
         type="button"
         onClick={handleSave}
         disabled={saving}
-        className="min-h-[44px] px-3 rounded-lg text-xs font-medium bg-accent text-white disabled:opacity-50"
+        className="min-h-[44px] px-3 rounded-lg text-xs font-medium bg-accent text-on-accent disabled:opacity-50"
       >
         {saveLabel}
       </button>
@@ -239,16 +234,16 @@ export function WarehousePage() {
     <div className="px-4 pt-5 pb-28 lg:px-0 lg:pt-0">
       <h1 className="text-xl font-semibold text-ink mb-4">{t.admin.stock.title}</h1>
 
-      <div className="inline-flex bg-surface border border-line rounded-lg p-0.5 mb-4">
+      <div className="inline-flex well rounded-xl p-0.5 mb-4">
         <button
           onClick={() => setTab('company')}
-          className={`px-4 py-2 rounded-md text-sm transition-colors ${tab === 'company' ? 'bg-accent text-white' : 'text-muted'}`}
+          className={`px-4 py-2 rounded-md text-sm transition-colors ${tab === 'company' ? 'bg-accent text-on-accent' : 'text-muted'}`}
         >
           {t.admin.stock.tabCompany}
         </button>
         <button
           onClick={() => setTab('owner')}
-          className={`px-4 py-2 rounded-md text-sm transition-colors ${tab === 'owner' ? 'bg-accent text-white' : 'text-muted'}`}
+          className={`px-4 py-2 rounded-md text-sm transition-colors ${tab === 'owner' ? 'bg-accent text-on-accent' : 'text-muted'}`}
         >
           {t.admin.stock.tabOwner}
         </button>
@@ -584,18 +579,18 @@ function StockView({ scope }: { scope: 'company' | 'owner' }) {
 
       <div className="flex gap-2.5 flex-wrap mb-3.5">
         <div className="relative flex-1 min-w-[140px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={stock.search}
-            className="w-full bg-surface rounded-lg pl-10 pr-4 py-2 text-sm border border-line focus:border-accent focus:outline-none"
+            className="w-full well rounded-xl ps-10 pe-4 py-2 text-sm border border-line focus:border-accent focus:outline-none"
           />
         </div>
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="bg-surface rounded-lg px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none"
+          className="well rounded-xl px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none"
         >
           <option value="all">{stock.allCategories}</option>
           {categories.map((c) => (
@@ -606,7 +601,7 @@ function StockView({ scope }: { scope: 'company' | 'owner' }) {
           <select
             value={apartmentFilter}
             onChange={(e) => setApartmentFilter(e.target.value)}
-            className="bg-surface rounded-lg px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none"
+            className="well rounded-xl px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none"
           >
             <option value="all">{stock.allApartments}</option>
             {apartments.map((a) => (
@@ -614,13 +609,13 @@ function StockView({ scope }: { scope: 'company' | 'owner' }) {
             ))}
           </select>
         )}
-        <div className="inline-flex bg-surface border border-line rounded-lg p-0.5">
+        <div className="inline-flex well rounded-xl p-0.5">
           {(['all', 'assets', 'consumables'] as KindFilter[]).map((f) => (
             <button
               key={f}
               onClick={() => setKindFilter(f)}
               className={`px-3 py-1.5 rounded-md text-sm transition-colors ${
-                kindFilter === f ? 'bg-accent text-white' : 'text-muted'
+                kindFilter === f ? 'bg-accent text-on-accent' : 'text-muted'
               }`}
             >
               {f === 'all' ? stock.all : f === 'assets' ? stock.assets : stock.consumables}
@@ -631,7 +626,7 @@ function StockView({ scope }: { scope: 'company' | 'owner' }) {
           type="button"
           onClick={toggleSelectionMode}
           aria-pressed={selectionMode}
-          className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors whitespace-nowrap ${selectionMode ? 'bg-accent text-white border-accent' : 'bg-surface text-muted border-line'}`}
+          className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors whitespace-nowrap ${selectionMode ? 'bg-accent text-on-accent border-accent' : 'well text-muted'}`}
         >
           <ArrowLeftRight className="w-4 h-4" />
           {isOwner ? stock.transferToCompany : stock.transferToOwner}
@@ -639,14 +634,14 @@ function StockView({ scope }: { scope: 'company' | 'owner' }) {
         {!isOwner && (
           <button
             onClick={toggleBelowMin}
-            className={`px-3 py-2 rounded-lg text-sm border transition-colors ${belowOnly ? 'bg-accent text-white border-accent' : 'bg-surface text-muted border-line'}`}
+            className={`px-3 py-2 rounded-lg text-sm border transition-colors ${belowOnly ? 'bg-accent text-on-accent border-accent' : 'well text-muted'}`}
           >
             {stock.belowMin}
           </button>
         )}
         <button
           onClick={toggleNoGuestPrice}
-          className={`px-3 py-2 rounded-lg text-sm border transition-colors whitespace-nowrap ${noGuestPrice ? 'bg-accent text-white border-accent' : 'bg-surface text-muted border-line'}`}
+          className={`px-3 py-2 rounded-lg text-sm border transition-colors whitespace-nowrap ${noGuestPrice ? 'bg-accent text-on-accent border-accent' : 'well text-muted'}`}
         >
           {stock.noGuestPrice}
         </button>
@@ -664,18 +659,18 @@ function StockView({ scope }: { scope: 'company' | 'owner' }) {
             </div>
 
             {/* Desktop table */}
-            <div className="hidden md:block bg-surface border border-line rounded-xl overflow-x-auto">
+            <div className="hidden md:block panel rounded-[20px] overflow-x-auto">
               <table className="w-full border-collapse">
                 <thead>
                   <tr>
                     {selectionMode && <th className="w-11 border-b border-line" />}
-                    <th className="text-left font-medium text-muted text-xs px-2.5 py-2 border-b border-line">{stock.title}</th>
-                    <th className="text-left font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">{t.common.balance} / {stock.min}</th>
-                    <th className="text-left font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">{stock.avgCost}</th>
-                    <th className="text-left font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">{stock.guestPrice}</th>
-                    <th className="text-left font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">{stock.markup}</th>
-                    <th className="text-left font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">{stock.margin}</th>
-                    <th className="text-left font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">{stock.stockValue}</th>
+                    <th className="text-start font-medium text-muted text-xs px-2.5 py-2 border-b border-line">{stock.title}</th>
+                    <th className="text-start font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">{t.common.balance} / {stock.min}</th>
+                    <th className="text-start font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">{stock.avgCost}</th>
+                    <th className="text-start font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">{stock.guestPrice}</th>
+                    <th className="text-start font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">{stock.markup}</th>
+                    <th className="text-start font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">{stock.margin}</th>
+                    <th className="text-start font-medium text-muted text-xs px-2.5 py-2 border-b border-line whitespace-nowrap">{stock.stockValue}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -783,14 +778,14 @@ function StockView({ scope }: { scope: 'company' | 'owner' }) {
             </div>
 
             {/* Mobile cards */}
-            <div className="md:hidden bg-surface border border-line rounded-xl divide-y divide-line">
+            <div className="md:hidden panel rounded-[20px] divide-y divide-line">
               {group.items.map((item) => {
                 const itemRow = item as MergedStockRow
                 const expanded = !isOwner && !selectionMode && expandedId === item.item_id
                 return (
                   <div key={`${item.item_id}-${isOwner ? (item as MergedOwnerRow).apartment_id : ''}`} className="px-3 py-3">
                     <div className="flex items-start gap-2">
-                      {selectionMode && <div className="pt-1 -ml-1">{renderSelectBox(itemRow)}</div>}
+                      {selectionMode && <div className="pt-1 -ms-1">{renderSelectBox(itemRow)}</div>}
                       <div className="flex-1 min-w-0">
                     <div
                       onClick={() => (selectionMode ? toggleRow(itemRow) : !isOwner && toggleExpand(item.item_id))}
@@ -886,7 +881,7 @@ function StockView({ scope }: { scope: 'company' | 'owner' }) {
           </div>
         ))}
         {grouped.length === 0 && (
-          <div className="bg-surface border border-line rounded-xl px-4 py-6 text-center text-muted text-sm">
+          <div className="panel rounded-[20px] px-4 py-6 text-center text-muted text-sm">
             {isOwner ? stock.ownerEmpty : t.common.noResults}
           </div>
         )}

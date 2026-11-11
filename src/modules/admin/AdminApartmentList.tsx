@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { fetchApartmentsAdmin, fetchApartmentGaps, fetchBuildings, createApartment, createBuilding, updateApartment } from '@/modules/admin/api'
 import type { Apartment, Building, ApartmentGapRow, AptType } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
-import { Search, Plus, X, Loader as Loader2, CreditCard as Edit3 } from 'lucide-react'
+import { Search, Plus, Loader as Loader2, CreditCard as Edit3 } from 'lucide-react'
+import { Modal } from '@/components/Modal'
 import { ErrorState } from '@/components/ErrorState'
 import { friendlyMessage } from '@/lib/errors'
 import { toast, errorMessage } from '@/lib/toast'
@@ -110,7 +111,7 @@ export function AdminApartmentList() {
         <h1 className="text-xl font-semibold text-ink">{t.admin.apartments.title}</h1>
         <button
           onClick={() => setShowAdd(true)}
-          className="ml-auto bg-accent text-white rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5 transition-opacity hover:opacity-90"
+          className="ms-auto bg-accent text-on-accent rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5 transition-opacity hover:opacity-90"
         >
           <Plus className="w-4 h-4" />
           {t.admin.apartments.add}
@@ -119,18 +120,18 @@ export function AdminApartmentList() {
 
       <div className="flex gap-2.5 mb-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t.apartments.search}
-            className="w-full bg-surface rounded-lg pl-10 pr-4 py-2 text-sm border border-line focus:border-accent focus:outline-none"
+            className="w-full well rounded-xl ps-10 pe-4 py-2 text-sm border border-line focus:border-accent focus:outline-none"
           />
         </div>
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
-          className="bg-surface rounded-lg px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none"
+          className="well rounded-xl px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none"
         >
           <option value="all">{t.apartments.typeAll}</option>
           {typeOrder.map((tp) => (
@@ -147,7 +148,7 @@ export function AdminApartmentList() {
             className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
               ownerFilter === f
                 ? 'border-accent bg-accent-soft text-accent'
-                : 'border-line bg-surface text-muted'
+                : 'well text-muted'
             }`}
           >
             {f === 'all' ? t.admin.apartments.filterAll : f === 'owner' ? t.admin.apartments.filterOwner : t.admin.apartments.filterRegular}
@@ -167,7 +168,7 @@ export function AdminApartmentList() {
               return (
                 <div
                   key={apt.id}
-                  className="relative bg-surface border border-line rounded-lg px-3 py-2.5 transition-colors hover:border-accent"
+                  className="tile relative rounded-2xl px-3 py-2.5 transition-colors hover:border-accent"
                 >
                   <button
                     onClick={() => setEditingApt(apt)}
@@ -178,7 +179,7 @@ export function AdminApartmentList() {
                   </button>
                   <div
                     onClick={() => navigate(`/admin/apartments/${apt.id}`)}
-                    className="text-left cursor-pointer"
+                    className="text-start cursor-pointer"
                   >
                   <div className="flex items-center gap-1.5">
                     <b className="text-base text-ink">{apt.code}</b>
@@ -265,12 +266,7 @@ function AddApartmentModal({ buildings, typeLabels, onClose, onCreated }: {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-6">
-      <div className="bg-surface rounded-2xl w-full max-w-sm p-5 border border-line">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-ink">{t.admin.apartments.addTitle}</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-muted" /></button>
-        </div>
+    <Modal open title={t.admin.apartments.addTitle} onClose={onClose} size="sm">
         <div className="space-y-3">
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.apartments.building}</label>
@@ -318,14 +314,13 @@ function AddApartmentModal({ buildings, typeLabels, onClose, onCreated }: {
           <button
             onClick={save}
             disabled={!valid || saving}
-            className="flex-1 bg-accent text-white rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-1 bg-accent text-on-accent rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {t.admin.apartments.create}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -371,12 +366,7 @@ export function EditApartmentModal({ apartment, buildings, typeLabels, onClose, 
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center px-6">
-      <div className="bg-surface rounded-2xl w-full max-w-sm max-h-[90dvh] overflow-y-auto p-5 border border-line">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-ink">{t.admin.apartments.editTitle}</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-muted" /></button>
-        </div>
+    <Modal open title={t.admin.apartments.editTitle} onClose={onClose} size="sm">
         <div className="space-y-3">
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.apartments.building}</label>
@@ -418,13 +408,12 @@ export function EditApartmentModal({ apartment, buildings, typeLabels, onClose, 
           <button
             onClick={save}
             disabled={!valid || saving}
-            className="flex-1 bg-accent text-white rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-1 bg-accent text-on-accent rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {t.admin.apartments.editSubmit}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

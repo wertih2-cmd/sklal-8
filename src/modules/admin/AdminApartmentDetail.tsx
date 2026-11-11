@@ -15,7 +15,7 @@ import type { Apartment, ApartmentGapRow, NormRuleRow, Staff, IssueMissingResult
 import { useI18n } from '@/i18n'
 import { cairoLocalToISO } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
-import { ClipboardList, History, Gift, X, Loader as Loader2, Wrench, Boxes, CreditCard as Edit3 } from 'lucide-react'
+import { ClipboardList, History, Gift, Loader as Loader2, Wrench, Boxes, CreditCard as Edit3 } from 'lucide-react'
 import { ErrorState } from '@/components/ErrorState'
 import { friendlyMessage } from '@/lib/errors'
 import { CleaningHistoryList } from '@/modules/history/CleaningHistoryList'
@@ -25,6 +25,7 @@ import { RoomsPanel } from '@/modules/rooms/RoomsPanel'
 import { useLiveRefresh } from '@/lib/realtime'
 import { OwnerBadge } from '@/components/OwnerBadge'
 import { EditApartmentModal } from './AdminApartmentList'
+import { Modal } from '@/components/Modal'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 
 type Tab = 'norms' | 'rooms' | 'cleaning' | 'incidents'
@@ -176,7 +177,7 @@ export function AdminApartmentDetail() {
   return (
     <>
       <div className="fixed inset-0 bg-black/45 z-drawer anim-scrim" onClick={close} />
-      <aside className="fixed top-0 right-0 bottom-0 w-full max-w-[440px] bg-surface z-drawer overflow-auto border-l border-line anim-drawer">
+      <aside className="fixed top-0 end-0 bottom-0 w-full max-w-[440px] bg-surface z-drawer overflow-auto border-s border-line anim-drawer">
         {loading ? (
           <div className="p-6 text-center text-muted text-sm">{t.app.loading}</div>
         ) : loadError ? (
@@ -211,7 +212,7 @@ export function AdminApartmentDetail() {
             <div className="font-semibold text-sm text-ink mt-4 mb-2">{t.admin.apartments.gap}</div>
             {gapItems.length > 0 ? (
               <>
-                <div className="bg-surface border border-line rounded-lg divide-y divide-[var(--line)]">
+                <div className="well rounded-xl divide-y divide-[var(--line)]">
                   {gapItems.map((g) => (
                     <div key={`${g.item_id}`} className="px-3 py-2.5 flex items-center justify-between">
                       <span className="text-sm text-ink">{cat.itemName(g.name)}</span>
@@ -222,7 +223,7 @@ export function AdminApartmentDetail() {
                 <button
                   onClick={handleIssueAll}
                   disabled={issuing}
-                  className="mt-3 bg-accent text-white rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5 disabled:opacity-40"
+                  className="mt-3 bg-accent text-on-accent rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5 disabled:opacity-40"
                 >
                   {issuing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Gift className="w-3.5 h-3.5" />}
                   {t.admin.apartments.issueAll}
@@ -283,15 +284,7 @@ export function AdminApartmentDetail() {
 
       {/* Issue result sheet */}
       {issueResult && (
-        <>
-          <div className="fixed inset-0 bg-black/50 z-modal" onClick={() => setIssueResult(null)} />
-          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal bg-surface rounded-2xl w-full max-w-sm p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-ink">{t.admin.apartments.issueAll}</h2>
-              <button onClick={() => setIssueResult(null)} className="p-1">
-                <X className="w-5 h-5 text-muted" />
-              </button>
-            </div>
+        <Modal open title={t.admin.apartments.issueAll} onClose={() => setIssueResult(null)} size="sm">
             {issueResult.doc_number && (
               <p className="text-sm text-muted mb-3">{t.common.document}: {n(issueResult.doc_number)}</p>
             )}
@@ -324,13 +317,12 @@ export function AdminApartmentDetail() {
             <button onClick={() => setIssueResult(null)} className="w-full bg-app text-ink rounded-lg py-3 font-medium text-sm">
               {t.common.ok}
             </button>
-          </div>
-        </>
+        </Modal>
       )}
 
       {/* Reverse modal */}
       {reverseEventId && (
-        <Modal title={t.admin.apartments.reverseConfirm} onClose={() => setReverseEventId(null)}>
+        <Modal open size="sm" title={t.admin.apartments.reverseConfirm} onClose={() => setReverseEventId(null)}>
           <input
             value={reverseReason}
             onChange={(e) => setReverseReason(e.target.value)}
@@ -350,7 +342,7 @@ export function AdminApartmentDetail() {
 
       {/* Recalc modal */}
       {recalcEventId && (
-        <Modal title={t.admin.apartments.recalcConfirm} onClose={() => { setRecalcEventId(null); setRecalcDate(''); setRecalcStaffIds([]) }}>
+        <Modal open size="sm" title={t.admin.apartments.recalcConfirm} onClose={() => { setRecalcEventId(null); setRecalcDate(''); setRecalcStaffIds([]) }}>
           <p className="text-xs text-warn bg-warn-soft rounded-lg px-3 py-2 mb-3">{t.admin.apartments.recalcWarn}</p>
           <div className="space-y-3 mb-4">
             <div>
@@ -392,7 +384,7 @@ export function AdminApartmentDetail() {
             <button onClick={() => { setRecalcEventId(null); setRecalcDate(''); setRecalcStaffIds([]) }} className="flex-1 bg-app text-ink rounded-lg py-3 font-medium text-sm">
               {t.cleaning.cancel}
             </button>
-            <button onClick={handleRecalc} className="flex-1 bg-accent text-white rounded-lg py-3 font-medium text-sm">
+            <button onClick={handleRecalc} className="flex-1 bg-accent text-on-accent rounded-lg py-3 font-medium text-sm">
               {t.admin.apartments.recalculate}
             </button>
           </div>
@@ -425,17 +417,5 @@ function TabButton({ active, onClick, icon: Icon, label }: { active: boolean; on
       <Icon className="w-4 h-4" />
       {label}
     </button>
-  )
-}
-
-function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
-  return (
-    <>
-      <div className="fixed inset-0 bg-black/50 z-modal" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal bg-surface rounded-2xl w-full max-w-sm p-5 border border-line">
-        <h3 className="text-base font-semibold text-ink mb-4">{title}</h3>
-        {children}
-      </div>
-    </>
   )
 }

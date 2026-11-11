@@ -192,6 +192,10 @@ body {
 .bg-warn { color: var(--on-warn); }
 .bg-ok { color: var(--on-ok); }
 
+@keyframes slide-in-left {
+  from { transform: translateX(-24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
 @keyframes slide-in-right {
   from { transform: translateX(24px); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
@@ -208,6 +212,7 @@ body {
 }
 
 .anim-drawer { animation: slide-in-right 0.2s ease-out; }
+[dir='rtl'] .anim-drawer { animation-name: slide-in-left; }
 .anim-scrim { animation: fade-in 0.15s ease-out; }
 .anim-sheet { animation: slide-up 0.25s ease-out; }
 

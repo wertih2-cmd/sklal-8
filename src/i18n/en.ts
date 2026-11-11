@@ -392,6 +392,7 @@ export const en: Dict = {
       ringLow: 'Badly short',
       ringNoNorms: 'No norms',
       ringEmpty: 'No apartments with norms',
+      statusLoadFailed: 'Load failed',
       toOrder: 'To order',
       gaps: 'Incomplete apartments',
       shortages: 'Stock shortage',

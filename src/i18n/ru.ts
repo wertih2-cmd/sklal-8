@@ -390,6 +390,7 @@ export const ru = {
       ringLow: 'Не хватает много',
       ringNoNorms: 'Без норм',
       ringEmpty: 'Нет квартир с нормами',
+      statusLoadFailed: 'Ошибка загрузки',
       toOrder: 'К заказу',
       gaps: 'Неполные квартиры',
       shortages: 'Дефицит на складе',

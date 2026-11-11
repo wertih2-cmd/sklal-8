@@ -66,7 +66,8 @@ export function Dashboard() {
   const [apartments, setApartments] = useState<Apartment[]>([])
   const [buildings, setBuildings] = useState<Building[]>([])
   const [incidents, setIncidents] = useState<Incident[]>([])
-  const [pendingCleanings, setPendingCleanings] = useState(0)
+  // null = the request failed: the tile says so instead of showing a false zero
+  const [pendingCleanings, setPendingCleanings] = useState<number | null>(0)
   const [oldestPendingCleaning, setOldestPendingCleaning] = useState<string | null>(null)
   const [finance, setFinance] = useState<{ company: ValuationTotals; owner: ValuationTotals; ownerApartments: number; currency: string } | null>(null)
   const [loading, setLoading] = useState(true)
@@ -76,15 +77,15 @@ export function Dashboard() {
     const quiet = silent === true
     if (!quiet) { setLoading(true); setLoadError(false) }
     try {
-      const [to, ga, sh, ap, bl, inc, pc, valCompany, valOwner, currency] = await Promise.all([fetchToOrder(), fetchApartmentGaps(), fetchShortageEvents(), fetchApartmentsAdmin(), fetchBuildings(), fetchAllIncidents(), fetchPendingCleanings().catch(() => []), fetchValuation('company').catch(() => null), fetchValuation('owner').catch(() => null), fetchCurrency().catch(() => 'EGP')])
+      const [to, ga, sh, ap, bl, inc, pc, valCompany, valOwner, currency] = await Promise.all([fetchToOrder(), fetchApartmentGaps(), fetchShortageEvents(), fetchApartmentsAdmin(), fetchBuildings(), fetchAllIncidents(), fetchPendingCleanings().catch(() => null), fetchValuation('company').catch(() => null), fetchValuation('owner').catch(() => null), fetchCurrency().catch(() => 'EGP')])
       setToOrder(to)
       setGaps(ga)
       setShortages(sh)
       setApartments(ap)
       setBuildings(bl)
       setIncidents(inc)
-      setPendingCleanings(pc.length)
-      setOldestPendingCleaning(oldestOf(pc.map((c) => c.created_at)))
+      setPendingCleanings(pc ? pc.length : null)
+      setOldestPendingCleaning(pc ? oldestOf(pc.map((c) => c.created_at)) : null)
       setFinance(valCompany && valOwner
         ? {
             company: valuationTotals(valCompany),
@@ -182,7 +183,7 @@ export function Dashboard() {
   }
 
   const cards: Array<{
-    key: string; label: string; count: number; icon: typeof TrendingDown; to: string
+    key: string; label: string; count: number | null; icon: typeof TrendingDown; to: string
     badge: { text: string; tone: BadgeTone }; hint?: string
   }> = [
     {
@@ -195,7 +196,10 @@ export function Dashboard() {
     },
     {
       key: 'cleanings', label: t.admin.dashboard.pendingCleanings, count: pendingCleanings, icon: CheckCheck,
-      to: '/admin/more/cleaning-approvals', badge: ageBadge(pendingCleanings, oldestPendingCleaning),
+      to: '/admin/more/cleaning-approvals',
+      badge: pendingCleanings === null
+        ? { text: t.admin.dashboard.statusLoadFailed, tone: 'bad' }
+        : ageBadge(pendingCleanings, oldestPendingCleaning),
       hint: oldestPendingCleaning ? `${t.admin.dashboard.oldest}: ${relativeTime(oldestPendingCleaning)}` : undefined,
     },
     {
@@ -240,7 +244,7 @@ export function Dashboard() {
                 {badge.text}
               </span>
             </div>
-            <b className="text-2xl font-semibold text-ink block">{n(String(count))}</b>
+            <b className="text-2xl font-semibold text-ink block">{count === null ? '—' : n(String(count))}</b>
             <span className="text-muted text-xs block line-clamp-2">{label}</span>
             {hint && <span className="text-muted text-[11px] block mt-1 line-clamp-2">{hint}</span>}
           </button>

@@ -393,6 +393,7 @@ export const ar: Dict = {
       ringLow: 'ناقص كتير',
       ringNoNorms: 'مفيش نورمات',
       ringEmpty: 'مفيش شقق ليها نورمات',
+      statusLoadFailed: 'فشل التحميل',
       toOrder: 'يُطلب',
       gaps: 'شقق ناقصة',
       shortages: 'نقص في المخزن',

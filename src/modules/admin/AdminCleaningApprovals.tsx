@@ -18,6 +18,7 @@ import {
   type CleaningPreviewLine,
 } from '@/modules/admin/api'
 import { fetchProfileName } from '@/modules/incidents/IncidentDetailModal'
+import { Modal } from '@/components/Modal'
 import type { Apartment } from '@/lib/database.types'
 
 function isVideoPath(path: string): boolean {
@@ -107,7 +108,7 @@ export function AdminCleaningApprovals() {
             const author = item.created_by ? authors.get(item.created_by) : undefined
             const cleaner = item.lead_staff_id != null ? staff.get(item.lead_staff_id) : undefined
             return (
-              <div key={item.id} className="bg-surface rounded-xl border border-line p-4">
+              <div key={item.id} className="tile rounded-[20px] p-4">
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <span className="text-base font-semibold text-ink">{aptMap.get(item.apartment_id) ?? `#${item.apartment_id}`}</span>
                   <span className="text-xs text-muted">{formatDateTime(item.cleaned_at)}</span>
@@ -119,7 +120,7 @@ export function AdminCleaningApprovals() {
                 {(item.media_paths?.length ?? 0) > 0 && (
                   <button
                     onClick={() => setViewerPaths(item.media_paths)}
-                    className="mt-3 w-full flex items-center gap-3 bg-app rounded-lg px-3 py-2 min-h-[44px] text-left"
+                    className="mt-3 w-full flex items-center gap-3 well rounded-lg px-3 py-2 min-h-[44px] text-start"
                   >
                     <span className="flex items-center gap-1 text-muted">
                       <Camera className="w-4 h-4" /><Video className="w-4 h-4" />
@@ -130,7 +131,7 @@ export function AdminCleaningApprovals() {
                   </button>
                 )}
 
-                <div className="mt-3 bg-app rounded-lg px-3 py-2">
+                <div className="mt-3 well rounded-lg px-3 py-2">
                   <p className="text-xs font-medium text-muted mb-1">{t.admin.approvals.willWriteOff}</p>
                   {lines.length === 0 ? (
                     <p className="text-xs text-muted">{t.admin.approvals.noMaterials}</p>
@@ -150,7 +151,7 @@ export function AdminCleaningApprovals() {
                   </button>
                   <button
                     onClick={() => { setNote(''); setAction({ item, decision: 'confirm' }) }}
-                    className="flex-1 bg-ok text-white rounded-xl py-2.5 min-h-[44px] text-sm font-medium flex items-center justify-center gap-2"
+                    className="flex-1 bg-ok text-on-accent rounded-xl py-2.5 min-h-[44px] text-sm font-medium flex items-center justify-center gap-2"
                   >
                     <Check className="w-4 h-4" />{t.admin.approvals.confirm}
                   </button>
@@ -166,30 +167,30 @@ export function AdminCleaningApprovals() {
       )}
 
       {action && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-6">
-          <div className="bg-surface border border-line rounded-2xl w-full max-w-sm p-5">
-            <h3 className="text-base font-semibold text-ink mb-4">
-              {action.decision === 'confirm' ? t.admin.approvals.confirmTitle : t.admin.approvals.rejectTitle}
-            </h3>
+        <Modal
+          open
+          title={action.decision === 'confirm' ? t.admin.approvals.confirmTitle : t.admin.approvals.rejectTitle}
+          onClose={() => { if (!processing) setAction(null) }}
+          size="sm"
+        >
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder={t.admin.approvals.notePlaceholder}
-              className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none mb-3"
+              className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none mb-3"
             />
             <div className="flex gap-3">
-              <button onClick={() => setAction(null)} className="flex-1 bg-app text-ink rounded-xl py-3 font-medium">{t.cleaning.cancel}</button>
+              <button onClick={() => setAction(null)} disabled={processing} className="flex-1 bg-app text-ink rounded-xl py-3 font-medium disabled:opacity-40">{t.cleaning.cancel}</button>
               <button
                 onClick={handleAction}
                 disabled={processing}
-                className={`flex-1 text-white rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2 ${action.decision === 'confirm' ? 'bg-ok' : 'bg-bad'}`}
+                className={`flex-1 text-on-accent rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2 ${action.decision === 'confirm' ? 'bg-ok' : 'bg-bad'}`}
               >
                 {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 {action.decision === 'confirm' ? t.admin.approvals.confirm : t.admin.approvals.reject}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

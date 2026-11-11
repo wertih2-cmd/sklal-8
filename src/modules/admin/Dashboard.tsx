@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { CompletenessRing } from '@/modules/admin/CompletenessRing'
+import { summarizeCompleteness } from '@/modules/admin/completeness'
 import { fetchToOrder, fetchApartmentGaps, fetchShortageEvents, fetchApartmentsAdmin, fetchBuildings, fetchAllIncidents, fetchPendingCleanings, ackEvents, fetchValuation, fetchCurrency } from '@/modules/admin/api'
 import type { ToOrderRow, ApartmentGapRow, Apartment, Building, AptType, Incident, NormalizedShortageEvent } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
@@ -133,6 +135,14 @@ export function Dashboard() {
     }
     return map
   }, [gaps])
+
+  const completeness = useMemo(
+    () => summarizeCompleteness(
+      apartments.map((a) => a.id),
+      new Map(Array.from(gapApartments, ([id, v]) => [id, v.items.length] as const)),
+    ),
+    [apartments, gapApartments],
+  )
 
   const apartmentsByType = useMemo(() => {
     const typeOrder: AptType[] = ['studio', '1br', '2br']
@@ -310,8 +320,19 @@ export function Dashboard() {
         <section className="panel rounded-[20px] p-4">
           <h2 className="text-base font-semibold text-ink mb-3 flex items-center gap-2">
             <PackageX className="w-4 h-4 text-warn" />
-            {t.admin.apartments.completeness}
+            {t.admin.dashboard.ringTitle}
           </h2>
+          <CompletenessRing
+            summary={completeness}
+            fmt={n}
+            labels={{
+              complete: t.admin.dashboard.ringComplete,
+              few: t.admin.dashboard.ringFew,
+              many: t.admin.dashboard.ringMany,
+              center: t.admin.dashboard.ringCenter,
+              empty: t.admin.dashboard.ringEmpty,
+            }}
+          />
           {apartmentsByType.map(([typeLabel, apts]) => (
             <div key={typeLabel}>
               <div className="font-semibold text-sm text-ink mt-4 mb-2 first:mt-0">{typeLabel}</div>

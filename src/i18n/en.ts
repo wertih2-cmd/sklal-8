@@ -386,6 +386,12 @@ export const en: Dict = {
       newOperation: 'New operation',
     },
     dashboard: {
+      ringTitle: 'Apartment completeness',
+      ringComplete: 'Complete',
+      ringFew: 'Slightly short',
+      ringMany: 'Badly short',
+      ringCenter: 'complete',
+      ringEmpty: 'No apartments',
       toOrder: 'To order',
       gaps: 'Incomplete apartments',
       shortages: 'Stock shortage',

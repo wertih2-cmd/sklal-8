@@ -387,6 +387,12 @@ export const ar: Dict = {
       newOperation: 'عملية جديدة',
     },
     dashboard: {
+      ringTitle: 'اكتمال الشقق',
+      ringComplete: 'مكتملة',
+      ringFew: 'ناقص قليل',
+      ringMany: 'ناقص كتير',
+      ringCenter: 'مكتمل',
+      ringEmpty: 'لا توجد شقق',
       toOrder: 'يُطلب',
       gaps: 'شقق ناقصة',
       shortages: 'نقص في المخزن',

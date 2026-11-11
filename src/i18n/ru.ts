@@ -384,6 +384,12 @@ export const ru = {
       newOperation: 'Новая операция',
     },
     dashboard: {
+      ringTitle: 'Укомплектованность квартир',
+      ringComplete: 'Укомплектованы',
+      ringFew: 'Не хватает немногого',
+      ringMany: 'Не хватает много',
+      ringCenter: 'укомплектовано',
+      ringEmpty: 'Нет квартир',
       toOrder: 'К заказу',
       gaps: 'Неполные квартиры',
       shortages: 'Дефицит на складе',

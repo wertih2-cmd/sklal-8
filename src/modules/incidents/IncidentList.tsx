@@ -72,7 +72,7 @@ export function IncidentList() {
     <div className="px-4 pt-6 pb-28">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold text-ink">{t.incidents.myIncidents}</h1>
-        <button onClick={() => navigate('/sv/incidents/new')} className="bg-accent text-white rounded-xl px-4 py-2 text-sm font-medium flex items-center gap-1.5">
+        <button onClick={() => navigate('/sv/incidents/new')} className="bg-accent text-on-accent rounded-xl px-4 py-2 text-sm font-medium flex items-center gap-1.5">
           <Plus className="w-4 h-4" />
           {t.incidents.title}
         </button>
@@ -95,10 +95,10 @@ export function IncidentList() {
               <button
                 key={inc.id}
                 onClick={() => setSelected(inc)}
-                className="w-full text-left bg-surface rounded-xl border border-line px-4 py-3 transition-colors hover:bg-app active:bg-app"
+                className="w-full text-start tile rounded-[20px] px-4 py-3 transition-colors hover:border-accent"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 bg-app rounded-lg flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 well rounded-lg flex items-center justify-center shrink-0">
                     <Icon className="w-4 h-4 text-muted" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -114,7 +114,7 @@ export function IncidentList() {
                       <span className="text-xs text-muted">·</span>
                       <span className="text-xs text-muted">{n(formatDateTime(inc.created_at))}</span>
                     </div>
-                    {inc.comment && <p className="text-xs text-muted mt-1.5 bg-app rounded-lg px-2.5 py-1.5 line-clamp-2">{inc.comment}</p>}
+                    {inc.comment && <p className="text-xs text-muted mt-1.5 well rounded-lg px-2.5 py-1.5 line-clamp-2">{inc.comment}</p>}
                     {hasPhotos && (
                       <div className="flex items-center gap-1 mt-1.5 text-xs text-muted">
                         <ImageIcon className="w-3.5 h-3.5" />
@@ -122,7 +122,7 @@ export function IncidentList() {
                       </div>
                     )}
                   </div>
-                  <ChevronRight className="w-4 h-4 text-muted shrink-0 mt-1" />
+                  <ChevronRight className="w-4 h-4 text-muted shrink-0 mt-1 rtl:rotate-180" />
                 </div>
               </button>
             )

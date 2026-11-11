@@ -3,9 +3,10 @@ import { supabase } from '@/lib/supabase'
 import { createSignedUrls } from '@/modules/qr/api'
 import { useI18n } from '@/i18n'
 import { formatDateTime } from '@/lib/format'
-import { X, Wrench, Package, CircleAlert as AlertCircle, Image as ImageIcon } from 'lucide-react'
+import { Wrench, Package, CircleAlert as AlertCircle, Image as ImageIcon } from 'lucide-react'
 import type { Incident, IncidentKind, IncidentStatus } from '@/lib/database.types'
 import { friendlyMessage } from '@/lib/errors'
+import { Modal } from '@/components/Modal'
 
 const kindIcons: Record<IncidentKind, React.ComponentType<{ className?: string }>> = {
   breakdown: Wrench,
@@ -77,23 +78,15 @@ export function IncidentDetailModal({
   }, [incident.photo_paths])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 anim-scrim" onClick={onClose} />
-      <div className="relative bg-surface w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-line anim-drawer">
-        <div className="sticky top-0 bg-surface border-b border-line px-4 py-3 flex items-center justify-between">
-          <h3 className="text-base font-semibold text-ink">{t.qr.incidentsTab}</h3>
-          <button onClick={onClose} className="p-1 -mr-1">
-            <X className="w-5 h-5 text-muted" />
-          </button>
-        </div>
-        <div className="px-4 py-4 space-y-3">
+    <Modal open title={t.qr.incidentsTab} onClose={onClose} size="md">
+        <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-app rounded-lg flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 well rounded-lg flex items-center justify-center shrink-0">
               <Icon className="w-5 h-5 text-muted" />
             </div>
             <div className="flex-1 min-w-0">
               <span className="text-sm font-medium text-ink">{kindLabel(incident.kind, t)}</span>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ml-2 ${statusColors[incident.status]}`}>
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ms-2 ${statusColors[incident.status]}`}>
                 {statusLabel(incident.status, t)}
               </span>
             </div>
@@ -144,10 +137,10 @@ export function IncidentDetailModal({
                   const isImg = isFileImage(path)
                   return (
                     <div key={path}>
-                      {url && isImg && <img src={url} alt="" className="rounded-xl w-full max-h-96 object-contain bg-app" />}
+                      {url && isImg && <img src={url} alt="" className="rounded-xl w-full max-h-96 object-contain well" />}
                       {url && !isImg && <video src={url} controls className="rounded-xl w-full max-h-96" />}
                       {!url && (
-                        <div className="rounded-xl w-full h-32 bg-app flex items-center justify-center">
+                        <div className="rounded-xl w-full h-32 well flex items-center justify-center">
                           <ImageIcon className="w-6 h-6 text-muted" />
                         </div>
                       )}
@@ -181,8 +174,7 @@ export function IncidentDetailModal({
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 

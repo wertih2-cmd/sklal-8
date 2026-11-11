@@ -11,6 +11,7 @@ import { friendlyMessage } from '@/lib/errors'
 import { IncidentDetailModal, fetchProfileName } from '@/modules/incidents/IncidentDetailModal'
 import { useLiveRefresh } from '@/lib/realtime'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Modal } from '@/components/Modal'
 import {
   initChargeState, applyPreview, buildChargePayload, canSubmit, computeAmount,
   type ChargeFormState,
@@ -224,13 +225,13 @@ export function AdminIncidents() {
             const hasPhotos = inc.photo_paths.length > 0
             const charge = charges.get(inc.id)
             return (
-              <div key={inc.id} className="bg-surface rounded-xl border border-line px-4 py-3">
+              <div key={inc.id} className="tile rounded-[20px] px-4 py-3">
                 <button
                   onClick={() => setSelected(inc)}
                   className="w-full text-start"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 bg-app rounded-lg flex items-center justify-center shrink-0">
+                    <div className="w-9 h-9 well rounded-lg flex items-center justify-center shrink-0">
                       <Icon className="w-4 h-4 text-muted" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -246,7 +247,7 @@ export function AdminIncidents() {
                         <span className="text-xs text-muted">·</span>
                         <span className="text-xs text-muted">{n(formatDateTime(inc.created_at))}</span>
                       </div>
-                      {inc.comment && <p className="text-xs text-muted mt-1.5 bg-app rounded-lg px-2.5 py-1.5 line-clamp-2">{inc.comment}</p>}
+                      {inc.comment && <p className="text-xs text-muted mt-1.5 well rounded-lg px-2.5 py-1.5 line-clamp-2">{inc.comment}</p>}
                       {hasPhotos && (
                         <div className="flex items-center gap-1 mt-1.5 text-xs text-muted">
                           <ImageIcon className="w-3.5 h-3.5" />
@@ -255,7 +256,7 @@ export function AdminIncidents() {
                       )}
                       {inc.resolution_note && <p className="text-xs text-muted mt-1 line-clamp-1">{inc.resolution_note}</p>}
                     </div>
-                    <ChevronRight className="w-4 h-4 text-muted shrink-0 mt-1" />
+                    <ChevronRight className="w-4 h-4 text-muted shrink-0 mt-1 rtl:rotate-180" />
                   </div>
                 </button>
 
@@ -346,16 +347,17 @@ export function AdminIncidents() {
       )}
 
       {actionIncident && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-6" onClick={() => !processing && setActionIncident(null)}>
-          <div className="bg-surface border border-line rounded-2xl w-full max-w-sm p-5 max-h-[90dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base font-semibold text-ink mb-4">
-              {actionIncident.decision === 'confirm' ? t.admin.adminIncidents.confirmTitle : t.admin.adminIncidents.rejectTitle}
-            </h3>
+        <Modal
+          open
+          title={actionIncident.decision === 'confirm' ? t.admin.adminIncidents.confirmTitle : t.admin.adminIncidents.rejectTitle}
+          onClose={() => { if (!processing) setActionIncident(null) }}
+          size="sm"
+        >
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder={t.admin.adminIncidents.note}
-              className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none mb-3"
+              className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none mb-3"
             />
             {actionIncident.decision === 'confirm' && actionIncident.incident.item_id && (
               <label className="flex items-center gap-2 mb-3">
@@ -408,7 +410,7 @@ export function AdminIncidents() {
                         value={chargeState.tenantNote}
                         onChange={(e) => setChargeState({ ...chargeState, tenantNote: e.target.value.slice(0, 200) })}
                         placeholder={t.admin.adminIncidents.tenantHint}
-                        className="w-full bg-app rounded-lg px-3 py-2 text-sm focus:outline-none"
+                        className="w-full well rounded-lg px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none"
                       />
                     </div>
 
@@ -421,7 +423,7 @@ export function AdminIncidents() {
                         min="0"
                         value={chargeState.baseCost}
                         onChange={(e) => setChargeState({ ...chargeState, baseCost: e.target.value, baseCostDirty: true })}
-                        className="w-full bg-app rounded-lg px-3 py-2 text-sm focus:outline-none"
+                        className="w-full well rounded-lg px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none"
                       />
                       <p className="text-xs text-muted mt-0.5">
                         {chargeState.baseCostDirty
@@ -443,7 +445,7 @@ export function AdminIncidents() {
                         min="0"
                         value={chargeState.coef}
                         onChange={(e) => setChargeState({ ...chargeState, coef: e.target.value, coefDirty: true })}
-                        className={`w-full bg-app rounded-lg px-3 py-2 text-sm focus:outline-none ${chargeState.coef === '' || Number(chargeState.coef) <= 0 ? 'border border-bad' : ''}`}
+                        className={`w-full well rounded-lg px-3 py-2 text-sm border focus:outline-none ${chargeState.coef === '' || Number(chargeState.coef) <= 0 ? 'border-bad' : 'border-line focus:border-accent'}`}
                       />
                       <p className={`text-xs mt-0.5 ${chargeState.coef === '' || Number(chargeState.coef) <= 0 ? 'text-bad' : 'text-muted'}`}>
                         {chargeState.coef === '' || Number(chargeState.coef) <= 0
@@ -481,7 +483,7 @@ export function AdminIncidents() {
               <button
                 onClick={handleAction}
                 disabled={processing || (actionIncident.decision === 'confirm' && !submitReady)}
-                className={`flex-1 text-white rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2 ${actionIncident.decision === 'confirm' ? 'bg-ok' : 'bg-bad'}`}
+                className={`flex-1 text-on-accent rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2 ${actionIncident.decision === 'confirm' ? 'bg-ok' : 'bg-bad'}`}
               >
                 {processing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 {actionIncident.decision === 'confirm' ? confirmLabel : t.admin.adminIncidents.reject}
@@ -490,8 +492,7 @@ export function AdminIncidents() {
             {disableReason && (
               <p className="text-xs text-bad text-center mt-2">{disableReason}</p>
             )}
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Charge status change dialog */}
@@ -517,7 +518,7 @@ export function AdminIncidents() {
 
       {/* Overlay for status processing */}
       {statusProcessing && (
-        <div className="fixed inset-0 bg-black/30 z-[71] flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/30 z-modal flex items-center justify-center">
           <Loader2 className="w-6 h-6 text-white animate-spin" />
         </div>
       )}

@@ -145,9 +145,17 @@ body {
   /* Same look as .glass, without the blur: for cards that scroll with the page. Without backdrop-filter there is no
      containing block for fixed dialogs inside them, and phones are spared a blur per card. */
   .panel {
-    background: var(--glass-bg);
+    background:
+      linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0)),
+      color-mix(in srgb, var(--surface) 90%, transparent);
     border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
+    box-shadow: inset 0 1px 0 var(--glass-inset-line), 0 10px 28px var(--well-shadow);
+  }
+  /* Small cards (tiles): a plain surface, so the colour spots of the background do not show through. */
+  .tile {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    box-shadow: inset 0 1px 0 var(--glass-inset-line), 0 6px 16px var(--well-shadow);
   }
   /* A recessed cell inside a panel. */
   .well {
@@ -220,8 +228,8 @@ body {
     --warn: #a86b00; --warn-soft: #fdf0d6; --on-warn: #fff;
     --ok: #2a7d4f; --ok-soft: #dff3e7; --on-ok: #fff;
   }
-  .bg-app, .bg-surface, .glass, .panel, .well { background: #fff !important; box-shadow: none !important; backdrop-filter: none !important; }
-  .panel, .well { border-color: #ccc !important; }
+  .bg-app, .bg-surface, .glass, .panel, .well, .tile { background: #fff !important; box-shadow: none !important; backdrop-filter: none !important; }
+  .panel, .well, .tile { border-color: #ccc !important; }
   .app-glow { background-image: none !important; }
   .text-ink { color: #000 !important; }
   .text-muted { color: #555 !important; }

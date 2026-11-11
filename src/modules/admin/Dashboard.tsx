@@ -215,13 +215,13 @@ export function Dashboard() {
     <div className="px-4 pt-5 pb-28 lg:px-0 lg:pt-0">
       <h1 className="text-xl font-semibold text-ink mb-5">{t.admin.nav.home}</h1>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-2.5 mb-5">
+      <div className="grid grid-cols-2 lg:grid-cols-5 auto-rows-fr gap-2.5 mb-5">
         {cards.map(({ key, label, count, icon: Icon, to, badge, hint }) => (
           <button
             key={key}
             data-testid={`dash-card-${key}`}
             onClick={() => navigate(to)}
-            className="panel rounded-[20px] px-3.5 py-3 text-start transition-colors hover:border-accent"
+            className="tile rounded-[20px] px-3.5 py-3 text-start transition-colors hover:border-accent"
             style={badge.tone === 'bad' ? { borderColor: 'var(--bad)' } : undefined}
           >
             <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 mb-2">
@@ -231,8 +231,8 @@ export function Dashboard() {
               </span>
             </div>
             <b className="text-2xl font-semibold text-ink block">{n(String(count))}</b>
-            <span className="text-muted text-xs block">{label}</span>
-            {hint && <span className="text-muted text-[11px] block mt-1">{hint}</span>}
+            <span className="text-muted text-xs block line-clamp-2">{label}</span>
+            {hint && <span className="text-muted text-[11px] block mt-1 line-clamp-2">{hint}</span>}
           </button>
         ))}
       </div>
@@ -257,7 +257,7 @@ export function Dashboard() {
               key={key}
               data-testid={`dash-finance-${key}`}
               onClick={() => navigate('/admin/more/reports?tab=valuation')}
-              className={`panel rounded-[20px] px-3.5 py-3 text-start transition-colors hover:border-accent ${key === 'stockValue' ? 'col-span-2 sm:col-span-1' : ''}`}
+              className={`tile rounded-[20px] px-3.5 py-3 text-start transition-colors hover:border-accent ${key === 'stockValue' ? 'col-span-2 sm:col-span-1' : ''}`}
             >
               <Wallet className="w-5 h-5 text-muted mb-2" />
               <b className="text-lg sm:text-xl font-semibold text-ink block break-words">{new Intl.NumberFormat(undefined, { style: 'currency', currency: finance.currency }).format(value)}</b>
@@ -361,7 +361,7 @@ export function Dashboard() {
           </div>
           <div className="space-y-2">
             {shortages.map((ev) => (
-              <div key={ev.id} className="panel rounded-2xl px-4 py-3">
+              <div key={ev.id} className="tile rounded-2xl px-4 py-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     {ev.items.map((it, i) => (

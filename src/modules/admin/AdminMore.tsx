@@ -29,18 +29,18 @@ export function AdminMore() {
     <div className="px-4 pt-6 pb-28">
       <h1 className="text-xl font-semibold text-ink mb-4">{t.admin.more.title}</h1>
 
-      <div className="bg-surface rounded-xl border border-line divide-y divide-[var(--line)] mb-4">
+      <div className="panel rounded-[20px] p-2.5 mb-4 flex flex-col gap-2">
         {items.map((item) => {
           const Icon = item.icon
           return (
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className="w-full px-4 py-3.5 flex items-center gap-3 text-left hover:bg-app transition-colors"
+              className="well w-full min-h-[48px] rounded-xl px-4 py-3 flex items-center gap-3 text-start transition-colors hover:border-accent"
             >
               <Icon className="w-5 h-5 text-muted" />
               <span className="flex-1 text-sm text-ink">{item.label}</span>
-              <ChevronRight className="w-4 h-4 text-muted" />
+              <ChevronRight className="w-4 h-4 text-muted rtl:rotate-180" />
             </button>
           )
         })}
@@ -48,7 +48,7 @@ export function AdminMore() {
 
       <button
         onClick={() => navigate('/sv')}
-        className="w-full bg-surface rounded-xl border border-line px-4 py-3.5 flex items-center gap-3 text-left hover:bg-app transition-colors"
+        className="tile w-full min-h-[48px] rounded-[20px] px-4 py-3.5 flex items-center gap-3 text-start transition-colors hover:border-accent"
       >
         <ExternalLink className="w-5 h-5 text-accent" />
         <span className="flex-1 text-sm text-accent font-medium">{t.admin.more.openAsSv}</span>
@@ -56,7 +56,7 @@ export function AdminMore() {
 
       {profile && (
         <div className="mt-6">
-          <div className="bg-surface rounded-xl border border-line px-4 py-3 flex items-center gap-3">
+          <div className="tile rounded-[20px] px-4 py-3 flex items-center gap-3">
             <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
               <Users className="w-5 h-5 text-on-accent" />
             </div>
@@ -67,7 +67,7 @@ export function AdminMore() {
           </div>
           <button
             onClick={signOut}
-            className="w-full mt-3 bg-surface border border-line text-bad rounded-xl py-3 font-medium"
+            className="tile w-full mt-3 min-h-[48px] text-bad rounded-[20px] py-3 font-medium transition-colors hover:border-bad"
           >
             {t.profile.logout}
           </button>

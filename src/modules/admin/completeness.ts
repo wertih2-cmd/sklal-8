@@ -1,44 +1,56 @@
-/** How many short lines (items below the apartment norm) still count as "a little short". */
-export const FEW_LINES_MAX = 3
+/** From this share of covered norm lines an apartment counts as "almost complete" (same threshold as the bars). */
+export const ALMOST_PCT = 75
 
-export type CompletenessLevel = 'complete' | 'few' | 'many'
+export type CompletenessLevel = 'complete' | 'almost' | 'low' | 'none'
+
+/** Norm lines of one apartment: how many it has in total and how many of them are short. */
+export interface ApartmentNorms {
+  total: number
+  missing: number
+}
 
 export interface CompletenessSummary {
+  /** Apartments that have norms: only they take part in the ring. */
   total: number
   complete: number
-  few: number
-  many: number
-  /** Share of fully complete apartments, 0..100. 100 only when every apartment is complete. */
+  almost: number
+  low: number
+  /** Apartments without any norm line: completeness is not defined for them. */
+  noNorms: number
+  /** Share of complete apartments among those with norms, 0..100. 100 only when every one is complete. */
   pct: number
 }
 
-export function levelOf(shortLines: number): CompletenessLevel {
-  if (shortLines <= 0) return 'complete'
-  return shortLines <= FEW_LINES_MAX ? 'few' : 'many'
+export function levelOf(n: ApartmentNorms | undefined): CompletenessLevel {
+  if (!n || n.total <= 0) return 'none'
+  if (n.missing <= 0) return 'complete'
+  const covered = ((n.total - n.missing) / n.total) * 100
+  return covered >= ALMOST_PCT ? 'almost' : 'low'
 }
 
 /**
- * Counts apartments by how many norm lines are short. `shortLinesByApartment` holds only apartments that have at
- * least one short line (the apartment_gap query returns just those); a missing id means "no short lines".
- * Gap rows of ids that are not in `apartmentIds` are ignored.
+ * Counts apartments by how well their norms are covered. `byApartment` has an entry for every apartment that has
+ * norm lines; an id missing from it means "no norms". Entries of ids that are not in `apartmentIds` are ignored.
  */
 export function summarizeCompleteness(
   apartmentIds: readonly number[],
-  shortLinesByApartment: ReadonlyMap<number, number>,
+  byApartment: ReadonlyMap<number, ApartmentNorms>,
 ): CompletenessSummary {
   let complete = 0
-  let few = 0
-  let many = 0
+  let almost = 0
+  let low = 0
+  let noNorms = 0
   for (const id of apartmentIds) {
-    const level = levelOf(shortLinesByApartment.get(id) ?? 0)
+    const level = levelOf(byApartment.get(id))
     if (level === 'complete') complete++
-    else if (level === 'few') few++
-    else many++
+    else if (level === 'almost') almost++
+    else if (level === 'low') low++
+    else noNorms++
   }
-  const total = complete + few + many
+  const total = complete + almost + low
   let pct = 0
   if (total > 0) pct = complete === total ? 100 : Math.min(99, Math.round((complete / total) * 100))
-  return { total, complete, few, many, pct }
+  return { total, complete, almost, low, noNorms, pct }
 }
 
 export interface RingArc {

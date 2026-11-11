@@ -1,38 +1,56 @@
 import { describe, it, expect } from 'vitest'
-import { FEW_LINES_MAX, levelOf, summarizeCompleteness, ringArcs } from './completeness'
+import { ALMOST_PCT, levelOf, summarizeCompleteness, ringArcs } from './completeness'
 
 describe('levelOf', () => {
-  it('no short lines is complete', () => {
-    expect(levelOf(0)).toBe('complete')
-    expect(levelOf(-1)).toBe('complete')
+  it('no norm lines at all is "none"', () => {
+    expect(levelOf(undefined)).toBe('none')
+    expect(levelOf({ total: 0, missing: 0 })).toBe('none')
   })
-  it('a few short lines up to the limit', () => {
-    expect(levelOf(1)).toBe('few')
-    expect(levelOf(FEW_LINES_MAX)).toBe('few')
+  it('nothing short is complete', () => {
+    expect(levelOf({ total: 10, missing: 0 })).toBe('complete')
   })
-  it('more than the limit is many', () => {
-    expect(levelOf(FEW_LINES_MAX + 1)).toBe('many')
+  it('the threshold is inclusive: exactly 75% covered is almost', () => {
+    expect(ALMOST_PCT).toBe(75)
+    expect(levelOf({ total: 4, missing: 1 })).toBe('almost')
+    expect(levelOf({ total: 10, missing: 2 })).toBe('almost')
+  })
+  it('below the threshold is low', () => {
+    expect(levelOf({ total: 4, missing: 2 })).toBe('low')
+    expect(levelOf({ total: 10, missing: 3 })).toBe('low')
+    expect(levelOf({ total: 5, missing: 5 })).toBe('low')
   })
 })
 
 describe('summarizeCompleteness', () => {
-  it('counts apartments by level; an id missing from the map is complete', () => {
-    const gaps = new Map([[1, 1], [2, 5], [3, 3]])
-    const s = summarizeCompleteness([1, 2, 3, 4, 5], gaps)
-    expect(s).toEqual({ total: 5, complete: 2, few: 2, many: 1, pct: 40 })
+  it('counts apartments by level; an id missing from the map has no norms', () => {
+    const by = new Map([
+      [1, { total: 10, missing: 0 }],
+      [2, { total: 10, missing: 2 }],
+      [3, { total: 10, missing: 6 }],
+      [4, { total: 3, missing: 0 }],
+    ])
+    const s = summarizeCompleteness([1, 2, 3, 4, 5], by)
+    expect(s).toEqual({ total: 4, complete: 2, almost: 1, low: 1, noNorms: 1, pct: 50 })
   })
-  it('ignores gap rows of apartments that are not in the list', () => {
-    const s = summarizeCompleteness([1, 2], new Map([[99, 7]]))
-    expect(s).toEqual({ total: 2, complete: 2, few: 0, many: 0, pct: 100 })
+  it('apartments without norms do not count in the share', () => {
+    const s = summarizeCompleteness([1, 2, 3], new Map([[1, { total: 2, missing: 0 }]]))
+    expect(s.total).toBe(1)
+    expect(s.noNorms).toBe(2)
+    expect(s.pct).toBe(100)
+  })
+  it('ignores entries of apartments that are not in the list', () => {
+    const s = summarizeCompleteness([1], new Map([[99, { total: 5, missing: 5 }]]))
+    expect(s).toEqual({ total: 0, complete: 0, almost: 0, low: 0, noNorms: 1, pct: 0 })
   })
   it('never shows 100 while something is short', () => {
     const ids = Array.from({ length: 300 }, (_, i) => i + 1)
-    const s = summarizeCompleteness(ids, new Map([[1, 2]]))
+    const by = new Map(ids.map((id) => [id, { total: 5, missing: id === 1 ? 1 : 0 }] as const))
+    const s = summarizeCompleteness(ids, by)
     expect(s.complete).toBe(299)
     expect(s.pct).toBe(99)
   })
   it('no apartments gives zeros', () => {
-    expect(summarizeCompleteness([], new Map())).toEqual({ total: 0, complete: 0, few: 0, many: 0, pct: 0 })
+    expect(summarizeCompleteness([], new Map())).toEqual({ total: 0, complete: 0, almost: 0, low: 0, noNorms: 0, pct: 0 })
   })
 })
 

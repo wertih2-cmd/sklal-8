@@ -139,7 +139,7 @@ export function Dashboard() {
   const completeness = useMemo(
     () => summarizeCompleteness(
       apartments.map((a) => a.id),
-      new Map(Array.from(gapApartments, ([id, v]) => [id, v.items.length] as const)),
+      new Map(Array.from(gapApartments, ([id, v]) => [id, { total: v.totalNorms, missing: v.items.length }] as const)),
     ),
     [apartments, gapApartments],
   )
@@ -327,9 +327,9 @@ export function Dashboard() {
             fmt={n}
             labels={{
               complete: t.admin.dashboard.ringComplete,
-              few: t.admin.dashboard.ringFew,
-              many: t.admin.dashboard.ringMany,
-              center: t.admin.dashboard.ringCenter,
+              almost: t.admin.dashboard.ringAlmost,
+              low: t.admin.dashboard.ringLow,
+              noNorms: t.admin.dashboard.ringNoNorms,
               empty: t.admin.dashboard.ringEmpty,
             }}
           />

@@ -66,7 +66,6 @@ export async function fetchApartmentGaps(): Promise<ApartmentGapRow[]> {
     supabase
       .from('apartment_gap')
       .select('apartment_id,code,item_id,name,norm,actual,gap')
-      .gt('gap', 0)
       .order('apartment_id')
       .order('item_id')
       .range(from, to),

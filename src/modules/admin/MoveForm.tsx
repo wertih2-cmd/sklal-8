@@ -7,8 +7,9 @@ import { formatQty } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
 import { lineSource, isTransferBlocked, transferOwnerFlags, buildOwnerStockMap, ownerAvailable, type MoveOp } from '@/modules/admin/moveRules'
 import { unitSource, candidateUnits, effectiveSelection, toggleUnit, type UnitLocation } from '@/modules/admin/unitSelection'
-import { Plus, Minus, Trash2, Loader as Loader2, Check, X, FileText, TriangleAlert as AlertTriangle, Info } from 'lucide-react'
+import { Plus, Minus, Trash2, Loader as Loader2, Check, FileText, TriangleAlert as AlertTriangle, Info } from 'lucide-react'
 import { useCatalogName } from '@/modules/core/useCatalogName'
+import { Modal } from '@/components/Modal'
 
 function localToday(): string {
   const d = new Date()
@@ -366,67 +367,41 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
 
   if (loading) {
     return (
-      <>
-        <div className="fixed inset-0 bg-black/45 z-modal anim-scrim" onClick={onClose} />
-        <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal bg-surface rounded-2xl p-6 max-w-sm w-full">
-          <div className="text-center text-muted text-sm">{t.app.loading}</div>
-        </div>
-      </>
+      <Modal open title={t.admin.move.title} onClose={onClose} size="sm">
+        <div className="text-center text-muted text-sm py-4">{t.app.loading}</div>
+      </Modal>
     )
   }
 
   if (result) {
     return (
-      <>
-        <div className="fixed inset-0 bg-black/45 z-modal anim-scrim" onClick={onClose} />
-        <div className="fixed z-modal left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm bg-surface rounded-2xl p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-ink">{t.admin.move.resultTitle}</h2>
-            <button onClick={onClose} className="p-1" aria-label={t.common.close}>
-              <X className="w-5 h-5 text-muted" />
-            </button>
+      <Modal open title={t.admin.move.resultTitle} onClose={onClose} size="sm">
+        <div className="flex flex-col items-center gap-4 py-4">
+          <div className="w-12 h-12 rounded-full bg-ok-soft flex items-center justify-center">
+            <Check className="w-6 h-6 text-ok" />
           </div>
-          <div className="flex flex-col items-center gap-4 py-4">
-            <div className="w-12 h-12 rounded-full bg-ok-soft flex items-center justify-center">
-              <Check className="w-6 h-6 text-ok" />
-            </div>
-            <div className="text-center">
-              <p className="text-sm text-muted">{t.admin.move.docNumber}</p>
-              <p className="text-lg font-semibold text-ink">{result.doc_number}</p>
-              <p className="text-xs text-muted mt-1">{n(String(result.lines))} {t.admin.move.resultLines}</p>
-            </div>
-            <button
-              onClick={() => { onDone(); navigate(`/admin/more/documents/${result.doc_id}`) }}
-              className="flex items-center gap-2 bg-accent text-white rounded-lg px-4 py-2.5 text-sm font-medium"
-            >
-              <FileText className="w-4 h-4" />
-              {t.admin.move.openDoc}
-            </button>
-            <button onClick={onDone} className="text-sm text-muted">
-              {t.cleaning.cancel}
-            </button>
+          <div className="text-center">
+            <p className="text-sm text-muted">{t.admin.move.docNumber}</p>
+            <p className="text-lg font-semibold text-ink">{result.doc_number}</p>
+            <p className="text-xs text-muted mt-1">{n(String(result.lines))} {t.admin.move.resultLines}</p>
           </div>
+          <button
+            onClick={() => { onDone(); navigate(`/admin/more/documents/${result.doc_id}`) }}
+            className="flex items-center gap-2 bg-accent text-on-accent rounded-lg px-4 py-2.5 text-sm font-medium"
+          >
+            <FileText className="w-4 h-4" />
+            {t.admin.move.openDoc}
+          </button>
+          <button onClick={onDone} className="text-sm text-muted">
+            {t.cleaning.cancel}
+          </button>
         </div>
-      </>
+      </Modal>
     )
   }
 
   return (
-    <>
-      <div className="fixed inset-0 bg-black/45 z-modal anim-scrim" onClick={onClose} />
-      <div
-        className="fixed z-modal left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm max-h-[90dvh] overflow-auto bg-surface rounded-2xl p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet max-md:max-h-[85dvh]"
-        role="dialog"
-        aria-modal="true"
-        aria-label={t.admin.move.title}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold text-ink">{t.admin.move.title}</h2>
-          <button onClick={onClose} className="p-1" aria-label={t.common.close}>
-            <X className="w-5 h-5 text-muted" />
-          </button>
-        </div>
-
+    <Modal open title={t.admin.move.title} onClose={onClose} size="sm">
         <div className="space-y-4">
           {/* Operation type */}
           <div>
@@ -437,7 +412,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
                   key={o.op}
                   onClick={() => handleOpChange(o.op)}
                   className={`rounded-full px-3.5 py-1.5 text-sm transition-colors border ${
-                    op === o.op ? 'bg-accent border-accent text-white' : 'bg-surface border-line text-muted'
+                    op === o.op ? 'bg-accent border-accent text-on-accent' : 'well text-muted'
                   }`}
                 >
                   {o.label}
@@ -450,16 +425,16 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
           {showOwnershipToggle && (
             <div>
               <label className="block text-sm font-medium text-ink mb-1.5">{t.admin.move.ownership}</label>
-              <div className="inline-flex bg-app border border-line rounded-lg p-0.5">
+              <div className="inline-flex well rounded-lg p-0.5">
                 <button
                   onClick={() => handleOwnershipChange('company')}
-                  className={`px-4 py-2 rounded-md text-sm transition-colors ${ownership === 'company' ? 'bg-accent text-white' : 'text-muted'}`}
+                  className={`px-4 py-2 rounded-md text-sm transition-colors ${ownership === 'company' ? 'bg-accent text-on-accent' : 'text-muted'}`}
                 >
                   {t.admin.move.ownershipCompany}
                 </button>
                 <button
                   onClick={() => handleOwnershipChange('owner')}
-                  className={`px-4 py-2 rounded-md text-sm transition-colors ${ownership === 'owner' ? 'bg-accent text-white' : 'text-muted'}`}
+                  className={`px-4 py-2 rounded-md text-sm transition-colors ${ownership === 'owner' ? 'bg-accent text-on-accent' : 'text-muted'}`}
                 >
                   {t.admin.move.ownershipOwner}
                 </button>
@@ -474,7 +449,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
               <select
                 value={ownerAptId ?? ''}
                 onChange={(e) => setOwnerAptId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full bg-surface rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
+                className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
               >
                 <option value="">—</option>
                 {ownerApartments.map((a) => (
@@ -515,7 +490,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
               <select
                 value={apartmentId ?? ''}
                 onChange={(e) => handleApartmentChange(e.target.value ? Number(e.target.value) : null)}
-                className="w-full bg-surface rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
+                className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
               >
                 <option value="">—</option>
                 {apartments.map((a) => (
@@ -531,7 +506,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
               <select
                 value={toApartmentId ?? ''}
                 onChange={(e) => setToApartmentId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full bg-surface rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
+                className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
               >
                 <option value="">—</option>
                 {apartments.filter((a) => a.id !== apartmentId).map((a) => (
@@ -548,7 +523,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
               <select
                 value={staffId ?? ''}
                 onChange={(e) => setStaffId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full bg-surface rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
+                className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
               >
                 <option value="">—</option>
                 {staffList.map((s) => (
@@ -565,7 +540,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
               <select
                 value={supplierId ?? ''}
                 onChange={(e) => setSupplierId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full bg-surface rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
+                className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
               >
                 <option value="">—</option>
                 {suppliers.map((s) => (
@@ -582,7 +557,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t.admin.stock.search}
-              className="w-full bg-surface rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none mb-2"
+              className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none mb-2"
             />
             <div className="flex items-center justify-between mb-1.5 gap-2">
               <span className="text-xs text-muted">{t.admin.move.pickerSelected}: {n(String(cart.length))}</span>
@@ -599,7 +574,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
               </span>
             </div>
             {showPicker && (
-              <div className="bg-surface rounded-lg border border-line max-h-56 overflow-y-auto">
+              <div className="well rounded-lg border border-line max-h-56 overflow-y-auto">
                 {filteredStock.length === 0 && (
                   <p className="px-4 py-2.5 text-sm text-muted">{t.common.noResults}</p>
                 )}
@@ -640,7 +615,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
                   : null
                 const unitLabel = line.unitMode === 'packs' ? line.packLabel : t.common.units[line.baseUnit as keyof typeof t.common.units] ?? line.baseUnit
                 return (
-                  <div key={line.itemId} className="bg-surface rounded-lg border border-line px-3 py-3">
+                  <div key={line.itemId} className="well rounded-xl border border-line px-3 py-3">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-ink">{cat.itemName(line.itemName)}</span>
                       <button onClick={() => removeLine(idx)} className="text-bad p-1" aria-label={t.admin.apartments.delete}>
@@ -681,13 +656,13 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
                       <div className="flex gap-1 mb-2">
                         <button
                           onClick={() => updateLine(idx, { unitMode: 'packs' })}
-                          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${line.unitMode === 'packs' ? 'bg-accent border-accent text-white' : 'bg-surface border-line text-muted'}`}
+                          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${line.unitMode === 'packs' ? 'bg-accent border-accent text-on-accent' : 'well text-muted'}`}
                         >
                           {line.packLabel}
                         </button>
                         <button
                           onClick={() => updateLine(idx, { unitMode: 'base' })}
-                          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${line.unitMode === 'base' ? 'bg-accent border-accent text-white' : 'bg-surface border-line text-muted'}`}
+                          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${line.unitMode === 'base' ? 'bg-accent border-accent text-on-accent' : 'well text-muted'}`}
                         >
                           {t.common.units[line.baseUnit as keyof typeof t.common.units] ?? line.baseUnit}
                         </button>
@@ -807,7 +782,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
               value={docDate}
               max={localToday()}
               onChange={(e) => setDocDate(e.target.value)}
-              className="w-full bg-surface rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
+              className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
             />
             {docDate && docDate !== localToday() && (
               <p className="text-xs text-muted mt-1">{t.admin.move.docDateHint}</p>
@@ -820,7 +795,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
             <input
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full bg-surface rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
+              className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
             />
           </div>
         </div>
@@ -839,13 +814,12 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
           <button
             onClick={handlePost}
             disabled={posting || cart.length === 0 || hasBlockedTransfer || hasOwnerConsumable}
-            className="flex-1 bg-accent text-white rounded-lg py-3 font-medium text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-1 bg-accent text-on-accent rounded-lg py-3 font-medium text-sm disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {posting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             {t.admin.move.post}
           </button>
         </div>
-      </div>
-    </>
+    </Modal>
   )
 }

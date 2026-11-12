@@ -69,7 +69,7 @@ export function TurnoverReport({ from, to, currency }: { from: string; to: strin
       t.admin.reports.colTransferOutQty, t.admin.reports.colInValue, t.admin.reports.colOutValue, t.admin.reports.colTransferInValue, t.admin.reports.colTransferOutValue],
     visible.map((r) => [r.item_name, r.category, r.in_qty, r.out_qty, r.transfer_in_qty, r.transfer_out_qty, r.in_value, r.out_value, r.transfer_in_value, r.transfer_out_value]))
 
-  const chip = (active: boolean) => `px-3 py-1.5 rounded-lg text-sm ${active ? 'bg-accent text-white' : 'bg-app text-muted'}`
+  const chip = (active: boolean) => `px-3 py-1.5 rounded-lg text-sm ${active ? 'bg-accent text-on-accent' : 'bg-app text-muted'}`
   const card = (label: string, value: string) => (
     <div className="bg-app rounded-lg px-3 py-2.5"><div className="text-xs text-muted">{label}</div><div className="text-base font-semibold text-ink">{value}</div></div>
   )
@@ -187,7 +187,7 @@ export function TurnoverReport({ from, to, currency }: { from: string; to: strin
   )
 }
 
-function Th({ children }: { children: React.ReactNode }) { return <th className="text-left font-medium text-muted text-xs px-2 py-2 whitespace-nowrap">{children}</th> }
+function Th({ children }: { children: React.ReactNode }) { return <th className="text-start font-medium text-muted text-xs px-2 py-2 whitespace-nowrap">{children}</th> }
 function Td({ children }: { children: React.ReactNode }) { return <td className="px-2 py-2 text-ink whitespace-nowrap">{children}</td> }
 
 function Kv({ label, value }: { label: string; value: string }) {

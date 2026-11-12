@@ -35,7 +35,7 @@ export function BootstrapScreen() {
           <Input label={t.auth.bootstrapLogin} value={login} onChange={setLogin} name="username" autoComplete="username" />
           <Input label={t.auth.bootstrapPassword} value={password} onChange={setPassword} type="password" name="new-password" autoComplete="new-password" />
           {error && <p className="text-sm text-bad">{error}</p>}
-          <button type="submit" className="w-full bg-accent text-white rounded-xl py-3 font-medium transition-opacity hover:opacity-90">
+          <button type="submit" className="w-full bg-accent text-on-accent rounded-xl py-3 font-medium transition-opacity hover:opacity-90">
             {t.auth.bootstrapSubmit}
           </button>
         </form>
@@ -76,7 +76,7 @@ export function LoginScreen({ title, subtitle }: { title?: string; subtitle?: st
           <Input label={t.auth.login} value={login} onChange={setLogin} name="username" autoComplete="username" />
           <Input label={t.auth.password} value={password} onChange={setPassword} type="password" name="password" autoComplete="current-password" />
           {error && <p className="text-sm text-bad">{error}</p>}
-          <button type="submit" className="w-full bg-accent text-white rounded-xl py-3 font-medium transition-opacity hover:opacity-90">
+          <button type="submit" className="w-full bg-accent text-on-accent rounded-xl py-3 font-medium transition-opacity hover:opacity-90">
             {t.auth.loginSubmit}
           </button>
         </form>

@@ -10,7 +10,7 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry?: (
       {onRetry && (
         <button
           onClick={onRetry}
-          className="flex items-center gap-2 bg-accent text-white rounded-xl px-4 py-2.5 text-sm font-medium"
+          className="flex items-center gap-2 bg-accent text-on-accent rounded-xl px-4 py-2.5 text-sm font-medium"
         >
           <RefreshCw className="w-4 h-4" />
           {t.retry}

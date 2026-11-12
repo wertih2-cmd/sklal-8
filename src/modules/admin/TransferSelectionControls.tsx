@@ -41,9 +41,9 @@ export function TransferActionBar({
   const stock = t.admin.stock
 
   return (
-    <div className="fixed inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[45] lg:inset-x-auto lg:bottom-6 lg:right-8 lg:w-[32rem]">
+    <div className="fixed inset-x-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-nav lg:inset-x-auto lg:bottom-6 lg:end-8 lg:w-[32rem]">
       <div className="bg-surface border border-line rounded-xl shadow-lg px-3 py-2.5 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-semibold text-ink mr-auto">
+        <span className="text-sm font-semibold text-ink me-auto">
           {stock.selectedCount.replace('{{count}}', n(String(count)))}
         </span>
         <button
@@ -64,7 +64,7 @@ export function TransferActionBar({
           type="button"
           onClick={onContinue}
           disabled={!canContinue}
-          className="min-h-[44px] px-4 rounded-lg text-sm font-medium bg-accent text-white disabled:opacity-50 transition-opacity"
+          className="min-h-[44px] px-4 rounded-lg text-sm font-medium bg-accent text-on-accent disabled:opacity-50 transition-opacity"
         >
           {stock.continueAction}
         </button>

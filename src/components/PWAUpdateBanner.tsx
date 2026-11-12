@@ -33,7 +33,7 @@ export function PWAUpdateBanner() {
   if (!needRefresh || outboxBlocked) return null
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[80] bg-accent text-white px-4 py-3 flex items-center justify-between gap-3 anim-slide-up">
+    <div className="fixed bottom-0 inset-x-0 z-confirm bg-accent text-on-accent px-4 py-3 flex items-center justify-between gap-3 anim-slide-up">
       <span className="text-sm font-medium">{t.pwaUpdate}</span>
       <button
         onClick={() => updateServiceWorker(true)}

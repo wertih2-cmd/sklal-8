@@ -129,7 +129,7 @@ export function CleaningHistoryList({ apartmentId, canDelete, onRecalculate, onR
               key={ev.id}
               onClick={() => setSelected(ev)}
               data-testid="cleaning-card"
-              className="w-full text-left bg-surface border border-line rounded-xl px-4 py-3 hover:border-accent transition-colors"
+              className="w-full text-start tile rounded-[20px] px-4 py-3 hover:border-accent transition-colors"
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium text-ink">{n(formatDateTime(ev.cleaned_at))}</span>

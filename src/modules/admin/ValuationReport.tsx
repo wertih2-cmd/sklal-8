@@ -85,7 +85,7 @@ export function ValuationReport({ currency }: { currency: string }) {
       t.admin.reports.colMarkup, t.admin.reports.colMargin],
     visible.map((r) => [r.name, r.category, owner(r), r.on_hand, r.min_stock, r.avg_cost, r.guest_price, r.stock_value, r.potential_revenue, r.markup_pct, r.margin_pct]))
 
-  const chip = (active: boolean) => `px-3 py-1.5 rounded-lg text-sm ${active ? 'bg-accent text-white' : 'bg-app text-muted'}`
+  const chip = (active: boolean) => `px-3 py-1.5 rounded-lg text-sm ${active ? 'bg-accent text-on-accent' : 'bg-app text-muted'}`
   const filters: Array<[ValuationFilter, string]> = [
     ['all', t.admin.reports.filterAll],
     ['with_stock', t.admin.reports.filterWithStock],
@@ -186,7 +186,7 @@ export function ValuationReport({ currency }: { currency: string }) {
   )
 }
 
-function Th({ children }: { children: React.ReactNode }) { return <th className="text-left font-medium text-muted text-xs px-2 py-2 whitespace-nowrap">{children}</th> }
+function Th({ children }: { children: React.ReactNode }) { return <th className="text-start font-medium text-muted text-xs px-2 py-2 whitespace-nowrap">{children}</th> }
 function Td({ children }: { children: React.ReactNode }) { return <td className="px-2 py-2 text-ink whitespace-nowrap">{children}</td> }
 
 function Kv({ label, value }: { label: string; value: string }) {

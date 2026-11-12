@@ -78,7 +78,7 @@ function QrApp() {
           <Package className="w-7 h-7 text-warn" />
         </div>
         <p className="text-sm text-muted mb-4">{t.offline}</p>
-        <button onClick={retryInit} className="flex items-center gap-2 bg-accent text-white rounded-xl px-5 py-2.5 text-sm font-medium">
+        <button onClick={retryInit} className="flex items-center gap-2 bg-accent text-on-accent rounded-xl px-5 py-2.5 text-sm font-medium">
           <RefreshCw className="w-4 h-4" />
           {t.retry}
         </button>

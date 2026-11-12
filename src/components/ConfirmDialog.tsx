@@ -68,7 +68,7 @@ export function ConfirmDialog({
           <button
             ref={confirmRef}
             onClick={onConfirm}
-            className={`flex-1 ${toneBg} text-white rounded-lg py-3 font-medium text-sm`}
+            className={`flex-1 ${toneBg} text-on-accent rounded-lg py-3 font-medium text-sm`}
           >
             {confirmLabel ?? t.common.ok}
           </button>

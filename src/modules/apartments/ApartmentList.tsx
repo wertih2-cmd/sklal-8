@@ -121,12 +121,12 @@ export function ApartmentList() {
     <div className="px-4 pt-6">
       <div className="flex gap-2.5 mb-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t.apartments.search}
-            className="w-full bg-surface rounded-xl pl-10 pr-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
+            className="w-full well rounded-xl ps-10 pe-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
           />
         </div>
         <select
@@ -213,7 +213,7 @@ export function ApartmentList() {
                     <button
                       key={apt.id}
                       onClick={() => navigate(`/sv/apartments/${apt.id}`)}
-                      className="w-full bg-surface rounded-xl px-4 py-3 flex items-center justify-between border border-line hover:border-accent transition-colors text-left"
+                      className="w-full tile rounded-[20px] px-4 py-3 flex items-center justify-between hover:border-accent transition-colors text-start"
                     >
                       <div className="flex items-center gap-3">
                         <span className="font-medium text-ink">{apt.code}</span>

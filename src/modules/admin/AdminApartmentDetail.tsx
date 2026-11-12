@@ -333,7 +333,7 @@ export function AdminApartmentDetail() {
             <button onClick={() => setReverseEventId(null)} className="flex-1 bg-app text-ink rounded-lg py-3 font-medium text-sm">
               {t.cleaning.cancel}
             </button>
-            <button onClick={handleReverse} className="flex-1 bg-bad text-white rounded-lg py-3 font-medium text-sm">
+            <button onClick={handleReverse} className="flex-1 bg-bad text-on-accent rounded-lg py-3 font-medium text-sm">
               {t.admin.apartments.reverse}
             </button>
           </div>

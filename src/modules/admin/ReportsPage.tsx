@@ -251,7 +251,7 @@ export function ReportsPage() {
       <div className="bg-surface border border-line rounded-xl p-3 mb-4">
         <div className="flex gap-2 flex-wrap no-print">
           {(['today', '7', '30', 'custom'] as Period[]).map((value) => (
-            <button key={value} onClick={() => setPeriod(value)} className={`px-3 py-1.5 rounded-lg text-sm ${period === value ? 'bg-accent text-white' : 'bg-app text-muted'}`}>
+            <button key={value} onClick={() => setPeriod(value)} className={`px-3 py-1.5 rounded-lg text-sm ${period === value ? 'bg-accent text-on-accent' : 'bg-app text-muted'}`}>
               {value === 'today' ? t.admin.reports.today : value === '7' ? t.admin.reports.days7 : value === '30' ? t.admin.reports.days30 : t.admin.reports.custom}
             </button>
           ))}
@@ -295,7 +295,7 @@ export function ReportsPage() {
       {showOwnershipFilter && !loading && !error && (
         <div className="flex gap-2 mb-4 no-print">
           {(['company', 'owner', 'all'] as OwnershipFilter[]).map((value) => (
-            <button key={value} onClick={() => setOwnershipFilter(value)} className={`px-3 py-1.5 rounded-lg text-sm ${ownershipFilter === value ? 'bg-accent text-white' : 'bg-app text-muted'}`}>
+            <button key={value} onClick={() => setOwnershipFilter(value)} className={`px-3 py-1.5 rounded-lg text-sm ${ownershipFilter === value ? 'bg-accent text-on-accent' : 'bg-app text-muted'}`}>
               {value === 'company' ? t.admin.reports.ownershipCompany : value === 'owner' ? t.admin.reports.ownershipOwner : t.admin.reports.ownershipAll}
             </button>
           ))}
@@ -307,7 +307,7 @@ export function ReportsPage() {
           {tab === 'expense' && <ReportCard title={t.admin.reports.expense} onExport={exportExpense} exportLabel={t.admin.reports.export}>
             <div className="flex gap-2 flex-wrap mb-3 no-print">
               {EXPENSE_VIEWS.map((view) => (
-                <button key={view} onClick={() => setExpenseView(view)} className={`px-3 py-1.5 rounded-lg text-sm ${expenseView === view ? 'bg-accent text-white' : 'bg-app text-muted'}`}>{expenseViewLabel[view]}</button>
+                <button key={view} onClick={() => setExpenseView(view)} className={`px-3 py-1.5 rounded-lg text-sm ${expenseView === view ? 'bg-accent text-on-accent' : 'bg-app text-muted'}`}>{expenseViewLabel[view]}</button>
               ))}
             </div>
             {expenseView !== 'rows' ? <ExpenseGroupsTable groups={expenseGroups} view={expenseView} currency={currency} /> : (
@@ -333,7 +333,7 @@ export function ReportsPage() {
             {chargesError ? <p className="text-sm text-bad text-center py-6">{chargesError}</p> : (<>
             <div className="flex gap-2 mb-3 flex-wrap no-print">
               {(['all', 'pending', 'paid', 'waived'] as ChargeStatusFilter[]).map((value) => (
-                <button key={value} onClick={() => setChargeStatusFilter(value)} className={`px-3 py-1.5 rounded-lg text-sm ${chargeStatusFilter === value ? 'bg-accent text-white' : 'bg-app text-muted'}`}>
+                <button key={value} onClick={() => setChargeStatusFilter(value)} className={`px-3 py-1.5 rounded-lg text-sm ${chargeStatusFilter === value ? 'bg-accent text-on-accent' : 'bg-app text-muted'}`}>
                   {chargeStatusChip(value)}
                 </button>
               ))}
@@ -380,6 +380,6 @@ function SummaryCard({ label, amount, count, currency, tone }: { label: string; 
   )
 }
 
-function Th({ children }: { children: React.ReactNode }) { return <th className="text-left font-medium text-muted text-xs px-2 py-2 whitespace-nowrap">{children}</th> }
+function Th({ children }: { children: React.ReactNode }) { return <th className="text-start font-medium text-muted text-xs px-2 py-2 whitespace-nowrap">{children}</th> }
 function Td({ children }: { children: React.ReactNode }) { return <td className="px-2 py-2 text-ink whitespace-nowrap">{children}</td> }
 function Empty({ label }: { label: string }) { return <p className="text-sm text-muted text-center py-6">{label}</p> }

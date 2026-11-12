@@ -50,16 +50,16 @@ export function ToastContainer() {
   const dismiss = useToast((s) => s.dismiss)
   if (toasts.length === 0) return null
   return (
-    <div className="fixed top-4 left-0 right-0 z-[100] flex flex-col items-center gap-2 px-4 pointer-events-none">
+    <div className="fixed top-4 inset-x-0 z-toast flex flex-col items-center gap-2 px-4 pointer-events-none">
       {toasts.map((t) => (
         <div
           key={t.id}
           onClick={() => dismiss(t.id)}
           className={`pointer-events-auto rounded-xl px-4 py-3 text-sm font-medium shadow-lg max-w-sm w-full text-center ${
             t.kind === 'error'
-              ? 'bg-bad text-white'
+              ? 'bg-bad text-on-accent'
               : t.kind === 'success'
-                ? 'bg-ok text-white'
+                ? 'bg-ok text-on-accent'
                 : 'bg-surface text-ink border border-line'
           }`}
         >

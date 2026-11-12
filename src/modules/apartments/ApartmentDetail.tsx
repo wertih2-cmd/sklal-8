@@ -92,7 +92,7 @@ export function ApartmentDetail() {
     <div className="min-h-screen bg-app">
       <div className="bg-surface border-b border-line sticky top-11 z-30">
         <div className="px-4 py-3 flex items-center gap-3">
-          <button onClick={() => navigate('/sv')} className="p-1 -ml-1">
+          <button onClick={() => navigate('/sv')} className="p-1 -ms-1">
             <ArrowLeft className="w-5 h-5 text-muted" />
           </button>
           <div className="flex-1">
@@ -156,7 +156,7 @@ export function ApartmentDetail() {
                 <p className="text-xs text-muted mt-1.5">{n(formatDateTime(note.created_at))}</p>
               </div>
             ))}
-            <div className="fixed bottom-[7.5rem] left-0 right-0 z-10 bg-surface/95 backdrop-blur border-t border-line px-4 py-3">
+            <div className="fixed bottom-[7.5rem] inset-x-0 z-10 bg-surface/95 backdrop-blur border-t border-line px-4 py-3">
               <div className="max-w-lg mx-auto flex gap-2">
                 <input
                   value={noteText}
@@ -165,7 +165,7 @@ export function ApartmentDetail() {
                   className="flex-1 min-w-0 bg-app rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
                   onKeyDown={(e) => { if (e.key === 'Enter' && !sendingNote) handleAddNote() }}
                 />
-                <button onClick={handleAddNote} aria-label={t.qr.send} disabled={sendingNote || !noteText.trim()} className="bg-accent text-white rounded-xl min-w-[44px] min-h-[44px] px-4 py-2.5 flex items-center justify-center disabled:opacity-40">
+                <button onClick={handleAddNote} aria-label={t.qr.send} disabled={sendingNote || !noteText.trim()} className="bg-accent text-on-accent rounded-xl min-w-[44px] min-h-[44px] px-4 py-2.5 flex items-center justify-center disabled:opacity-40">
                   <Send className="w-4 h-4" />
                 </button>
               </div>
@@ -182,11 +182,11 @@ export function ApartmentDetail() {
         )}
       </div>
 
-      <div className="fixed bottom-16 left-0 right-0 z-20 bg-surface/95 backdrop-blur border-t border-line px-4 pt-3 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
+      <div className="fixed bottom-16 inset-x-0 z-20 bg-surface/95 backdrop-blur border-t border-line px-4 pt-3 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
         <div className="max-w-lg mx-auto grid grid-cols-2 gap-2">
           <button
             onClick={() => navigate(`/sv/apartments/${aptId}/clean`)}
-            className="min-h-[48px] bg-accent text-white rounded-xl px-2 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
+            className="min-h-[48px] bg-accent text-on-accent rounded-xl px-2 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
           >
             <CheckCircle2 className="w-5 h-5" />
             {t.apartments.cleaned}

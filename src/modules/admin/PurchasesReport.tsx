@@ -33,7 +33,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: 'wa
   )
 }
 
-const chip = (active: boolean) => `px-3 py-1.5 rounded-lg text-sm ${active ? 'bg-accent text-white' : 'bg-app text-muted'}`
+const chip = (active: boolean) => `px-3 py-1.5 rounded-lg text-sm ${active ? 'bg-accent text-on-accent' : 'bg-app text-muted'}`
 
 /** Shortage to order (current state) and receipts per supplier (for the page period). `range.to` is exclusive. */
 export function PurchasesReport({ range, currency }: { range: { from: string; to: string }; currency: string }) {

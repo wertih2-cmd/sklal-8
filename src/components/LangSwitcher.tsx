@@ -17,7 +17,7 @@ export function LangSwitcher({ compact = false }: { compact?: boolean }) {
             key={l.code}
             onClick={() => setLang(l.code)}
             className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-              lang === l.code ? 'bg-accent text-white' : 'text-muted'
+              lang === l.code ? 'bg-accent text-on-accent' : 'text-muted'
             }`}
           >
             {l.label}
@@ -34,7 +34,7 @@ export function LangSwitcher({ compact = false }: { compact?: boolean }) {
           key={l.code}
           onClick={() => setLang(l.code)}
           className={`px-3 py-1.5 rounded-md text-sm transition-colors flex items-center gap-1.5 ${
-            lang === l.code ? 'bg-accent text-white' : 'text-muted'
+            lang === l.code ? 'bg-accent text-on-accent' : 'text-muted'
           }`}
         >
           <span>{l.flag}</span>

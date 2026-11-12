@@ -31,7 +31,7 @@ export class SentryErrorBoundary extends Component<Props, State> {
           <p className="text-sm text-muted mb-6">{d.errorBoundaryMessage}</p>
           <button
             onClick={() => window.location.reload()}
-            className="flex items-center gap-2 bg-accent text-white rounded-xl px-5 py-2.5 text-sm font-medium"
+            className="flex items-center gap-2 bg-accent text-on-accent rounded-xl px-5 py-2.5 text-sm font-medium"
           >
             <RefreshCw className="w-4 h-4" />
             {d.errorBoundaryReload}

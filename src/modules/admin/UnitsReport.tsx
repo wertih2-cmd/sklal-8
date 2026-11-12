@@ -91,7 +91,7 @@ export function UnitsReport({ currency }: { currency: string }) {
     [t.admin.reports.item, t.admin.reports.unitCode, t.admin.reports.unitStatus, t.admin.reports.unitLocation, t.admin.reports.apartment, t.admin.reports.unitCostCol],
     visible.map((r) => [r.name, r.code, statusLabel(r.status), r.location, owner(r), r.unitCost]))
 
-  const chip = (active: boolean) => `px-3 py-1.5 rounded-lg text-sm ${active ? 'bg-accent text-white' : 'bg-app text-muted'}`
+  const chip = (active: boolean) => `px-3 py-1.5 rounded-lg text-sm ${active ? 'bg-accent text-on-accent' : 'bg-app text-muted'}`
   const filters: Array<[UnitStatusFilter, string]> = [
     ['all', t.admin.reports.filterAll],
     ['in_stock', t.admin.reports.unitStatusInStock],
@@ -187,5 +187,5 @@ export function UnitsReport({ currency }: { currency: string }) {
   )
 }
 
-function Th({ children }: { children: React.ReactNode }) { return <th className="text-left font-medium text-muted text-xs px-2 py-2 whitespace-nowrap">{children}</th> }
+function Th({ children }: { children: React.ReactNode }) { return <th className="text-start font-medium text-muted text-xs px-2 py-2 whitespace-nowrap">{children}</th> }
 function Td({ children }: { children: React.ReactNode }) { return <td className="px-2 py-2 text-ink whitespace-nowrap">{children}</td> }

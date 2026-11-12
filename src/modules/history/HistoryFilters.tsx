@@ -90,7 +90,7 @@ export function HistoryFilters(props: Props) {
     <div className="bg-surface rounded-xl border border-line" data-testid="history-filters">
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full px-4 py-3 flex items-center justify-between text-left"
+        className="w-full px-4 py-3 flex items-center justify-between text-start"
         data-testid="filters-toggle"
       >
         <span className="text-sm font-medium text-ink flex items-center gap-2">

@@ -62,7 +62,7 @@ export function ContactsPage() {
                         {c.role_title && <p className="text-xs text-muted">{c.role_title}</p>}
                       </div>
                     </div>
-                    <div className="flex gap-2 ml-12">
+                    <div className="flex gap-2 ms-12">
                       <a href={`tel:${c.phone_e164}`} className="flex items-center gap-1.5 bg-accent-soft text-accent rounded-lg px-3 py-1.5 text-xs font-medium">
                         <Phone className="w-3.5 h-3.5" />
                         {t.contacts.call}

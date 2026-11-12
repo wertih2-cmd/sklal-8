@@ -151,7 +151,7 @@ export function IncidentHistoryList({ apartmentId, canDelete, refreshKey }: Prop
               key={inc.id}
               onClick={() => setSelected(inc)}
               data-testid="incident-card"
-              className="w-full text-left bg-surface border border-line rounded-xl px-4 py-3 hover:border-accent transition-colors"
+              className="w-full text-start tile rounded-[20px] px-4 py-3 hover:border-accent transition-colors"
             >
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm font-medium text-ink">{n(formatDateTime(inc.created_at))}</span>

@@ -97,7 +97,7 @@ export function DocumentsPage() {
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={`rounded-full px-3.5 py-1.5 text-sm transition-colors border ${
-              filter === f.key ? 'bg-accent border-accent text-white' : 'bg-surface border-line text-muted'
+              filter === f.key ? 'bg-accent border-accent text-on-accent' : 'well text-muted'
             }`}
           >
             {f.label}
@@ -118,7 +118,7 @@ export function DocumentsPage() {
               <button
                 key={doc.id}
                 onClick={() => navigate(`/admin/more/documents/${doc.id}`)}
-                className="w-full bg-surface border border-line rounded-xl px-4 py-3 flex items-center gap-3 text-left hover:border-accent transition-colors"
+                className="w-full tile rounded-[20px] px-4 py-3 flex items-center gap-3 text-start hover:border-accent transition-colors"
               >
                 <FileText className="w-5 h-5 text-accent shrink-0" />
                 <div className="flex-1 min-w-0">

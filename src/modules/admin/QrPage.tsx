@@ -171,7 +171,7 @@ export function QrPage() {
         </h1>
         <button
           onClick={handlePrint}
-          className="bg-accent text-white rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5 no-print"
+          className="bg-accent text-on-accent rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5 no-print"
         >
           <Printer className="w-4 h-4" />
           {t.qr.print}
@@ -192,12 +192,12 @@ export function QrPage() {
 
       <div className="flex items-center gap-2 mb-3 no-print">
         <div className="flex-1 relative">
-          <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-muted absolute start-3 top-1/2 -translate-y-1/2" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t.qr.search}
-            className="w-full bg-surface rounded-lg pl-10 pr-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
+            className="w-full well rounded-lg ps-10 pe-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
           />
         </div>
       </div>
@@ -206,7 +206,7 @@ export function QrPage() {
         <button onClick={selectAll} className="text-sm text-accent">{t.qr.selectAll}</button>
         <span className="text-muted">·</span>
         <button onClick={deselectAll} className="text-sm text-muted">{t.qr.deselectAll}</button>
-        {selected.size > 0 && <span className="text-sm text-muted ml-auto">{n(String(selected.size))}</span>}
+        {selected.size > 0 && <span className="text-sm text-muted ms-auto">{n(String(selected.size))}</span>}
       </div>
 
       {apartments.length === 0 ? (

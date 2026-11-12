@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type JsQR from 'jsqr'
 import { X } from 'lucide-react'
 import { useI18n } from '@/i18n'
+import { useModalLayer } from '@/components/useModalLayer'
 
 type DetectedCode = { rawValue: string }
 type BarcodeDetectorLike = { detect: (source: CanvasImageSource) => Promise<DetectedCode[]> }
@@ -27,6 +28,9 @@ export function QrScanner({ onResult, onClose, onManual }: Props) {
   const tRef = useRef(t)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+
+  // Escape closes the scanner.
+  useModalLayer(true, onClose)
 
   useEffect(() => {
     onResultRef.current = onResult

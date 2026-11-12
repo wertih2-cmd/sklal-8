@@ -26,6 +26,7 @@ import { useLiveRefresh } from '@/lib/realtime'
 import { OwnerBadge } from '@/components/OwnerBadge'
 import { EditApartmentModal } from './AdminApartmentList'
 import { Modal } from '@/components/Modal'
+import { useModalLayer } from '@/components/useModalLayer'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 
 type Tab = 'norms' | 'rooms' | 'cleaning' | 'incidents'
@@ -169,6 +170,9 @@ export function AdminApartmentDetail() {
   }
 
   const close = () => navigate('/admin/apartments')
+
+  // Escape closes the side panel; a dialog opened above it is closed first.
+  useModalLayer(true, close)
 
   const totalNorms = gaps.length
   const missingCount = gapItems.length

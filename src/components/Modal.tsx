@@ -19,7 +19,11 @@ interface ModalProps {
   hideHeader?: boolean
   /** Close on a click outside the dialog (default true). Off for forms where a stray click would lose input. */
   closeOnBackdrop?: boolean
+  /** Off for a dialog that must be closed by its own button only: no Esc, no backdrop click, no close icon. Default true. */
+  dismissible?: boolean
 }
+
+const noop = () => {}
 
 const SIZE_CLASS: Record<ModalSize, string> = {
   sm: 'max-w-sm',
@@ -48,13 +52,13 @@ function unlockScroll() {
  * Shared modal: centred dialog on desktop, bottom sheet on phones.
  * Rendered through a portal at layer z-modal (70); ConfirmDialog (80) opens above it.
  */
-export function Modal({ open, title, onClose, children, size = 'md', glass = false, hideHeader = false, closeOnBackdrop = true }: ModalProps) {
+export function Modal({ open, title, onClose, children, size = 'md', glass = false, hideHeader = false, closeOnBackdrop = true, dismissible = true }: ModalProps) {
   const { t } = useI18n()
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
 
   // Escape closes only the topmost dialog (a ConfirmDialog opened above this modal is closed first).
-  const isTop = useModalLayer(open, onClose)
+  const isTop = useModalLayer(open, dismissible ? onClose : noop)
 
   useEffect(() => {
     if (!open) return
@@ -93,7 +97,7 @@ export function Modal({ open, title, onClose, children, size = 'md', glass = fal
 
   return createPortal(
     <div className="fixed inset-0 z-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
-      <div className="absolute inset-0 bg-black/45 anim-scrim" onClick={closeOnBackdrop ? onClose : undefined} />
+      <div className="absolute inset-0 bg-black/45 anim-scrim" onClick={closeOnBackdrop && dismissible ? onClose : undefined} />
       <div
         ref={panelRef}
         tabIndex={-1}
@@ -102,13 +106,15 @@ export function Modal({ open, title, onClose, children, size = 'md', glass = fal
         {!hideHeader && (
           <div className="flex items-center justify-between mb-4">
             <h2 id={titleId} className="text-base font-semibold text-ink">{title}</h2>
-            <button
-              onClick={onClose}
-              className="p-2 -m-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
-              aria-label={t.common.close}
-            >
-              <X className="w-5 h-5 text-muted" />
-            </button>
+            {dismissible && (
+              <button
+                onClick={onClose}
+                className="p-2 -m-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                aria-label={t.common.close}
+              >
+                <X className="w-5 h-5 text-muted" />
+              </button>
+            )}
           </div>
         )}
         {hideHeader && <span id={titleId} className="sr-only">{title}</span>}

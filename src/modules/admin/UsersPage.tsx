@@ -412,7 +412,7 @@ export function UsersPage() {
           title={t.admin.users.credentialsTitle}
           onClose={() => setCreatedCreds(null)}
           size="sm"
-          closeOnBackdrop={false}
+          dismissible={false}
         >
             <p className="text-sm text-warn bg-warn-soft rounded-xl px-3 py-2.5 mb-4">{t.admin.users.credentialsHint}</p>
             <div className="space-y-3">

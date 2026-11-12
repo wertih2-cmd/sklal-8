@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
-import { MAX_BODY_CHARS, buildPrompt, extractModelText, parseLang, parseModelText, sanitizePayload } from './logic.ts';
+import { MAX_BODY_CHARS, buildPrompt, describeModelAnswer, extractModelText, parseLang, parseModelTextDetailed, sanitizePayload } from './logic.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: system }] },
           contents: [{ role: 'user', parts: [{ text: user }] }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 2048, responseMimeType: 'application/json' },
+          generationConfig: { temperature: 0.2, maxOutputTokens: 8192, responseMimeType: 'application/json' },
         }),
         signal: ctrl.signal,
       });
@@ -81,9 +81,15 @@ Deno.serve(async (req) => {
     if (res.status === 429) return json({ error: 'ai_rate_limited' }, 429);
     if (!res.ok) { console.error('gemini status:', res.status); return json({ error: 'ai_unavailable' }, 502); }
 
-    const parsed = parseModelText(extractModelText(await res.json()));
-    if (!parsed) return json({ error: 'ai_bad_response' }, 502);
-    return json({ headline: parsed.headline, bullets: parsed.bullets, model, generated_at: new Date().toISOString() });
+    const answer = await res.json();
+    const parsed = parseModelTextDetailed(extractModelText(answer));
+    if (!parsed.ok) {
+      // Fixed codes and counts only: no key, no data, no text of the answer.
+      const diagnostics = { reason: parsed.reason, ...describeModelAnswer(answer) };
+      console.error('ai bad response:', JSON.stringify(diagnostics));
+      return json({ error: 'ai_bad_response', ...diagnostics }, 502);
+    }
+    return json({ headline: parsed.value.headline, bullets: parsed.value.bullets, model, generated_at: new Date().toISOString() });
   } catch (e) {
     console.error('ai-digest failed:', e instanceof Error ? e.message : 'error');
     return json({ error: 'ai_unavailable' }, 500);

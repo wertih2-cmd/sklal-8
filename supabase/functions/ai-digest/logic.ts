@@ -150,25 +150,43 @@ function cleanText(v: unknown, max: number): string | null {
   return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s
 }
 
-/** Reads the model answer; null when it is not the requested JSON. */
-export function parseModelText(text: string): AiDigestText | null {
+export type ParseFailure = 'empty' | 'not_json' | 'bad_shape'
+export type ParseResult = { ok: true; value: AiDigestText } | { ok: false; reason: ParseFailure }
+
+/** Reads the model answer and says why it could not be read; the reason is a fixed code, never the text itself. */
+export function parseModelTextDetailed(text: string): ParseResult {
   let body = text.trim()
+  if (!body) return { ok: false, reason: 'empty' }
   const fence = body.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i)
   if (fence) body = fence[1]
   let parsed: unknown
   try {
     parsed = JSON.parse(body)
   } catch {
-    return null
+    // The model sometimes adds a sentence around the JSON: try the outermost braces.
+    const a = body.indexOf('{')
+    const b = body.lastIndexOf('}')
+    if (a === -1 || b <= a) return { ok: false, reason: 'not_json' }
+    try {
+      parsed = JSON.parse(body.slice(a, b + 1))
+    } catch {
+      return { ok: false, reason: 'not_json' }
+    }
   }
-  if (!isObj(parsed) || !Array.isArray(parsed.bullets)) return null
+  if (!isObj(parsed) || !Array.isArray(parsed.bullets)) return { ok: false, reason: 'bad_shape' }
   const headline = cleanText(parsed.headline, MAX_HEADLINE)
   const bullets = parsed.bullets
     .map((b) => cleanText(b, MAX_BULLET))
     .filter((b): b is string => b != null)
     .slice(0, MAX_BULLETS)
-  if (!headline || bullets.length === 0) return null
-  return { headline, bullets }
+  if (!headline || bullets.length === 0) return { ok: false, reason: 'bad_shape' }
+  return { ok: true, value: { headline, bullets } }
+}
+
+/** Reads the model answer; null when it is not the requested JSON. */
+export function parseModelText(text: string): AiDigestText | null {
+  const r = parseModelTextDetailed(text)
+  return r.ok ? r.value : null
 }
 
 /** Text of a generateContent answer: all non-thought text parts of the first candidate. */
@@ -180,4 +198,50 @@ export function extractModelText(data: unknown): string {
     .filter((p): p is Record<string, unknown> => isObj(p) && p.thought !== true && typeof p.text === 'string')
     .map((p) => p.text as string)
     .join('')
+}
+
+export interface AnswerDiagnostics {
+  finish_reason: string | null
+  block_reason: string | null
+  candidates: number
+  parts: number
+  text_length: number
+  prompt_tokens: number | null
+  output_tokens: number | null
+  thoughts_tokens: number | null
+}
+
+const CODE_WORD = /^[A-Z][A-Z0-9_]{0,39}$/
+
+function codeWord(v: unknown): string | null {
+  return typeof v === 'string' && CODE_WORD.test(v) ? v : null
+}
+
+function count(v: unknown): number | null {
+  return typeof v === 'number' && Number.isInteger(v) && v >= 0 && v < 100_000_000 ? v : null
+}
+
+/** Safe facts about a generateContent answer: fixed codes and counts only, no text of the answer. */
+export function describeModelAnswer(data: unknown): AnswerDiagnostics {
+  const out: AnswerDiagnostics = {
+    finish_reason: null, block_reason: null, candidates: 0, parts: 0, text_length: 0,
+    prompt_tokens: null, output_tokens: null, thoughts_tokens: null,
+  }
+  if (!isObj(data)) return out
+  if (isObj(data.promptFeedback)) out.block_reason = codeWord(data.promptFeedback.blockReason)
+  if (isObj(data.usageMetadata)) {
+    out.prompt_tokens = count(data.usageMetadata.promptTokenCount)
+    out.output_tokens = count(data.usageMetadata.candidatesTokenCount)
+    out.thoughts_tokens = count(data.usageMetadata.thoughtsTokenCount)
+  }
+  if (Array.isArray(data.candidates)) {
+    out.candidates = data.candidates.length
+    const first = data.candidates[0]
+    if (isObj(first)) {
+      out.finish_reason = codeWord(first.finishReason)
+      if (isObj(first.content) && Array.isArray(first.content.parts)) out.parts = first.content.parts.length
+    }
+  }
+  out.text_length = extractModelText(data).length
+  return out
 }

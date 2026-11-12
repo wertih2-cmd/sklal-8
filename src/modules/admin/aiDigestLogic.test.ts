@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  sanitizePayload, buildPrompt, parseModelText, extractModelText, parseLang, MAX_APARTMENTS, MAX_BULLETS,
+  sanitizePayload, buildPrompt, parseModelText, parseModelTextDetailed, describeModelAnswer, extractModelText, parseLang, MAX_APARTMENTS, MAX_BULLETS,
 } from '../../../supabase/functions/ai-digest/logic'
 import { errorCodeFromServer } from './aiDigestErrors'
 
@@ -115,5 +115,38 @@ describe('extractModelText and error codes', () => {
     expect(errorCodeFromServer('ai_rate_limited')).toBe('rate_limited')
     expect(errorCodeFromServer('ai_unavailable')).toBe('unavailable')
     expect(errorCodeFromServer(undefined)).toBe('unavailable')
+  })
+})
+
+describe('parseModelTextDetailed', () => {
+  const good = JSON.stringify({ headline: 'H', bullets: ['a'] })
+
+  it('reads JSON wrapped in a sentence', () => {
+    expect(parseModelTextDetailed(`Here you go:\n${good}\nHope it helps.`)).toEqual({ ok: true, value: { headline: 'H', bullets: ['a'] } })
+  })
+
+  it('names the reason with a fixed code', () => {
+    expect(parseModelTextDetailed('   ')).toEqual({ ok: false, reason: 'empty' })
+    expect(parseModelTextDetailed('no json here')).toEqual({ ok: false, reason: 'not_json' })
+    expect(parseModelTextDetailed('{"headline": "cut off", "bullets": ["a"')).toEqual({ ok: false, reason: 'not_json' })
+    expect(parseModelTextDetailed('{"headline":"x","bullets":"y"}')).toEqual({ ok: false, reason: 'bad_shape' })
+    expect(parseModelTextDetailed('[1,2]')).toEqual({ ok: false, reason: 'bad_shape' })
+  })
+})
+
+describe('describeModelAnswer', () => {
+  it('gives codes and counts and never the text', () => {
+    const d = describeModelAnswer({
+      candidates: [{ finishReason: 'MAX_TOKENS', content: { parts: [{ text: 'secret words', thought: true }, { text: 'abc' }] } }],
+      usageMetadata: { promptTokenCount: 300, candidatesTokenCount: 5, thoughtsTokenCount: 2043 },
+    })
+    expect(d).toEqual({ finish_reason: 'MAX_TOKENS', block_reason: null, candidates: 1, parts: 2, text_length: 3, prompt_tokens: 300, output_tokens: 5, thoughts_tokens: 2043 })
+    expect(JSON.stringify(d)).not.toMatch(/secret|abc/)
+  })
+
+  it('reports a blocked prompt and ignores odd values', () => {
+    const d = describeModelAnswer({ promptFeedback: { blockReason: 'SAFETY' }, candidates: [{ finishReason: 'drop table;' }] })
+    expect(d).toMatchObject({ block_reason: 'SAFETY', finish_reason: null, candidates: 1, text_length: 0 })
+    expect(describeModelAnswer(null).candidates).toBe(0)
   })
 })

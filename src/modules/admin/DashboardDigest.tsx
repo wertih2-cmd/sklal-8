@@ -16,7 +16,8 @@ const CACHE_MS = 3 * 60 * 1000
 const SHORTAGE_LIMIT = 200
 const FEED_DAYS = 7
 const PAGE_SIZE = 6
-const AI_CACHE_MS = 3 * 60 * 1000
+// The AI text stays on screen this long; it is dropped earlier when the period or the language changes.
+const AI_KEEP_MS = 15 * 60 * 1000
 
 interface Loaded {
   shortages: DigestShortage[]
@@ -27,7 +28,11 @@ interface Loaded {
 
 // Kept outside the component so that coming back to the home screen within a few minutes does not refetch.
 let cache: Loaded | null = null
-let aiCache: { key: string; result: AiDigestResult; at: number } | null = null
+let aiCache: { scope: string; key: string; result: AiDigestResult; at: number } | null = null
+
+function restoreAi(scope: string): { result: AiDigestResult; key: string } | null {
+  return aiCache && aiCache.scope === scope && Date.now() - aiCache.at < AI_KEEP_MS ? { result: aiCache.result, key: aiCache.key } : null
+}
 
 async function loadAll(): Promise<Loaded> {
   const since = new Date(Date.now() - FEED_DAYS * 24 * 60 * 60 * 1000).toISOString()
@@ -65,7 +70,7 @@ export function DashboardDigest({ incidents, apartments }: { incidents: Incident
   const [failed, setFailed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [visible, setVisible] = useState(PAGE_SIZE)
-  const [ai, setAi] = useState<AiDigestResult | null>(null)
+  const [ai, setAi] = useState<{ result: AiDigestResult; key: string } | null>(() => restoreAi(`${lang}|24h`))
   const [aiBusy, setAiBusy] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   const alive = useRef(true)
@@ -110,12 +115,19 @@ export function DashboardDigest({ incidents, apartments }: { incidents: Incident
     })
   }, [data, incidents, period, codes])
 
-  // The text belongs to one period and one set of facts: drop it when either changes.
-  const aiKey = useMemo(() => (digest ? `${lang}|${JSON.stringify(toAiPayload(digest))}` : ''), [digest, lang])
+  // Facts the text was written from. Ages in hours drift every few minutes, so they are left out:
+  // only a change in counts or in who is affected marks the text as out of date.
+  const aiKey = useMemo(
+    () => (digest ? JSON.stringify(toAiPayload(digest), (k, v) => (k === 'oldest_hours' || k === 'oldest_waiting_hours' ? undefined : v)) : ''),
+    [digest],
+  )
+  const aiScope = `${lang}|${period}`
+  // The text belongs to one period and one language: another period or language drops it.
   useEffect(() => {
-    setAi(aiCache && aiCache.key === aiKey && Date.now() - aiCache.at < AI_CACHE_MS ? aiCache.result : null)
+    setAi(restoreAi(aiScope))
     setAiError(null)
-  }, [aiKey])
+  }, [aiScope])
+  const aiStale = ai != null && aiKey !== '' && ai.key !== aiKey
 
   const askAi = async () => {
     if (!digest || aiBusy) return
@@ -123,8 +135,8 @@ export function DashboardDigest({ incidents, apartments }: { incidents: Incident
     setAiError(null)
     try {
       const result = await fetchAiDigest(toAiPayload(digest), lang)
-      aiCache = { key: aiKey, result, at: Date.now() }
-      if (alive.current) setAi(result)
+      aiCache = { scope: aiScope, key: aiKey, result, at: Date.now() }
+      if (alive.current) setAi({ result, key: aiKey })
     } catch (e) {
       const code = e instanceof AiDigestError ? e.code : 'unavailable'
       if (alive.current) setAiError(code === 'not_configured' ? d.aiErrNotConfigured : code === 'rate_limited' ? d.aiErrRateLimited : d.aiErrFailed)
@@ -220,10 +232,11 @@ export function DashboardDigest({ incidents, apartments }: { incidents: Incident
               {ai && (
                 <div className="well rounded-xl px-3 py-2.5 mt-2" data-testid="dash-digest-ai">
                   <b className="text-sm text-ink flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-accent shrink-0" />{d.aiTitle}</b>
-                  <p className="text-ink text-sm mt-1">{ai.headline}</p>
+                  <p className="text-ink text-sm mt-1">{ai.result.headline}</p>
                   <ul className="mt-1.5 space-y-1 list-disc ps-4">
-                    {ai.bullets.map((b, i) => <li key={i} className="text-xs text-ink">{b}</li>)}
+                    {ai.result.bullets.map((b, i) => <li key={i} className="text-xs text-ink">{b}</li>)}
                   </ul>
+                  {aiStale && <p className="text-warn text-[11px] mt-2">{d.aiStale}</p>}
                   <p className="text-muted text-[11px] mt-2">{d.aiNote}</p>
                 </div>
               )}

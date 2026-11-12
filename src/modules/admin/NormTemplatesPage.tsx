@@ -5,7 +5,8 @@ import type { WarehouseStockRow, NormRuleRow, NormType, AptType, BaseUnit } from
 import { useI18n } from '@/i18n'
 import { toast, errorMessage } from '@/lib/toast'
 import { useLiveRefresh } from '@/lib/realtime'
-import { ArrowLeft, Plus, Trash2, CreditCard as Edit3, X, Check } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, CreditCard as Edit3, Check } from 'lucide-react'
+import { Modal } from '@/components/Modal'
 import { ErrorState } from '@/components/ErrorState'
 import { friendlyMessage } from '@/lib/errors'
 import { useCatalogName } from '@/modules/core/useCatalogName'
@@ -109,7 +110,7 @@ export function NormTemplatesPage() {
     <div className="min-h-screen bg-app">
       <div className="bg-surface border-b border-line sticky top-11 lg:top-0 z-30">
         <div className="px-4 py-3 flex items-center gap-3">
-          <button onClick={() => navigate('/admin/more')} className="p-1 -ml-1">
+          <button onClick={() => navigate('/admin/more')} className="p-1 -ms-1">
             <ArrowLeft className="w-5 h-5 text-ink" />
           </button>
           <h1 className="text-lg font-semibold text-ink">{t.admin.normTemplates.title}</h1>
@@ -153,14 +154,14 @@ export function NormTemplatesPage() {
               {items.length === 0 ? (
                 <p className="text-sm text-muted px-3">{t.admin.normTemplates.noNorms}</p>
               ) : (
-                <div className="bg-surface rounded-xl border border-line divide-y divide-[var(--line)]">
+                <div className="tile rounded-[20px] divide-y divide-[var(--line)]">
                   {items.map((nr) => {
                     const item = stock.find((s) => s.item_id === nr.item_id)
                     return (
                       <div key={nr.id} className="px-4 py-2.5 flex items-center justify-between">
                         <div className="min-w-0">
                           <span className="text-sm text-ink">{item ? cat.itemName(item.name) : `#${n(String(nr.item_id))}`}</span>
-                          <span className="text-xs text-muted ml-1">{n(String(nr.qty))} {item ? unitShort(item.base_unit, t.common.units) : ''}</span>
+                          <span className="text-xs text-muted ms-1">{n(String(nr.qty))} {item ? unitShort(item.base_unit, t.common.units) : ''}</span>
                           {nr.note && <span className="text-xs text-muted block">{nr.note}</span>}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
@@ -230,16 +231,11 @@ function NormEditorModal({
   const selectedItem = items.find((i) => i.item_id === itemId)
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-6">
-      <div className="bg-surface rounded-2xl w-full max-w-sm p-5 border border-line">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-ink">{norm ? t.admin.normTemplates.editNorm : t.admin.normTemplates.addNorm}</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-muted" /></button>
-        </div>
+    <Modal open title={norm ? t.admin.normTemplates.editNorm : t.admin.normTemplates.addNorm} onClose={onClose} size="sm" closeOnBackdrop={false}>
         <div className="space-y-3">
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.normTemplates.item}</label>
-            <select value={itemId} onChange={(e) => setItemId(Number(e.target.value))} className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none">
+            <select value={itemId} onChange={(e) => setItemId(Number(e.target.value))} className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none">
               <option value="0">—</option>
               {items.filter((i) => !takenIds.has(i.item_id) || i.item_id === itemId).map((i) => <option key={i.item_id} value={i.item_id}>{cat.itemName(i.name)}</option>)}
             </select>
@@ -259,7 +255,7 @@ function NormEditorModal({
           </div>
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.move.note}</label>
-            <input value={note} onChange={(e) => setNote(e.target.value)} className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            <input value={note} onChange={(e) => setNote(e.target.value)} className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           </div>
         </div>
         <div className="flex gap-3 mt-4">
@@ -267,13 +263,12 @@ function NormEditorModal({
           <button
             onClick={() => onSave(normType, itemId, Number(qty), note.trim() || null)}
             disabled={!itemId || !qty || !qtyValid}
-            className="flex-1 bg-accent text-white rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-1 bg-accent text-on-accent rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
           >
             <Check className="w-4 h-4" />
             {t.admin.normTemplates.save}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

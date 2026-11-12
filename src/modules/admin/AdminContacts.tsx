@@ -3,7 +3,8 @@ import { fetchAllContacts, createContact, updateContact, deleteContact } from '@
 import type { Contact } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { toast, errorMessage } from '@/lib/toast'
-import { Plus, Trash2, CreditCard as Edit3, X, Check, Phone, MessageCircle } from 'lucide-react'
+import { Plus, Trash2, CreditCard as Edit3, Check, Phone, MessageCircle } from 'lucide-react'
+import { Modal } from '@/components/Modal'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { ErrorState } from '@/components/ErrorState'
 import { friendlyMessage } from '@/lib/errors'
@@ -32,7 +33,7 @@ export function AdminContacts() {
     <div className="px-4 pt-6 pb-28">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold text-ink">{t.admin.adminContacts.title}</h1>
-        <button onClick={() => setAdding(true)} className="bg-accent text-white rounded-xl px-4 py-2 text-sm font-medium flex items-center gap-1.5">
+        <button onClick={() => setAdding(true)} className="bg-accent text-on-accent rounded-xl px-4 py-2 text-sm font-medium flex items-center gap-1.5">
           <Plus className="w-4 h-4" />{t.admin.adminContacts.add}
         </button>
       </div>
@@ -42,7 +43,7 @@ export function AdminContacts() {
       ) : (
         <div className="space-y-2">
           {contacts.map((c) => (
-            <div key={c.id} className="bg-surface rounded-xl border border-line px-4 py-3">
+            <div key={c.id} className="tile rounded-[20px] px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-ink">{c.name}</p>
@@ -108,28 +109,24 @@ function ContactEditor({
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-6">
-      <div className="bg-surface rounded-2xl w-full max-w-sm p-5 border border-line">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-ink">{contact ? t.admin.adminContacts.title : t.admin.adminContacts.add}</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-muted" /></button>
-        </div>
+    <>
+      <Modal open title={contact ? t.admin.adminContacts.title : t.admin.adminContacts.add} onClose={onClose} size="sm" closeOnBackdrop={false}>
         <div className="space-y-3">
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.adminContacts.name}</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           </div>
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.adminContacts.group}</label>
-            <input value={group} onChange={(e) => setGroup(e.target.value)} className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            <input value={group} onChange={(e) => setGroup(e.target.value)} className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           </div>
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.adminContacts.roleTitle}</label>
-            <input value={roleTitle} onChange={(e) => setRoleTitle(e.target.value)} className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            <input value={roleTitle} onChange={(e) => setRoleTitle(e.target.value)} className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           </div>
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.adminContacts.phone}</label>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+20123456789" className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+20123456789" className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           </div>
           <label className="flex items-center gap-2">
             <input type="checkbox" checked={whatsapp} onChange={(e) => setWhatsapp(e.target.checked)} className="w-4 h-4" />
@@ -158,18 +155,18 @@ function ContactEditor({
           <button
             onClick={() => onSave(name.trim(), group.trim() || null, roleTitle.trim() || null, phone.trim(), whatsapp, active, whatsapp && notify)}
             disabled={!name.trim() || !phone.trim()}
-            className="flex-1 bg-accent text-white rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-1 bg-accent text-on-accent rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
           >
             <Check className="w-4 h-4" />{t.admin.adminContacts.save}
           </button>
         </div>
-      </div>
+      </Modal>
       <ConfirmDialog
         open={confirmDelete}
         title={t.admin.adminContacts.confirmDelete}
         onConfirm={() => { setConfirmDelete(false); onDelete?.() }}
         onCancel={() => setConfirmDelete(false)}
       />
-    </div>
+    </>
   )
 }

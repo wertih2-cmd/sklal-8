@@ -16,6 +16,7 @@ import { formatDate, formatDateTime, formatQty } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
 import { useLiveRefresh } from '@/lib/realtime'
 import { ArrowLeft, Printer, Upload, Trash2, FileText, Loader as Loader2 } from 'lucide-react'
+import { Modal } from '@/components/Modal'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { OwnerBadge } from '@/components/OwnerBadge'
 import { useCatalogName } from '@/modules/core/useCatalogName'
@@ -210,30 +211,33 @@ export function DocumentDetailPage() {
       </div>
 
       {voidOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-6 no-print">
-          <div className="bg-surface rounded-2xl w-full max-w-sm p-5 border border-line">
-            <h3 className="text-base font-semibold text-ink mb-2">{t.admin.documents.voidTitle}</h3>
+        <Modal
+          open
+          title={t.admin.documents.voidTitle}
+          onClose={() => { if (!voiding) setVoidOpen(false) }}
+          size="sm"
+          closeOnBackdrop={false}
+        >
             <p className="text-sm text-muted mb-3">{t.admin.documents.voidBody}</p>
             <input
               value={voidReason}
               onChange={(e) => setVoidReason(e.target.value)}
               maxLength={200}
               placeholder={t.admin.documents.voidReason}
-              className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none mb-4"
+              className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none mb-4"
             />
             <div className="flex gap-3">
               <button onClick={() => setVoidOpen(false)} disabled={voiding} className="flex-1 bg-app text-ink rounded-xl py-3 font-medium">{t.cleaning.cancel}</button>
               <button
                 onClick={handleVoid}
                 disabled={voiding}
-                className="flex-1 bg-bad text-white rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
+                className="flex-1 bg-bad text-on-accent rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
               >
                 {voiding ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 {t.admin.documents.voidConfirm}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* Doc header */}
@@ -315,7 +319,7 @@ export function DocumentDetailPage() {
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="flex items-center gap-1.5 bg-accent text-white rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-40"
+            className="flex items-center gap-1.5 bg-accent text-on-accent rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-40"
           >
             {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
             {t.admin.documents.upload}
@@ -341,7 +345,7 @@ export function DocumentDetailPage() {
                 <FileText className="w-4 h-4 text-accent shrink-0" />
                 <button
                   onClick={() => openAttachment(att.storage_path)}
-                  className="flex-1 text-left text-sm text-ink hover:text-accent"
+                  className="flex-1 text-start text-sm text-ink hover:text-accent"
                 >
                   {att.storage_path.split('/').pop() ?? att.id}
                 </button>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Modal } from '@/components/Modal'
 import { fetchApartmentsAdmin, fetchItems, fetchTrackedUnits, transferCompanyOwner } from '@/modules/admin/api'
 import type { Apartment, ItemUnit, TransferDirection } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
@@ -115,18 +116,7 @@ export function TransferModal({
   const closeIfIdle = () => { if (!saving) onClose() }
 
   return (
-    <div
-      className="fixed inset-0 z-modal flex items-center justify-center bg-black/40"
-      role="dialog"
-      aria-modal="true"
-      onClick={closeIfIdle}
-      onKeyDown={(e) => { if (e.key === 'Escape') closeIfIdle() }}
-    >
-      <div
-        className="bg-surface border border-line rounded-xl p-4 mx-4 max-w-md w-full max-h-[85vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="text-sm font-semibold text-ink mb-3">{stock.transferTitle}</div>
+    <Modal open title={stock.transferTitle} onClose={closeIfIdle} size="md">
 
         <div className="space-y-2 mb-3">
           {selection.map((entry) => {
@@ -154,7 +144,7 @@ export function TransferModal({
                           </button>
                         </span>
                       </div>
-                      <div className="max-h-32 overflow-y-auto rounded-lg border border-line bg-surface">
+                      <div className="max-h-32 overflow-y-auto well rounded-lg border border-line">
                         {cands.map((u) => (
                           <label key={u.id} className="flex items-center gap-2 px-3 py-2 text-sm text-ink border-b border-line last:border-0 cursor-pointer">
                             <input
@@ -189,7 +179,7 @@ export function TransferModal({
                   value={qtyText}
                   disabled={saving}
                   onChange={(e) => setQtyTexts((prev) => ({ ...prev, [entry.row.key]: e.target.value }))}
-                  className="w-24 min-h-[44px] bg-surface rounded-lg px-3 py-2 text-sm text-right border border-line focus:border-accent focus:outline-none disabled:opacity-50"
+                  className="w-24 min-h-[44px] well rounded-lg px-3 py-2 text-sm text-end border border-line focus:border-accent focus:outline-none disabled:opacity-50"
                 />
               </div>
             )
@@ -248,12 +238,11 @@ export function TransferModal({
             type="button"
             onClick={handleConfirm}
             disabled={!canConfirm}
-            className="min-h-[44px] px-4 rounded-lg text-sm font-medium bg-accent text-white disabled:opacity-50"
+            className="min-h-[44px] px-4 rounded-lg text-sm font-medium bg-accent text-on-accent disabled:opacity-50"
           >
             {stock.confirmCount.replace('{{count}}', n(String(selection.length)))}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

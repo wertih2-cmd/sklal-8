@@ -285,32 +285,32 @@ export function NormsTab({
                   </button>
                   {openMenu === nt && (
                     <>
-                      <div className="fixed inset-0 z-[65]" onClick={() => setOpenMenu(null)} />
-                      <div className="absolute right-0 top-full mt-1 z-[66] bg-surface border border-line rounded-lg shadow-lg py-1 min-w-[200px]">
+                      <div className="fixed inset-0 z-drawer" onClick={() => setOpenMenu(null)} />
+                      <div className="absolute end-0 top-full mt-1 z-drawer bg-surface border border-line rounded-lg shadow-lg py-1 min-w-[200px]">
                         <button
                           onClick={() => { setConfirmMaterializeType(nt); setOpenMenu(null) }}
-                          className="w-full text-left px-3 py-2.5 text-sm text-ink hover:bg-app flex items-center gap-2 min-h-[44px]"
+                          className="w-full text-start px-3 py-2.5 text-sm text-ink hover:bg-app flex items-center gap-2 min-h-[44px]"
                         >
                           <Download className="w-4 h-4 text-muted" />
                           {t.admin.apartments.makeIndependent}
                         </button>
                         <button
                           onClick={() => { setConfirmResetType(nt); setOpenMenu(null) }}
-                          className="w-full text-left px-3 py-2.5 text-sm text-ink hover:bg-app flex items-center gap-2 min-h-[44px]"
+                          className="w-full text-start px-3 py-2.5 text-sm text-ink hover:bg-app flex items-center gap-2 min-h-[44px]"
                         >
                           <RotateCcw className="w-4 h-4 text-muted" />
                           {t.admin.apartments.resetSection}
                         </button>
                         <button
                           onClick={() => { setCopyModal({ direction: 'from', normType: nt }); setOpenMenu(null) }}
-                          className="w-full text-left px-3 py-2.5 text-sm text-ink hover:bg-app flex items-center gap-2 min-h-[44px]"
+                          className="w-full text-start px-3 py-2.5 text-sm text-ink hover:bg-app flex items-center gap-2 min-h-[44px]"
                         >
                           <Copy className="w-4 h-4 text-muted" />
                           {t.admin.apartments.copyToApts}
                         </button>
                         <button
                           onClick={() => { setCopyModal({ direction: 'to', normType: nt }); setOpenMenu(null) }}
-                          className="w-full text-left px-3 py-2.5 text-sm text-ink hover:bg-app flex items-center gap-2 min-h-[44px]"
+                          className="w-full text-start px-3 py-2.5 text-sm text-ink hover:bg-app flex items-center gap-2 min-h-[44px]"
                         >
                           <Copy className="w-4 h-4 text-muted" />
                           {t.admin.apartments.copyFromApt}
@@ -324,11 +324,11 @@ export function NormsTab({
             <p className="text-xs text-muted mb-2">{t.admin.apartments.sectionHints[nt]}</p>
 
             {sectionLoading === nt ? (
-              <div className="bg-surface border border-line rounded-lg p-4 text-center text-muted text-sm">{t.app.loading}</div>
+              <div className="tile rounded-xl p-4 text-center text-muted text-sm">{t.app.loading}</div>
             ) : rows.length === 0 ? (
-              <div className="bg-surface border border-line rounded-lg p-4 text-center text-muted text-sm">{t.admin.apartments.noNorms}</div>
+              <div className="tile rounded-xl p-4 text-center text-muted text-sm">{t.admin.apartments.noNorms}</div>
             ) : (
-              <div className="bg-surface border border-line rounded-lg divide-y divide-[var(--line)]">
+              <div className="tile rounded-xl divide-y divide-[var(--line)]">
                 {rows.map((row) => {
                   const info = getItemInfo(row.itemId)
                   const name = getItemName(row.itemId)

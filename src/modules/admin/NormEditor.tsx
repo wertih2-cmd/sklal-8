@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useI18n } from '@/i18n'
-import { X, Check, Loader as Loader2 } from 'lucide-react'
+import { Check, Loader as Loader2 } from 'lucide-react'
+import { Modal } from '@/components/Modal'
 import type { NormType, BaseUnit } from '@/lib/database.types'
 import type { NormCatalogItem } from './norms'
 import { unitLabel } from '@/lib/format'
@@ -69,14 +70,7 @@ export function NormEditor({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-[70]" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[71] bg-surface rounded-2xl w-full max-w-sm p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-ink">
-            {isEdit ? t.admin.apartments.editNorm : t.admin.apartments.addNorm}
-          </h3>
-          <button onClick={onClose} className="p-1"><X className="w-5 h-5 text-muted" /></button>
-        </div>
+      <Modal open title={isEdit ? t.admin.apartments.editNorm : t.admin.apartments.addNorm} onClose={onClose} size="sm">
         <div className="space-y-3">
           <div>
             <label className="block text-sm text-muted mb-1">{t.admin.normTemplates.item}</label>
@@ -155,13 +149,13 @@ export function NormEditor({
           <button
             onClick={() => onSave(selectedItemId ?? 0, Number(qtyStr), noteStr.trim() || null)}
             disabled={!selectedItemId || !qtyStr || !qtyValid || saving}
-            className="flex-1 bg-accent text-white rounded-lg py-3 font-medium text-sm disabled:opacity-40 flex items-center justify-center gap-2 min-h-[44px]"
+            className="flex-1 bg-accent text-on-accent rounded-lg py-3 font-medium text-sm disabled:opacity-40 flex items-center justify-center gap-2 min-h-[44px]"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             {t.admin.apartments.save}
           </button>
         </div>
-      </div>
+      </Modal>
     </>
   )
 }

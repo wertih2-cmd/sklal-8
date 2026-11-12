@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useI18n } from '@/i18n'
-import { X, Check, Loader as Loader2, Search } from 'lucide-react'
+import { Check, Loader as Loader2, Search } from 'lucide-react'
+import { Modal } from '@/components/Modal'
 import type { NormType, Apartment } from '@/lib/database.types'
 
 export interface CopyMode {
@@ -82,14 +83,7 @@ export function NormCopyModal({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-[70]" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[71] bg-surface rounded-2xl w-full max-w-sm p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet max-h-[90dvh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-ink">
-            {direction === 'from' ? t.admin.apartments.copyToApts : t.admin.apartments.copyFromApt}
-          </h3>
-          <button onClick={onClose} className="p-1"><X className="w-5 h-5 text-muted" /></button>
-        </div>
+      <Modal open title={direction === 'from' ? t.admin.apartments.copyToApts : t.admin.apartments.copyFromApt} onClose={onClose} size="sm">
         <div className="space-y-4">
           <div>
             <label className="block text-sm text-muted mb-2">{t.admin.apartments.copyTypes}</label>
@@ -112,12 +106,12 @@ export function NormCopyModal({
             <div>
               <label className="block text-sm text-muted mb-2">{t.admin.apartments.copySelectTargets}</label>
               <div className="relative mb-2">
-                <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-muted absolute start-3 top-1/2 -translate-y-1/2" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t.admin.apartments.searchByCode}
-                  className="w-full bg-app rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none"
+                  className="w-full well rounded-lg ps-9 pe-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
                 />
               </div>
               <div className="max-h-40 overflow-y-auto space-y-1.5">
@@ -141,12 +135,12 @@ export function NormCopyModal({
             <div>
               <label className="block text-sm text-muted mb-2">{t.admin.apartments.copySelectSource}</label>
               <div className="relative mb-2">
-                <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-muted absolute start-3 top-1/2 -translate-y-1/2" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t.admin.apartments.searchByCode}
-                  className="w-full bg-app rounded-lg pl-9 pr-4 py-2.5 text-sm focus:outline-none"
+                  className="w-full well rounded-lg ps-9 pe-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
                 />
               </div>
               <div className="max-h-40 overflow-y-auto space-y-1.5">
@@ -189,13 +183,13 @@ export function NormCopyModal({
           <button
             onClick={handleConfirm}
             disabled={!canConfirm || saving}
-            className="flex-1 bg-accent text-white rounded-lg py-3 font-medium text-sm disabled:opacity-40 flex items-center justify-center gap-2 min-h-[44px]"
+            className="flex-1 bg-accent text-on-accent rounded-lg py-3 font-medium text-sm disabled:opacity-40 flex items-center justify-center gap-2 min-h-[44px]"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             {t.admin.apartments.copyApply}
           </button>
         </div>
-      </div>
+      </Modal>
     </>
   )
 }

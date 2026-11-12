@@ -3,7 +3,8 @@ import { fetchAllStaff, createStaff, updateStaff, deleteStaff, archiveStaff, sta
 import type { Staff } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { toast, errorMessage } from '@/lib/toast'
-import { Plus, Trash2, CreditCard as Edit3, X, Check, Phone } from 'lucide-react'
+import { Plus, Trash2, CreditCard as Edit3, Check, Phone } from 'lucide-react'
+import { Modal } from '@/components/Modal'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { ErrorState } from '@/components/ErrorState'
 import { friendlyMessage } from '@/lib/errors'
@@ -35,7 +36,7 @@ export function StaffPage() {
         <h1 className="text-xl font-semibold text-ink">{t.admin.staff.title}</h1>
         <button
           onClick={() => setAdding(true)}
-          className="bg-accent text-white rounded-xl px-4 py-2 text-sm font-medium flex items-center gap-1.5"
+          className="bg-accent text-on-accent rounded-xl px-4 py-2 text-sm font-medium flex items-center gap-1.5"
         >
           <Plus className="w-4 h-4" />
           {t.admin.staff.add}
@@ -47,7 +48,7 @@ export function StaffPage() {
       ) : (
         <div className="space-y-2">
           {staff.map((s) => (
-            <div key={s.id} className="bg-surface rounded-xl border border-line px-4 py-3">
+            <div key={s.id} className="tile rounded-[20px] px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-ink">{s.full_name}</p>
@@ -137,20 +138,16 @@ function StaffEditor({
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-6">
-      <div className="bg-surface rounded-2xl w-full max-w-sm p-5 border border-line">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-ink">{staff ? t.admin.staff.title : t.admin.staff.add}</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-muted" /></button>
-        </div>
+    <>
+      <Modal open title={staff ? t.admin.staff.title : t.admin.staff.add} onClose={onClose} size="sm" closeOnBackdrop={false}>
         <div className="space-y-3">
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.staff.name}</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           </div>
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.staff.role}</label>
-            <select value={roleVal} onChange={(e) => setRoleVal(e.target.value)} className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none">
+            <select value={roleVal} onChange={(e) => setRoleVal(e.target.value)} className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none">
               <option value="housekeeper">{t.admin.staff.roleHousekeeper}</option>
               <option value="other">{t.admin.staff.roleOther}</option>
               {roleVal !== 'housekeeper' && roleVal !== 'other' && <option value={roleVal}>{roleVal}</option>}
@@ -158,7 +155,7 @@ function StaffEditor({
           </div>
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.staff.phone}</label>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+20123456789" className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+20123456789" className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           </div>
           {staff && (
             <label className="flex items-center gap-2">
@@ -177,19 +174,19 @@ function StaffEditor({
           <button
             onClick={() => onSave(name.trim(), roleVal.trim(), phone.trim(), active)}
             disabled={!name.trim()}
-            className="flex-1 bg-accent text-white rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-1 bg-accent text-on-accent rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
           >
             <Check className="w-4 h-4" />
             {t.admin.staff.save}
           </button>
         </div>
-      </div>
+      </Modal>
       <ConfirmDialog
         open={confirmDelete}
         title={t.admin.staff.confirmDelete}
         onConfirm={() => { setConfirmDelete(false); onDelete?.() }}
         onCancel={() => setConfirmDelete(false)}
       />
-    </div>
+    </>
   )
 }

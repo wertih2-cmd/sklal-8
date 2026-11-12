@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useI18n, currentDict } from '@/i18n'
 import { toast, errorMessage } from '@/lib/toast'
-import { Plus, Trash2, Eye, EyeOff, Copy, Check, X, Lock, CreditCard as Edit3, Shield, QrCode, UserCheck, ShieldCheck } from 'lucide-react'
+import { Plus, Trash2, Eye, EyeOff, Copy, Check, Lock, CreditCard as Edit3, Shield, QrCode, UserCheck, ShieldCheck } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { ErrorState } from '@/components/ErrorState'
+import { Modal } from '@/components/Modal'
 import type { AppRole } from '@/lib/database.types'
 
 const EDGE_ERROR_CODES = new Set([
@@ -189,7 +190,7 @@ export function UsersPage() {
         <h1 className="text-xl font-semibold text-ink">{t.admin.users.title}</h1>
         <button
           onClick={() => setAdding(true)}
-          className="bg-accent text-white rounded-xl px-4 py-2 text-sm font-medium flex items-center gap-1.5"
+          className="bg-accent text-on-accent rounded-xl px-4 py-2 text-sm font-medium flex items-center gap-1.5"
         >
           <Plus className="w-4 h-4" />
           {t.admin.users.add}
@@ -202,7 +203,7 @@ export function UsersPage() {
             key={rf}
             onClick={() => setRoleFilter(rf)}
             className={`rounded-full px-3 py-1.5 text-sm whitespace-nowrap transition-colors border ${
-              roleFilter === rf ? 'bg-accent border-accent text-white' : 'bg-surface border-line text-muted'
+              roleFilter === rf ? 'bg-accent border-accent text-on-accent' : 'well text-muted'
             }`}
           >
             {rf === 'all' ? t.admin.users.filterAll : roleLabel(rf)}
@@ -218,7 +219,7 @@ export function UsersPage() {
             const badge = ROLE_BADGE[u.role] ?? ROLE_BADGE.supervisor
             const RoleIcon = badge.icon
             return (
-              <div key={u.id} className="bg-surface rounded-xl border border-line px-4 py-3">
+              <div key={u.id} className="tile rounded-[20px] px-4 py-3">
                 <div className="flex items-center justify-between mb-2">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -293,12 +294,13 @@ export function UsersPage() {
         />
       )}
       {pwTarget && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-6">
-          <div className="bg-surface rounded-2xl w-full max-w-sm p-5 border border-line">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-base font-semibold text-ink">{t.admin.users.setPassword}</h3>
-              <button onClick={() => setPwTarget(null)}><X className="w-5 h-5 text-muted" /></button>
-            </div>
+        <Modal
+          open
+          title={t.admin.users.setPassword}
+          onClose={() => setPwTarget(null)}
+          size="sm"
+          closeOnBackdrop={false}
+        >
             <p className="text-xs text-muted mb-3">{pwTarget.full_name} · {pwTarget.login}</p>
             <div className="relative mb-4">
               <input
@@ -307,13 +309,13 @@ export function UsersPage() {
                 onChange={(e) => setPwValue(e.target.value)}
                 autoComplete="new-password"
                 placeholder={t.admin.users.password}
-                className="w-full bg-app rounded-xl pl-4 pr-11 py-2.5 text-sm focus:outline-none"
+                className="w-full well rounded-xl ps-4 pe-11 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => setPwShow((v) => !v)}
                 aria-label={pwShow ? t.admin.users.hidePassword : t.admin.users.showPassword}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted"
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-muted"
               >
                 {pwShow ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -323,13 +325,12 @@ export function UsersPage() {
               <button
                 onClick={submitPassword}
                 disabled={pwBusy || pwValue.length < 8}
-                className="flex-1 bg-accent text-white rounded-xl py-3 font-medium disabled:opacity-40"
+                className="flex-1 bg-accent text-on-accent rounded-xl py-3 font-medium disabled:opacity-40"
               >
                 {t.admin.staff.save}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
       {deleteTarget && (
         <ConfirmDialog
@@ -341,16 +342,17 @@ export function UsersPage() {
       )}
 
       {renaming && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-6">
-          <div className="bg-surface rounded-2xl w-full max-w-sm p-5 border border-line">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-ink">{t.admin.users.renameTitle}</h3>
-              <button onClick={() => setRenaming(null)}><X className="w-5 h-5 text-muted" /></button>
-            </div>
+        <Modal
+          open
+          title={t.admin.users.renameTitle}
+          onClose={() => setRenaming(null)}
+          size="sm"
+          closeOnBackdrop={false}
+        >
             <input
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
-              className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none mb-4"
+              className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none mb-4"
             />
             <div className="flex gap-3">
               <button onClick={() => setRenaming(null)} className="flex-1 bg-app text-ink rounded-xl py-3 font-medium">
@@ -368,22 +370,21 @@ export function UsersPage() {
                   }
                 }}
                 disabled={!renameValue.trim()}
-                className="flex-1 bg-accent text-white rounded-xl py-3 font-medium disabled:opacity-40"
+                className="flex-1 bg-accent text-on-accent rounded-xl py-3 font-medium disabled:opacity-40"
               >
                 {t.admin.users.rename}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {changingRole && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-6">
-          <div className="bg-surface rounded-2xl w-full max-w-sm p-5 border border-line">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-ink">{t.admin.users.roleLabel}</h3>
-              <button onClick={() => setChangingRole(null)}><X className="w-5 h-5 text-muted" /></button>
-            </div>
+        <Modal
+          open
+          title={t.admin.users.roleLabel}
+          onClose={() => setChangingRole(null)}
+          size="sm"
+        >
             <div className="space-y-2">
               {(['admin', 'manager', 'supervisor'] as const).map((r) => {
                 const badge = ROLE_BADGE[r]
@@ -392,8 +393,8 @@ export function UsersPage() {
                   <button
                     key={r}
                     onClick={() => handleRoleChange(changingRole, r)}
-                    className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors border ${
-                      users.find((u) => u.id === changingRole)?.role === r ? 'border-accent bg-accent-soft' : 'border-line bg-app hover:bg-surface'
+                    className={`w-full flex items-center gap-3 rounded-xl px-4 py-3 text-start transition-colors border ${
+                      users.find((u) => u.id === changingRole)?.role === r ? 'border-accent bg-accent-soft' : 'well hover:border-accent'
                     }`}
                   >
                     <RoleIcon className={`w-4 h-4 ${badge.text}`} />
@@ -402,20 +403,20 @@ export function UsersPage() {
                 )
               })}
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {createdCreds && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-6">
-          <div className="bg-surface rounded-2xl w-full max-w-sm p-5 border border-line">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-semibold text-ink">{t.admin.users.credentialsTitle}</h3>
-              <button onClick={() => setCreatedCreds(null)}><X className="w-5 h-5 text-muted" /></button>
-            </div>
+        <Modal
+          open
+          title={t.admin.users.credentialsTitle}
+          onClose={() => setCreatedCreds(null)}
+          size="sm"
+          closeOnBackdrop={false}
+        >
             <p className="text-sm text-warn bg-warn-soft rounded-xl px-3 py-2.5 mb-4">{t.admin.users.credentialsHint}</p>
             <div className="space-y-3">
-              <div className="bg-app rounded-xl px-4 py-3 flex items-center justify-between">
+              <div className="well rounded-xl px-4 py-3 flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted">{t.admin.users.login}</p>
                   <p className="text-sm font-medium text-ink">{createdCreds.login}</p>
@@ -424,7 +425,7 @@ export function UsersPage() {
                   {copied === 'login' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 </button>
               </div>
-              <div className="bg-app rounded-xl px-4 py-3 flex items-center justify-between">
+              <div className="well rounded-xl px-4 py-3 flex items-center justify-between">
                 <div>
                   <p className="text-xs text-muted">{t.admin.users.password}</p>
                   <p className="text-sm font-medium text-ink">{createdCreds.password}</p>
@@ -434,11 +435,10 @@ export function UsersPage() {
                 </button>
               </div>
             </div>
-            <button onClick={() => setCreatedCreds(null)} className="w-full mt-4 bg-accent text-white rounded-xl py-3 font-medium">
+            <button onClick={() => setCreatedCreds(null)} className="w-full mt-4 bg-accent text-on-accent rounded-xl py-3 font-medium">
               OK
             </button>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   )
@@ -473,12 +473,7 @@ function UserCreateForm({ onClose, onCreated }: { onClose: () => void; onCreated
   ]
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center px-6">
-      <div className="bg-surface rounded-2xl w-full max-w-sm p-5 border border-line">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-ink">{t.admin.users.add}</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-muted" /></button>
-        </div>
+    <Modal open title={t.admin.users.add} onClose={onClose} size="sm" closeOnBackdrop={false}>
         <div className="space-y-3">
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.users.login}</label>
@@ -486,12 +481,12 @@ function UserCreateForm({ onClose, onCreated }: { onClose: () => void; onCreated
               value={login}
               onChange={(e) => setLogin(e.target.value.toLowerCase())}
               placeholder="a-z 0-9 . _ -"
-              className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none"
+              className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
             />
           </div>
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.users.fullName}</label>
-            <input value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            <input value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           </div>
           <div>
             <label className="block text-sm text-ink mb-1">{t.admin.users.roleLabel}</label>
@@ -501,7 +496,7 @@ function UserCreateForm({ onClose, onCreated }: { onClose: () => void; onCreated
                   key={opt.value}
                   onClick={() => setRole(opt.value)}
                   className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-colors border ${
-                    role === opt.value ? 'bg-accent border-accent text-white' : 'bg-app border-line text-muted'
+                    role === opt.value ? 'bg-accent border-accent text-on-accent' : 'well text-muted'
                   }`}
                 >
                   {opt.label}
@@ -517,9 +512,9 @@ function UserCreateForm({ onClose, onCreated }: { onClose: () => void; onCreated
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t.admin.users.passwordAny}
-                className="w-full bg-app rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none"
+                className="w-full well rounded-xl px-4 py-2.5 pe-10 text-sm border border-line focus:border-accent focus:outline-none"
               />
-              <button onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted">
+              <button onClick={() => setShowPw(!showPw)} className="absolute end-3 top-1/2 -translate-y-1/2 text-muted">
                 {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
@@ -530,12 +525,11 @@ function UserCreateForm({ onClose, onCreated }: { onClose: () => void; onCreated
           <button
             onClick={handleCreate}
             disabled={submitting || !login.trim() || !fullName.trim() || !password}
-            className="flex-1 bg-accent text-white rounded-xl py-3 font-medium disabled:opacity-40"
+            className="flex-1 bg-accent text-on-accent rounded-xl py-3 font-medium disabled:opacity-40"
           >
             {t.admin.users.add}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }

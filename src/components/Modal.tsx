@@ -17,6 +17,8 @@ interface ModalProps {
   glass?: boolean
   /** Hide the built-in header (title stays as aria-label). */
   hideHeader?: boolean
+  /** Close on a click outside the dialog (default true). Off for forms where a stray click would lose input. */
+  closeOnBackdrop?: boolean
 }
 
 const SIZE_CLASS: Record<ModalSize, string> = {
@@ -46,7 +48,7 @@ function unlockScroll() {
  * Shared modal: centred dialog on desktop, bottom sheet on phones.
  * Rendered through a portal at layer z-modal (70); ConfirmDialog (80) opens above it.
  */
-export function Modal({ open, title, onClose, children, size = 'md', glass = false, hideHeader = false }: ModalProps) {
+export function Modal({ open, title, onClose, children, size = 'md', glass = false, hideHeader = false, closeOnBackdrop = true }: ModalProps) {
   const { t } = useI18n()
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
@@ -91,7 +93,7 @@ export function Modal({ open, title, onClose, children, size = 'md', glass = fal
 
   return createPortal(
     <div className="fixed inset-0 z-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
-      <div className="absolute inset-0 bg-black/45 anim-scrim" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/45 anim-scrim" onClick={closeOnBackdrop ? onClose : undefined} />
       <div
         ref={panelRef}
         tabIndex={-1}

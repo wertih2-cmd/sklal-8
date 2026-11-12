@@ -17,8 +17,9 @@ import {
 import type { Category, Item, ItemKind, BaseUnit, Supplier } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { toast } from '@/lib/toast'
-import { Plus, Trash2, CreditCard as Edit3, X, Check, ChevronRight, ChevronDown, Package, Folder, Search } from 'lucide-react'
+import { Plus, Trash2, CreditCard as Edit3, Check, ChevronRight, ChevronDown, Package, Folder, Search } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Modal as BaseModal } from '@/components/Modal'
 import { ErrorState } from '@/components/ErrorState'
 import { friendlyMessage, friendlyMessage as errorMessage } from '@/lib/errors'
 import { useLiveRefresh } from '@/lib/realtime'
@@ -100,7 +101,7 @@ export function CatalogPage() {
         <h1 className="text-xl font-semibold text-ink">{t.admin.catalog.title}</h1>
         <button
           onClick={() => setAddingCat(true)}
-          className="bg-accent text-white rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5"
+          className="bg-accent text-on-accent rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5"
         >
           <Plus className="w-4 h-4" />
           {t.admin.catalog.addCategory}
@@ -114,7 +115,7 @@ export function CatalogPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t.admin.catalog.searchPlaceholder}
-            className="w-full bg-surface border border-line rounded-lg ps-9 pe-3 py-2.5 text-sm text-ink focus:outline-none"
+            className="w-full well border border-line rounded-lg ps-9 pe-3 py-2.5 text-sm text-ink focus:border-accent focus:outline-none"
           />
         </div>
       )}
@@ -128,16 +129,16 @@ export function CatalogPage() {
           {groups.map(({ category: cat, items: catItems, matched }) => {
             const expanded = expandedCat === cat.id || matched
             return (
-              <div key={cat.id} className="bg-surface border border-line rounded-xl overflow-hidden">
+              <div key={cat.id} className="tile rounded-[20px] overflow-hidden">
                 <div className="flex items-center gap-3 px-4 py-3">
                   <button
                     onClick={() => setExpandedCat(expanded ? null : cat.id)}
-                    className="flex items-center gap-2 flex-1 text-left min-w-0"
+                    className="flex items-center gap-2 flex-1 text-start min-w-0"
                   >
                     {expanded ? (
                       <ChevronDown className="w-4 h-4 text-muted shrink-0" />
                     ) : (
-                      <ChevronRight className="w-4 h-4 text-muted shrink-0" />
+                      <ChevronRight className="w-4 h-4 text-muted shrink-0 rtl:rotate-180" />
                     )}
                     <Folder className="w-4 h-4 text-muted shrink-0" />
                     <span className="text-sm font-medium text-ink truncate">{categoryName(cat.name)}</span>
@@ -170,15 +171,15 @@ export function CatalogPage() {
                           <Package className="w-4 h-4 text-muted shrink-0" />
                           <div className="flex-1 min-w-0">
                             <span className={`text-sm ${it.active ? 'text-ink' : 'text-muted line-through'}`}>{itemName(it.name)}</span>
-                            <span className="text-xs text-muted ml-2">
+                            <span className="text-xs text-muted ms-2">
                               {it.pack_size > 1 ? `${n(String(it.pack_size))} ${it.pack_label}` : t.common.units[it.base_unit]}
                               {it.min_stock != null && ` · ${t.common.minimum} ${n(String(it.min_stock))}`}
                             </span>
                             {it.tenant_coef != null
-                              ? <span className="text-xs text-ink ml-1">· ×{formatCoef(it.tenant_coef)}</span>
+                              ? <span className="text-xs text-ink ms-1">· ×{formatCoef(it.tenant_coef)}</span>
                               : cat.tenant_coef != null
-                                ? <span className="text-xs text-muted ml-1">· ×{formatCoef(cat.tenant_coef)}</span>
-                                : <span className="text-xs text-muted ml-1">· {t.admin.catalog.tenantCoefNone}</span>}
+                                ? <span className="text-xs text-muted ms-1">· ×{formatCoef(cat.tenant_coef)}</span>
+                                : <span className="text-xs text-muted ms-1">· {t.admin.catalog.tenantCoefNone}</span>}
                           </div>
                           <button onClick={() => setEditingItem({ item: it, categoryId: cat.id })} className="text-muted hover:text-accent shrink-0">
                             <Edit3 className="w-3.5 h-3.5" />
@@ -361,22 +362,22 @@ function CategoryEditor({
       <div className="space-y-3">
         <Field label={t.admin.catalog.categoryName}>
           <input value={name} onChange={(e) => setName(e.target.value)}
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
         </Field>
         <Field label={t.admin.catalog.nameEn}>
           <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} dir="ltr"
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
         </Field>
         <Field label={t.admin.catalog.nameAr}>
           <input value={nameAr} onChange={(e) => setNameAr(e.target.value)} dir="rtl"
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           <p className="text-xs text-muted mt-0.5">{t.admin.catalog.nameTranslationHint}</p>
         </Field>
         <Field label={t.admin.catalog.kind}>
           <div className="grid grid-cols-2 gap-2">
             {(['asset', 'consumable'] as ItemKind[]).map((k) => (
               <button key={k} onClick={() => setKind(k)}
-                className={`rounded-lg py-2.5 text-sm border transition-colors ${kind === k ? 'border-accent bg-accent-soft text-accent font-medium' : 'border-line bg-surface text-muted'}`}>
+                className={`rounded-lg py-2.5 text-sm border transition-colors ${kind === k ? 'border-accent bg-accent-soft text-accent font-medium' : 'well text-muted'}`}>
                 {kindLabels[k]}
               </button>
             ))}
@@ -384,12 +385,12 @@ function CategoryEditor({
         </Field>
         <Field label={t.admin.catalog.sort}>
           <input type="number" value={sort} onChange={(e) => setSort(e.target.value)}
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
         </Field>
         <Field label={t.admin.catalog.tenantCoef}>
           <input type="number" min="0" step="any" value={tenantCoef} onChange={(e) => setTenantCoef(e.target.value)}
             placeholder={t.admin.catalog.tenantCoefExample}
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           {tenantCoef.trim() && parseCoef(tenantCoef) == null
             ? <p className="text-xs text-bad mt-0.5">{t.admin.catalog.tenantCoefInvalid}</p>
             : <p className="text-xs text-muted mt-0.5">{t.admin.catalog.tenantCoefHint}</p>}
@@ -484,28 +485,28 @@ function ItemEditor({
       <div className="space-y-3">
         <Field label={t.admin.catalog.category}>
           <select value={categoryId} onChange={(e) => setCategoryId(Number(e.target.value))}
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none">
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none">
             {categories.map((c) => <option key={c.id} value={c.id}>{categoryName(c.name)}</option>)}
           </select>
         </Field>
         <Field label={t.admin.catalog.itemName}>
           <input value={name} onChange={(e) => setName(e.target.value)}
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
         </Field>
         <Field label={t.admin.catalog.nameEn}>
           <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} dir="ltr"
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
         </Field>
         <Field label={t.admin.catalog.nameAr}>
           <input value={nameAr} onChange={(e) => setNameAr(e.target.value)} dir="rtl"
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           <p className="text-xs text-muted mt-0.5">{t.admin.catalog.nameTranslationHint}</p>
         </Field>
         <Field label={t.admin.catalog.baseUnit}>
           <div className={`grid grid-cols-3 gap-2 ${unitLocked ? 'opacity-50 pointer-events-none' : ''}`}>
             {baseUnitOptions.map((u) => (
               <button key={u} onClick={() => setBaseUnit(u)} disabled={unitLocked}
-                className={`rounded-lg py-2 text-sm border transition-colors ${baseUnit === u ? 'border-accent bg-accent-soft text-accent font-medium' : 'border-line bg-surface text-muted'} ${unitLocked ? 'cursor-not-allowed' : ''}`}>
+                className={`rounded-lg py-2 text-sm border transition-colors ${baseUnit === u ? 'border-accent bg-accent-soft text-accent font-medium' : 'well text-muted'} ${unitLocked ? 'cursor-not-allowed' : ''}`}>
                 {t.common.units[u]}
               </button>
             ))}
@@ -517,16 +518,16 @@ function ItemEditor({
         <div className="grid grid-cols-2 gap-2">
           <Field label={t.admin.catalog.packSize}>
             <input type="number" min="1" step="0.001" value={packSize} onChange={(e) => setPackSize(e.target.value)}
-              className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+              className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           </Field>
           <Field label={t.admin.catalog.packLabel}>
             <input value={packLabel} onChange={(e) => setPackLabel(e.target.value)}
-              className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+              className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           </Field>
         </div>
         <Field label={t.admin.catalog.supplier}>
           <select value={supplierId ?? ''} onChange={(e) => setSupplierId(e.target.value ? Number(e.target.value) : null)}
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none">
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none">
             <option value="">{t.admin.catalog.noSupplier}</option>
             {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
@@ -534,26 +535,26 @@ function ItemEditor({
         <Field label={t.admin.catalog.minStock}>
           <input type="number" min="0" step="0.001" value={minStock} onChange={(e) => setMinStock(e.target.value)}
             placeholder="—"
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
         </Field>
         <Field label={t.admin.catalog.targetStock}>
           <input type="number" min="0" step="0.001" value={targetStock} onChange={(e) => setTargetStock(e.target.value)}
             placeholder="—"
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           {targetInvalid && <p className="text-xs text-bad mt-1">{t.admin.catalog.targetBelowMin}</p>}
         </Field>
         <Field label={t.admin.catalog.note}>
           <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={300}
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
         </Field>
         <Field label={t.admin.catalog.sortOrder}>
           <input type="number" step="1" value={sort} onChange={(e) => setSort(e.target.value)}
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
         </Field>
         <Field label={t.admin.catalog.tenantCoef}>
           <input type="number" min="0" step="any" value={tenantCoef} onChange={(e) => setTenantCoef(e.target.value)}
             placeholder={t.admin.catalog.tenantCoefExample}
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           {tenantCoef.trim() && parseCoef(tenantCoef) == null
             ? <p className="text-xs text-bad mt-0.5">{t.admin.catalog.tenantCoefInvalid}</p>
             : <p className="text-xs text-muted mt-0.5">{t.admin.catalog.tenantCoefHint}</p>}
@@ -573,13 +574,13 @@ function ItemEditor({
         <Field label={t.admin.catalog.defaultCost}>
           <input type="number" min="0" step="any" value={defaultCost} onChange={(e) => setDefaultCost(e.target.value)}
             placeholder="—"
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
         </Field>
         {!item && (
           <Field label={t.admin.catalog.openingQty}>
             <input type="number" min="0" step="any" value={openingQty} onChange={(e) => setOpeningQty(e.target.value)}
               placeholder="0"
-              className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+              className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
           </Field>
         )}
         <label className="flex items-center gap-2">
@@ -659,18 +660,7 @@ function ItemEditor({
 }
 
 function Modal({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) {
-  return (
-    <>
-      <div className="fixed inset-0 bg-black/50 z-[60]" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[61] bg-surface rounded-2xl w-full max-w-sm p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet max-md:max-h-[85vh] max-md:overflow-auto md:max-h-[90vh] md:overflow-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-ink">{title}</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-muted" /></button>
-        </div>
-        {children}
-      </div>
-    </>
-  )
+  return <BaseModal open title={title} onClose={onClose} size="sm">{children}</BaseModal>
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -688,7 +678,7 @@ function Actions({ onClose, onSave, disabled }: { onClose: () => void; onSave: (
     <div className="flex gap-3 mt-4">
       <button onClick={onClose} className="flex-1 bg-app text-ink rounded-lg py-3 font-medium text-sm">{t.cleaning.cancel}</button>
       <button onClick={onSave} disabled={disabled}
-        className="flex-1 bg-accent text-white rounded-lg py-3 font-medium text-sm disabled:opacity-40 flex items-center justify-center gap-2">
+        className="flex-1 bg-accent text-on-accent rounded-lg py-3 font-medium text-sm disabled:opacity-40 flex items-center justify-center gap-2">
         <Check className="w-4 h-4" />
         {t.admin.catalog.save}
       </button>

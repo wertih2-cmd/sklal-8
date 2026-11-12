@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Loader as Loader2, X, Trash2, Camera, Video, RotateCcw } from 'lucide-react'
 
 import { useI18n } from '@/i18n'
+import { Modal } from '@/components/Modal'
+import { useModalLayer } from '@/components/useModalLayer'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 import { formatDateTime, formatQty } from '@/lib/format'
 import { friendlyMessage, toApiError } from '@/lib/errors'
@@ -48,16 +50,8 @@ export function CleaningDetailSheet({ event, canDelete, onClose, onDeleted, onRe
 
   useEffect(() => { loadLines() }, [loadLines])
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
-      if (showMedia) return
-      if (confirmDelete) { setConfirmDelete(false); setReason(''); return }
-      onClose()
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [showMedia, confirmDelete, onClose])
+  // Escape reaches only the topmost layer: the viewer, then the delete dialog, then this panel.
+  useModalLayer(true, onClose)
 
   const normTypeLabels: Record<NormType, string> = {
     asset_standing: t.apartments.normInventory,
@@ -90,21 +84,21 @@ export function CleaningDetailSheet({ event, canDelete, onClose, onDeleted, onRe
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/45 z-[65] anim-scrim" onClick={onClose} />
-      <aside className="fixed top-0 right-0 bottom-0 w-full max-w-[440px] bg-surface z-[66] overflow-auto border-l border-line anim-drawer" data-testid="cleaning-detail">
+      <div className="fixed inset-0 bg-black/45 z-drawer anim-scrim" onClick={onClose} />
+      <aside className="fixed top-0 end-0 bottom-0 w-full max-w-[440px] bg-surface z-drawer overflow-auto border-s border-line anim-drawer" data-testid="cleaning-detail">
         <div className="sticky top-0 bg-surface border-b border-line px-5 py-3 flex items-center justify-between">
           <h2 className="text-base font-semibold text-ink">{t.history.cleaningDetail}</h2>
-          <button onClick={onClose} className="p-2 -mr-1 rounded-lg hover:bg-app"><X className="w-5 h-5 text-muted" /></button>
+          <button onClick={onClose} className="p-2 -me-1 rounded-lg hover:bg-app"><X className="w-5 h-5 text-muted" /></button>
         </div>
         <div className="px-5 py-4 space-y-4">
           <div>
             <span className="text-sm font-medium text-ink">{n(formatDateTime(event.cleaned_at))}</span>
             {event.status === 'done' && event.posting_status === 'pending' ? (
-              <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-warn-soft text-warn">
+              <span className="ms-2 text-xs px-2 py-0.5 rounded-full bg-warn-soft text-warn">
                 {t.admin.apartments.pendingApproval}
               </span>
             ) : (
-              <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${event.status === 'done' ? 'bg-ok-soft text-ok' : 'bg-bad-soft text-bad'}`}>
+              <span className={`ms-2 text-xs px-2 py-0.5 rounded-full ${event.status === 'done' ? 'bg-ok-soft text-ok' : 'bg-bad-soft text-bad'}`}>
                 {event.status === 'done' ? t.admin.apartments.done : t.admin.apartments.reversed}
               </span>
             )}
@@ -125,7 +119,7 @@ export function CleaningDetailSheet({ event, canDelete, onClose, onDeleted, onRe
           ) : lines.length > 0 ? (
             <div>
               <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">{t.history.items}</h3>
-              <div className="bg-app rounded-xl border border-line divide-y divide-[var(--line)]">
+              <div className="well rounded-xl border border-line divide-y divide-[var(--line)]">
                 {lines.map((line) => (
                   <div key={`${line.event_id}-${line.item_id}`} className="px-3 py-2.5 flex items-center justify-between">
                     <div className="min-w-0">
@@ -196,8 +190,12 @@ export function CleaningDetailSheet({ event, canDelete, onClose, onDeleted, onRe
       )}
 
       {confirmDelete && (
-        <div className="fixed inset-0 bg-black/45 z-[75] flex items-center justify-center anim-scrim" onClick={() => { setConfirmDelete(false); setReason('') }}>
-          <div className="bg-surface rounded-2xl p-5 max-w-sm w-full mx-4 border border-line" onClick={(e) => e.stopPropagation()}>
+        <Modal
+          open
+          title={t.history.delete}
+          onClose={() => { if (!deleting) { setConfirmDelete(false); setReason('') } }}
+          size="sm"
+        >
             <p className="text-sm text-warn mb-3">{t.history.deleteWarning}</p>
             <textarea
               value={reason}
@@ -205,7 +203,7 @@ export function CleaningDetailSheet({ event, canDelete, onClose, onDeleted, onRe
               placeholder={t.history.deleteReason}
               data-testid="delete-reason"
               rows={3}
-              className="w-full bg-app rounded-lg px-3 py-2.5 text-sm border border-line focus:border-accent focus:outline-none mb-4 resize-none"
+              className="w-full well rounded-lg px-3 py-2.5 text-sm border border-line focus:border-accent focus:outline-none mb-4 resize-none"
             />
             <div className="flex gap-3">
               <button onClick={() => { setConfirmDelete(false); setReason('') }} className="flex-1 bg-app text-ink rounded-lg py-3 font-medium text-sm" disabled={deleting}>
@@ -215,14 +213,13 @@ export function CleaningDetailSheet({ event, canDelete, onClose, onDeleted, onRe
                 onClick={handleDelete}
                 disabled={deleting || !reason.trim()}
                 data-testid="confirm-delete"
-                className="flex-1 bg-bad text-white rounded-lg py-3 font-medium text-sm disabled:opacity-40 flex items-center justify-center gap-2"
+                className="flex-1 bg-bad text-on-accent rounded-lg py-3 font-medium text-sm disabled:opacity-40 flex items-center justify-center gap-2"
               >
                 {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                 {t.history.delete}
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   )

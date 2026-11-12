@@ -21,7 +21,7 @@ export function AdminOnlyScreen({ onScanner }: Props) {
       <p className="text-sm text-muted max-w-xs mb-6">{t.welcome.adminOnlyText}</p>
       <button
         onClick={onScanner}
-        className="w-full max-w-xs min-h-[48px] bg-accent text-white rounded-xl px-4 py-3 text-sm font-medium transition-opacity hover:opacity-90"
+        className="w-full max-w-xs min-h-[48px] bg-accent text-on-accent rounded-xl px-4 py-3 text-sm font-medium transition-opacity hover:opacity-90"
       >
         {t.welcome.toScanner}
       </button>

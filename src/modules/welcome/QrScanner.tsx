@@ -138,7 +138,7 @@ export function QrScanner({ onResult, onClose, onManual }: Props) {
   }, [])
 
   return (
-    <div className="fixed inset-0 z-[90] bg-black text-white">
+    <div className="fixed inset-0 z-confirm bg-black text-white">
       <video
         ref={videoRef}
         playsInline
@@ -149,7 +149,7 @@ export function QrScanner({ onResult, onClose, onManual }: Props) {
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="w-64 h-64 max-w-[70vw] max-h-[70vw] rounded-3xl border-2 border-white/90 shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]" />
       </div>
-      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pb-3">
+      <div className="absolute top-0 inset-x-0 flex items-center justify-between px-4 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pb-3">
         <span className="text-base font-semibold">{t.welcome.scannerTitle}</span>
         <button
           onClick={onClose}
@@ -159,11 +159,11 @@ export function QrScanner({ onResult, onClose, onManual }: Props) {
           <X className="w-5 h-5" />
         </button>
       </div>
-      <div className="absolute bottom-0 left-0 right-0 px-6 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] text-center">
+      <div className="absolute bottom-0 inset-x-0 px-6 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] text-center">
         {error ? (
           <p className="text-sm bg-black/70 rounded-xl px-4 py-3">{error}</p>
         ) : notice ? (
-          <p className="text-sm bg-warn text-white rounded-xl px-4 py-3">{notice}</p>
+          <p className="text-sm bg-warn text-on-accent rounded-xl px-4 py-3">{notice}</p>
         ) : (
           <p className="text-sm text-white/90">{t.welcome.scanHint}</p>
         )}

@@ -48,7 +48,7 @@ export function WelcomePage({ onContinue }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] bg-slate-900 text-white overflow-hidden">
+    <div className="fixed inset-0 z-drawer bg-slate-900 text-white overflow-hidden">
       <div
         className="absolute inset-0"
         style={{ background: 'linear-gradient(160deg, #0e7c86 0%, #0f172a 100%)' }}
@@ -71,7 +71,7 @@ export function WelcomePage({ onContinue }: Props) {
           {canEnterApp && (
             <button
               onClick={handleContinue}
-              className="w-full min-h-[56px] bg-accent text-white rounded-2xl px-4 py-3 text-base font-medium flex items-center justify-center gap-2.5 transition-opacity active:opacity-90"
+              className="w-full min-h-[56px] bg-accent text-on-accent rounded-2xl px-4 py-3 text-base font-medium flex items-center justify-center gap-2.5 transition-opacity active:opacity-90"
             >
               <LogIn className="w-5 h-5 shrink-0" />
               <span>{t.welcome.enterApp}</span>

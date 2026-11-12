@@ -60,7 +60,7 @@ export function QrIndexPage() {
         <p className="text-sm text-bad mb-4">{error}</p>
         <button
           onClick={load}
-          className="inline-flex items-center gap-2 bg-accent text-white rounded-xl px-5 py-2.5 text-sm font-medium"
+          className="inline-flex items-center gap-2 bg-accent text-on-accent rounded-xl px-5 py-2.5 text-sm font-medium"
         >
           <RefreshCw className="w-4 h-4" />
           {t.retry}
@@ -73,12 +73,12 @@ export function QrIndexPage() {
     <div className="px-4 pt-4 pb-8">
       <h1 className="text-lg font-semibold text-ink mb-4">{t.qr.qrIndexTitle}</h1>
       <div className="relative mb-4">
-        <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+        <Search className="w-4 h-4 text-muted absolute start-3 top-1/2 -translate-y-1/2" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t.qr.search}
-          className="w-full bg-surface rounded-lg pl-10 pr-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
+          className="w-full well rounded-lg ps-10 pe-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
         />
       </div>
       {grouped.length === 0 ? (
@@ -93,7 +93,7 @@ export function QrIndexPage() {
                   <button
                     key={apt.id}
                     onClick={() => navigate(`/qr/${apt.id}`)}
-                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-app transition-colors text-left"
+                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-app transition-colors text-start"
                   >
                     <div>
                       <span className="text-sm font-medium text-ink">{apt.code}</span>

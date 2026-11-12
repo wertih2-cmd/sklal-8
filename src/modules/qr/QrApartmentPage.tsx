@@ -23,11 +23,12 @@ import { useNotifyContacts, commentMessage } from '@/lib/whatsappNotify'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 import { getOutboxSummary, getOutboxEntries, subscribe, flushOutbox, retryMediaEntry, discardMediaEntry, retryFailedEntry, deleteFailedEntry, type OutboxEntry } from '@/lib/outbox'
 import {
-  CircleCheck as CheckCircle2, Wrench, Search, Send, Camera, Video, X, FileText,
+  CircleCheck as CheckCircle2, Wrench, Search, Send, Camera, Video, FileText,
   Loader as Loader2, MessageCircle, RefreshCw, ChevronRight, Image as ImageIcon,
   Trash2,
 } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Modal } from '@/components/Modal'
 import { ErrorState } from '@/components/ErrorState'
 import { CleaningHistoryList } from '@/modules/history/CleaningHistoryList'
 import { QR_HISTORY_ENABLED } from '@/modules/qr/flags'
@@ -359,12 +360,12 @@ export function QrApartmentPage() {
               <span>{t.qr.updated}: {n(formatDateTime(lastUpdated.toISOString()))}</span>
             </div>
             <div className="relative">
-              <Search className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-muted absolute start-3 top-1/2 -translate-y-1/2" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={t.qr.search}
-                className="w-full bg-surface rounded-lg pl-10 pr-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
+                className="w-full well rounded-lg ps-10 pe-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
               />
             </div>
             <div className="flex gap-1.5 overflow-x-auto pb-1">
@@ -380,16 +381,16 @@ export function QrApartmentPage() {
               return (
                 <div key={nt}>
                   <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">{normTypeLabels[nt]}</h3>
-                  <div className="bg-surface rounded-xl border border-line divide-y divide-[var(--line)]">
+                  <div className="tile rounded-[20px] divide-y divide-[var(--line)]">
                     {list.map((nr) => (
                       <div key={`${nr.item_id}-${nr.norm_type}`} className="px-4 py-3 flex items-center justify-between gap-3">
                         <div className="min-w-0 flex-1">
                           <span className="text-sm text-ink break-words">{itemName(nr.item_name)}</span>
                           {itemCategoryMap.get(nr.item_id) && (
-                            <span className="text-xs text-muted block sm:inline sm:ml-2">{categoryName(itemCategoryMap.get(nr.item_id)!)}</span>
+                            <span className="text-xs text-muted block sm:inline sm:ms-2">{categoryName(itemCategoryMap.get(nr.item_id)!)}</span>
                           )}
                         </div>
-                        <span className="text-sm text-muted shrink-0 ml-2">
+                        <span className="text-sm text-muted shrink-0 ms-2">
                           {n(formatQty(nr.qty, { base_unit: nr.base_unit, pack_size: nr.pack_size, pack_label: nr.pack_label }))}
                         </span>
                       </div>
@@ -418,7 +419,7 @@ export function QrApartmentPage() {
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder={t.qr.commentPlaceholder}
-                className="flex-1 basis-full sm:basis-0 min-w-0 bg-surface rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
+                className="flex-1 basis-full sm:basis-0 min-w-0 well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none"
                 onKeyDown={(e) => { if (e.key === 'Enter' && !sendingNote) handleAddNote(null) }}
               />
               <button
@@ -441,7 +442,7 @@ export function QrApartmentPage() {
                 onClick={() => handleAddNote(null)}
                 disabled={sendingNote || !noteText.trim() || !navigator.onLine}
                 aria-label={t.qr.send}
-                className="bg-accent text-white rounded-xl min-w-[44px] min-h-[44px] px-4 py-2.5 flex items-center justify-center disabled:opacity-40"
+                className="bg-accent text-on-accent rounded-xl min-w-[44px] min-h-[44px] px-4 py-2.5 flex items-center justify-center disabled:opacity-40"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -470,7 +471,7 @@ export function QrApartmentPage() {
                 <button
                   key={note.id}
                   onClick={() => setDetail({ type: 'note', note })}
-                  className="w-full text-left bg-surface rounded-xl border border-line px-4 py-3 transition-colors hover:bg-app active:bg-app"
+                  className="w-full text-start tile rounded-[20px] px-4 py-3 transition-colors hover:border-accent"
                 >
                   <p className="text-sm text-ink line-clamp-3">{note.body}</p>
                   {note.photo_path && (
@@ -518,7 +519,7 @@ export function QrApartmentPage() {
                   <button
                     key={inc.id}
                     onClick={() => setDetail({ type: 'incident', incident: inc })}
-                    className="w-full text-left bg-surface rounded-xl border border-line px-4 py-3 transition-colors hover:bg-app active:bg-app"
+                    className="w-full text-start tile rounded-[20px] px-4 py-3 transition-colors hover:border-accent"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-ink">{kindLabel(inc.kind, t)}</span>
@@ -552,11 +553,11 @@ export function QrApartmentPage() {
       </div>
 
       {/* Sticky bottom actions */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 bg-surface/95 backdrop-blur border-t border-line px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+      <div className="fixed bottom-0 inset-x-0 z-20 bg-surface/95 backdrop-blur border-t border-line px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
         <div className="max-w-lg mx-auto grid grid-cols-2 gap-2">
           <button
             onClick={() => navigate(`/qr/${aptId}/clean`)}
-            className="min-h-[48px] bg-accent text-white rounded-xl px-1 py-3 text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 transition-opacity hover:opacity-90"
+            className="min-h-[48px] bg-accent text-on-accent rounded-xl px-1 py-3 text-xs sm:text-sm font-medium flex items-center justify-center gap-1.5 transition-opacity hover:opacity-90"
           >
             <CheckCircle2 className="w-5 h-5" />
             <span className="truncate">{t.qr.cleaned}</span>
@@ -664,28 +665,21 @@ function DetailModal({
   n: ReturnType<typeof useI18n>['n']
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 anim-scrim" onClick={onClose} />
-      <div className="relative bg-surface w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-line anim-drawer">
-        <div className="sticky top-0 bg-surface border-b border-line px-4 py-3 flex items-center justify-between">
-          <h3 className="text-base font-semibold text-ink">
-            {state.type === 'note' && t.qr.comments}
-            {state.type === 'incident' && t.qr.incidentsTab}
-          </h3>
-          <button onClick={onClose} className="p-1 -mr-1">
-            <X className="w-5 h-5 text-muted" />
-          </button>
-        </div>
-        <div className="px-4 py-4 space-y-3">
-          {state.type === 'note' && state.note && (
-            <NoteDetail note={state.note} fileUrls={noteFileUrls} t={t} n={n} />
-          )}
-          {state.type === 'incident' && state.incident && (
-            <IncidentDetail incident={state.incident} fileUrls={incidentFileUrls} t={t} n={n} />
-          )}
-        </div>
+    <Modal
+      open
+      title={state.type === 'note' ? t.qr.comments : state.type === 'incident' ? t.qr.incidentsTab : ''}
+      onClose={onClose}
+      size="md"
+    >
+      <div className="space-y-3">
+        {state.type === 'note' && state.note && (
+          <NoteDetail note={state.note} fileUrls={noteFileUrls} t={t} n={n} />
+        )}
+        {state.type === 'incident' && state.incident && (
+          <IncidentDetail incident={state.incident} fileUrls={incidentFileUrls} t={t} n={n} />
+        )}
       </div>
-    </div>
+    </Modal>
   )
 }
 
@@ -907,7 +901,7 @@ function WhatsappSection({
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={2}
-          className="w-full bg-surface rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none resize-none"
+          className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none resize-none"
         />
       </div>
       <p className="text-xs text-warn">{t.qr.whatsappHint}</p>
@@ -915,18 +909,18 @@ function WhatsappSection({
         {grouped.map(([group, list]) => (
           <div key={group}>
             <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-2">{group}</h3>
-            <div className="bg-surface rounded-xl border border-line divide-y divide-[var(--line)]">
+            <div className="tile rounded-[20px] divide-y divide-[var(--line)]">
               {list.map((contact) => (
                 <button
                   key={contact.id}
                   onClick={() => buildMessage(contact)}
                   disabled={signing}
-                  className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-app transition-colors disabled:opacity-50"
+                  className="w-full px-4 py-3 flex items-center gap-3 text-start hover:bg-app transition-colors disabled:opacity-50"
                 >
                   <MessageCircle className="w-5 h-5 text-accent shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="text-sm text-ink">{contact.name}</span>
-                    {contact.role_title && <span className="text-xs text-muted ml-2">{contact.role_title}</span>}
+                    {contact.role_title && <span className="text-xs text-muted ms-2">{contact.role_title}</span>}
                   </div>
                 </button>
               ))}
@@ -956,7 +950,7 @@ function Chip({ active, onClick, label }: { active: boolean; onClick: () => void
     <button
       onClick={onClick}
       className={`rounded-full px-3 py-1.5 text-sm whitespace-nowrap transition-colors border ${
-        active ? 'bg-accent border-accent text-white' : 'bg-surface border-line text-muted'
+        active ? 'bg-accent border-accent text-on-accent' : 'well text-muted'
       }`}
     >
       {label}

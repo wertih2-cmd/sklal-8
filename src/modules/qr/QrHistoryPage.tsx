@@ -71,7 +71,7 @@ export function QrHistoryPage() {
         <p className="text-sm text-muted mb-4">{t.qr.historyOffline}</p>
         <button
           onClick={handleRetry}
-          className="inline-flex items-center gap-2 bg-accent text-white rounded-xl px-5 py-2.5 text-sm font-medium"
+          className="inline-flex items-center gap-2 bg-accent text-on-accent rounded-xl px-5 py-2.5 text-sm font-medium"
         >
           <RefreshCw className="w-4 h-4" />
           {t.retry}

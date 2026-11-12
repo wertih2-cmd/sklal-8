@@ -439,6 +439,7 @@ export const ar: Dict = {
         aiErrNotConfigured: 'الذكاء الاصطناعي غير مهيأ: لا يوجد مفتاح في أسرار الدالة.',
         aiErrRateLimited: 'طلبات كثيرة. حاول بعد دقيقة.',
         aiStale: 'تغيرت البيانات بعد صياغة هذا النص. اضغط الزر مرة أخرى لتحديثه.',
+        aiErrDetail: 'الرمز',
         loadFailed: 'تعذر تحميل الملخص',
         showMore: 'عرض المزيد',
         showLess: 'طي',

@@ -438,6 +438,7 @@ export const en: Dict = {
         aiErrNotConfigured: 'AI is not set up: the function has no key in its secrets.',
         aiErrRateLimited: 'Too often. Try again in a minute.',
         aiStale: 'The data changed after this was written. Press the button again to refresh the text.',
+        aiErrDetail: 'Code',
         loadFailed: 'Could not load the digest',
         showMore: 'Show more',
         showLess: 'Show less',

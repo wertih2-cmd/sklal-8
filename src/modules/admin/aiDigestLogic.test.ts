@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   sanitizePayload, buildPrompt, parseModelText, parseModelTextDetailed, describeModelAnswer, extractModelText, parseLang, MAX_APARTMENTS, MAX_BULLETS,
 } from '../../../supabase/functions/ai-digest/logic'
-import { errorCodeFromServer } from './aiDigestErrors'
+import { errorCodeFromServer, describeServerBody, AiDigestError } from './aiDigestErrors'
 
 const apt = (over: Record<string, unknown> = {}) => ({
   code: 'B-12', label: 'urgent', new_incidents: 1, new_cleanings: 2, repeat: false, oldest_waiting_hours: 50,
@@ -148,5 +148,24 @@ describe('describeModelAnswer', () => {
     const d = describeModelAnswer({ promptFeedback: { blockReason: 'SAFETY' }, candidates: [{ finishReason: 'drop table;' }] })
     expect(d).toMatchObject({ block_reason: 'SAFETY', finish_reason: null, candidates: 1, text_length: 0 })
     expect(describeModelAnswer(null).candidates).toBe(0)
+  })
+})
+
+describe('describeServerBody', () => {
+  it('writes the fixed fields of a diagnostics body on one line', () => {
+    const body = { error: 'ai_bad_response', reason: 'empty', finish_reason: 'MAX_TOKENS', candidates: 1, parts: 1, text_length: 0, thoughts_tokens: 2043 }
+    expect(describeServerBody(body, 502)).toBe('http=502, error=ai_bad_response, reason=empty, finish_reason=MAX_TOKENS, candidates=1, parts=1, text_length=0, thoughts_tokens=2043')
+  })
+
+  it('ignores free text, unknown keys and unreadable bodies', () => {
+    expect(describeServerBody({ error: 'ai_unavailable', message: 'secret words', reason: 'has spaces and words' })).toBe('error=ai_unavailable')
+    expect(describeServerBody(null, 500)).toBe('http=500')
+    expect(describeServerBody('text')).toBe('')
+  })
+
+  it('travels with the error object', () => {
+    const e = new AiDigestError('unavailable', 'http=502')
+    expect([e.code, e.detail]).toEqual(['unavailable', 'http=502'])
+    expect(new AiDigestError('rate_limited').detail).toBe('')
   })
 })

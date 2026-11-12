@@ -73,6 +73,7 @@ export function DashboardDigest({ incidents, apartments }: { incidents: Incident
   const [ai, setAi] = useState<{ result: AiDigestResult; key: string } | null>(() => restoreAi(`${lang}|24h`))
   const [aiBusy, setAiBusy] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [aiDetail, setAiDetail] = useState('')
   const alive = useRef(true)
 
   const load = useCallback(async () => {
@@ -126,6 +127,7 @@ export function DashboardDigest({ incidents, apartments }: { incidents: Incident
   useEffect(() => {
     setAi(restoreAi(aiScope))
     setAiError(null)
+    setAiDetail('')
   }, [aiScope])
   const aiStale = ai != null && aiKey !== '' && ai.key !== aiKey
 
@@ -133,13 +135,17 @@ export function DashboardDigest({ incidents, apartments }: { incidents: Incident
     if (!digest || aiBusy) return
     setAiBusy(true)
     setAiError(null)
+    setAiDetail('')
     try {
       const result = await fetchAiDigest(toAiPayload(digest), lang)
       aiCache = { scope: aiScope, key: aiKey, result, at: Date.now() }
       if (alive.current) setAi({ result, key: aiKey })
     } catch (e) {
       const code = e instanceof AiDigestError ? e.code : 'unavailable'
-      if (alive.current) setAiError(code === 'not_configured' ? d.aiErrNotConfigured : code === 'rate_limited' ? d.aiErrRateLimited : d.aiErrFailed)
+      if (alive.current) {
+        setAiError(code === 'not_configured' ? d.aiErrNotConfigured : code === 'rate_limited' ? d.aiErrRateLimited : d.aiErrFailed)
+        setAiDetail(e instanceof AiDigestError ? e.detail : '')
+      }
     } finally {
       if (alive.current) setAiBusy(false)
     }
@@ -229,6 +235,7 @@ export function DashboardDigest({ incidents, apartments }: { incidents: Incident
                 {aiBusy ? d.aiGenerating : d.aiButton}
               </button>
               {aiError && <p className="text-bad text-xs mt-2">{aiError}</p>}
+              {aiError && aiDetail && <p className="text-muted text-[11px] mt-1 break-all" dir="ltr">{d.aiErrDetail}: {aiDetail}</p>}
               {ai && (
                 <div className="well rounded-xl px-3 py-2.5 mt-2" data-testid="dash-digest-ai">
                   <b className="text-sm text-ink flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-accent shrink-0" />{d.aiTitle}</b>

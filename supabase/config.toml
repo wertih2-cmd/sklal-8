@@ -1,2 +1,5 @@
 [functions.admin-users]
 verify_jwt = true
+
+[functions.ai-digest]
+verify_jwt = true

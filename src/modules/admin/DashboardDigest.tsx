@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { RefreshCw, ShieldAlert } from 'lucide-react'
+import { RefreshCw, ShieldAlert, Sparkles } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { fetchCleaningFeed, fetchPendingCleanings, fetchShortageEvents, fetchWarehouseStock } from '@/modules/admin/api'
 import type { Apartment, Incident, WarehouseStockRow } from '@/lib/database.types'
 import { useLiveRefresh } from '@/lib/realtime'
+import { fetchAiDigest, type AiDigestResult } from '@/modules/admin/aiDigestClient'
+import { AiDigestError } from '@/modules/admin/aiDigestErrors'
 import {
-  buildDigest, mergeCleanings,
+  buildDigest, mergeCleanings, toAiPayload,
   type AlertCode, type ApartmentLabel, type DigestAlert, type DigestCleaning, type DigestPeriod, type DigestShortage, type Severity,
 } from '@/modules/admin/digest'
 
@@ -14,6 +16,7 @@ const CACHE_MS = 3 * 60 * 1000
 const SHORTAGE_LIMIT = 200
 const FEED_DAYS = 7
 const PAGE_SIZE = 6
+const AI_CACHE_MS = 3 * 60 * 1000
 
 interface Loaded {
   shortages: DigestShortage[]
@@ -24,6 +27,7 @@ interface Loaded {
 
 // Kept outside the component so that coming back to the home screen within a few minutes does not refetch.
 let cache: Loaded | null = null
+let aiCache: { key: string; result: AiDigestResult; at: number } | null = null
 
 async function loadAll(): Promise<Loaded> {
   const since = new Date(Date.now() - FEED_DAYS * 24 * 60 * 60 * 1000).toISOString()
@@ -53,7 +57,7 @@ const LABEL_CLASS: Record<ApartmentLabel, string> = {
 }
 
 export function DashboardDigest({ incidents, apartments }: { incidents: Incident[]; apartments: Apartment[] }) {
-  const { t, n } = useI18n()
+  const { t, n, lang } = useI18n()
   const d = t.admin.dashboard.digest
   const navigate = useNavigate()
   const [period, setPeriod] = useState<DigestPeriod>('24h')
@@ -61,6 +65,9 @@ export function DashboardDigest({ incidents, apartments }: { incidents: Incident
   const [failed, setFailed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [visible, setVisible] = useState(PAGE_SIZE)
+  const [ai, setAi] = useState<AiDigestResult | null>(null)
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
   const alive = useRef(true)
 
   const load = useCallback(async () => {
@@ -102,6 +109,29 @@ export function DashboardDigest({ incidents, apartments }: { incidents: Incident
       apartmentCode: (id) => codes.get(id),
     })
   }, [data, incidents, period, codes])
+
+  // The text belongs to one period and one set of facts: drop it when either changes.
+  const aiKey = useMemo(() => (digest ? `${lang}|${JSON.stringify(toAiPayload(digest))}` : ''), [digest, lang])
+  useEffect(() => {
+    setAi(aiCache && aiCache.key === aiKey && Date.now() - aiCache.at < AI_CACHE_MS ? aiCache.result : null)
+    setAiError(null)
+  }, [aiKey])
+
+  const askAi = async () => {
+    if (!digest || aiBusy) return
+    setAiBusy(true)
+    setAiError(null)
+    try {
+      const result = await fetchAiDigest(toAiPayload(digest), lang)
+      aiCache = { key: aiKey, result, at: Date.now() }
+      if (alive.current) setAi(result)
+    } catch (e) {
+      const code = e instanceof AiDigestError ? e.code : 'unavailable'
+      if (alive.current) setAiError(code === 'not_configured' ? d.aiErrNotConfigured : code === 'rate_limited' ? d.aiErrRateLimited : d.aiErrFailed)
+    } finally {
+      if (alive.current) setAiBusy(false)
+    }
+  }
 
   const alertText: Record<AlertCode, string> = {
     incident_overdue: d.alertIncidentOverdue,
@@ -174,6 +204,31 @@ export function DashboardDigest({ incidents, apartments }: { incidents: Incident
           </div>
 
           {nothing && <p className="text-muted text-sm">{d.allClear}</p>}
+
+          {!nothing && (
+            <div className="mb-3">
+              <button
+                type="button"
+                onClick={() => void askAi()}
+                disabled={aiBusy}
+                className="well rounded-xl px-3 py-2 text-xs font-medium text-accent flex items-center gap-1.5 min-h-[44px] disabled:opacity-60"
+              >
+                <Sparkles className={`w-4 h-4 ${aiBusy ? 'animate-pulse' : ''}`} />
+                {aiBusy ? d.aiGenerating : d.aiButton}
+              </button>
+              {aiError && <p className="text-bad text-xs mt-2">{aiError}</p>}
+              {ai && (
+                <div className="well rounded-xl px-3 py-2.5 mt-2" data-testid="dash-digest-ai">
+                  <b className="text-sm text-ink flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-accent shrink-0" />{d.aiTitle}</b>
+                  <p className="text-ink text-sm mt-1">{ai.headline}</p>
+                  <ul className="mt-1.5 space-y-1 list-disc ps-4">
+                    {ai.bullets.map((b, i) => <li key={i} className="text-xs text-ink">{b}</li>)}
+                  </ul>
+                  <p className="text-muted text-[11px] mt-2">{d.aiNote}</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {shown.length > 0 && (
             <ul className="space-y-2">

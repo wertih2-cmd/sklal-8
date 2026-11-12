@@ -220,10 +220,10 @@ export function UsersPage() {
             const RoleIcon = badge.icon
             return (
               <div key={u.id} className="tile rounded-[20px] px-4 py-3">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-ink truncate">{u.full_name}</p>
+                      <p className="text-sm font-medium text-ink truncate min-w-0">{u.full_name}</p>
                       <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${badge.bg} ${badge.text}`}>
                         <RoleIcon className="w-3 h-3" />
                         {roleLabel(u.role)}
@@ -238,31 +238,31 @@ export function UsersPage() {
                     {u.active ? t.admin.users.active : t.admin.users.inactive}
                   </button>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button
                     onClick={() => { setPwTarget(u); setPwValue(''); setPwShow(false) }}
-                    className="text-xs bg-app text-ink rounded-lg px-3 py-1.5 flex items-center gap-1.5"
+                    className="text-xs bg-app text-ink rounded-lg px-3 py-1.5 flex items-center gap-1.5 whitespace-nowrap"
                   >
                     <Lock className="w-3 h-3" />
                     {t.admin.users.setPassword}
                   </button>
                   <button
                     onClick={() => { setRenaming(u.id); setRenameValue(u.full_name) }}
-                    className="text-xs bg-app text-ink rounded-lg px-3 py-1.5 flex items-center gap-1.5"
+                    className="text-xs bg-app text-ink rounded-lg px-3 py-1.5 flex items-center gap-1.5 whitespace-nowrap"
                   >
                     <Edit3 className="w-3 h-3" />
                     {t.admin.users.rename}
                   </button>
                   <button
                     onClick={() => setDeleteTarget(u.id)}
-                    className="text-xs bg-bad-soft text-bad rounded-lg px-3 py-1.5 flex items-center gap-1.5"
+                    className="text-xs bg-bad-soft text-bad rounded-lg px-3 py-1.5 flex items-center gap-1.5 whitespace-nowrap"
                   >
                     <Trash2 className="w-3 h-3" />
                     {t.admin.users.delete}
                   </button>
                   <button
                     onClick={() => setChangingRole(u.id)}
-                    className="text-xs bg-app text-ink rounded-lg px-3 py-1.5 flex items-center gap-1.5"
+                    className="text-xs bg-app text-ink rounded-lg px-3 py-1.5 flex items-center gap-1.5 whitespace-nowrap"
                   >
                     <ShieldCheck className="w-3 h-3" />
                     {t.admin.users.roleLabel}

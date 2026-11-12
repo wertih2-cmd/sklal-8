@@ -510,6 +510,8 @@ export interface NormalizedShortageEvent {
   id: number
   type: string
   created_at: string
+  /** null: not tied to an apartment (company warehouse stocktake) */
+  apartment_id: number | null
   items: NormalizedShortageItem[]
 }
 

@@ -87,6 +87,7 @@ export async function fetchShortageEvents(): Promise<NormalizedShortageEvent[]> 
 
 function normalizeShortageEvent(ev: EventRow): NormalizedShortageEvent {
   const payload = ev.payload as {
+    apartment_id?: number | string | null
     items?: Array<Record<string, unknown>>
   }
   const rawItems = payload?.items ?? []
@@ -99,6 +100,7 @@ function normalizeShortageEvent(ev: EventRow): NormalizedShortageEvent {
     id: ev.id,
     type: ev.type,
     created_at: ev.created_at,
+    apartment_id: payload?.apartment_id == null || Number.isNaN(Number(payload.apartment_id)) ? null : Number(payload.apartment_id),
     items,
   }
 }

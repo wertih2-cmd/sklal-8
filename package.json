@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test": "vitest run",
-    "check:i18n": "node --import tsx src/i18n/check.ts"
+    "check:i18n": "node --import tsx src/i18n/check.ts",
+    "check:ui": "node --import tsx src/uiCheck/check.ts"
   },
   "dependencies": {
     "@sentry/react": "^11.8.0",

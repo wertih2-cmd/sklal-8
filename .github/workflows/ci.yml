@@ -17,6 +17,7 @@ jobs:
       - run: npx tsc --noEmit -p tsconfig.app.json
       - run: npx eslint .
       - run: npm run check:i18n
+      - run: npm run check:ui
       - run: npm test
       - run: npx vite build
 

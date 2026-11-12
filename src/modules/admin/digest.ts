@@ -314,3 +314,17 @@ export function toAiPayload(digest: Digest): AiPayload {
     },
   }
 }
+
+/**
+ * Cleanings of the chosen period plus every cleaning still waiting for approval, whatever its age.
+ * A cleaning that appears in both lists is counted once, as waiting.
+ */
+export function mergeCleanings(
+  feed: Array<DigestCleaning & { id: string }>,
+  pending: Array<{ id: string; apartment_id: number; cleaned_at: string }>,
+): DigestCleaning[] {
+  const byId = new Map<string, DigestCleaning>()
+  for (const c of feed) byId.set(c.id, { apartment_id: c.apartment_id, cleaned_at: c.cleaned_at, status: c.status, posting_status: c.posting_status })
+  for (const c of pending) byId.set(c.id, { apartment_id: c.apartment_id, cleaned_at: c.cleaned_at, status: 'done', posting_status: 'pending' })
+  return [...byId.values()]
+}

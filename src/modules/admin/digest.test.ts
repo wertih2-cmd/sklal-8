@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   buildDigest,
   toAiPayload,
+  mergeCleanings,
   periodMs,
   type DigestInput,
   type DigestIncident,
@@ -206,5 +207,21 @@ describe('toAiPayload', () => {
   it('leaves quiet apartments out', () => {
     const d = buildDigest(input({ incidents: [inc({ status: 'confirmed', created_at: ago(100) })] }))
     expect(toAiPayload(d).apartments).toHaveLength(0)
+  })
+})
+
+describe('mergeCleanings', () => {
+  it('counts a cleaning found in both lists once, as waiting', () => {
+    const merged = mergeCleanings(
+      [{ id: 'a', apartment_id: 1, cleaned_at: ago(30), status: 'done', posting_status: 'pending' }, { id: 'b', apartment_id: 2, cleaned_at: ago(5), status: 'done', posting_status: 'posted' }],
+      [{ id: 'a', apartment_id: 1, cleaned_at: ago(30) }],
+    )
+    expect(merged).toHaveLength(2)
+    expect(merged.filter((c) => c.posting_status === 'pending')).toHaveLength(1)
+  })
+
+  it('keeps an old pending cleaning that is outside the feed window', () => {
+    const merged = mergeCleanings([], [{ id: 'z', apartment_id: 3, cleaned_at: ago(24 * 20) }])
+    expect(merged).toEqual([{ apartment_id: 3, cleaned_at: ago(24 * 20), status: 'done', posting_status: 'pending' }])
   })
 })

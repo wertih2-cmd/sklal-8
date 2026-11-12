@@ -17,6 +17,7 @@ import { DashboardAnalytics } from '@/modules/admin/DashboardAnalytics'
 import { DashboardIncidentFeed } from '@/modules/admin/DashboardIncidentFeed'
 import { DashboardCleaningFeed } from '@/modules/admin/DashboardCleaningFeed'
 import { DashboardReports } from '@/modules/admin/DashboardReports'
+import { DashboardDigest } from '@/modules/admin/DashboardDigest'
 
 function pctColor(p: number): string {
   if (p >= 100) return 'var(--ok)'
@@ -228,6 +229,8 @@ export function Dashboard() {
   return (
     <div className="px-4 pt-5 pb-28 lg:px-0 lg:pt-0">
       <h1 className="text-xl font-semibold text-ink mb-5">{t.admin.nav.home}</h1>
+
+      <DashboardDigest incidents={incidents} apartments={apartments} />
 
       <div className="grid grid-cols-2 lg:grid-cols-5 auto-rows-fr gap-2.5 mb-5">
         {cards.map(({ key, label, count, icon: Icon, to, badge, hint }) => (

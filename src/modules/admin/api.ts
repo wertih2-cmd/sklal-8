@@ -72,7 +72,7 @@ export async function fetchApartmentGaps(): Promise<ApartmentGapRow[]> {
   )
 }
 
-export async function fetchShortageEvents(): Promise<NormalizedShortageEvent[]> {
+export async function fetchShortageEvents(limit = 20): Promise<NormalizedShortageEvent[]> {
   const { data, error, status } = await supabase
     .from('events')
     .select('id,type,payload,created_at,processed_at')
@@ -80,7 +80,7 @@ export async function fetchShortageEvents(): Promise<NormalizedShortageEvent[]> 
     .is('processed_at', null)
     .order('created_at', { ascending: false })
     .order('id', { ascending: false })
-    .limit(20)
+    .limit(limit)
   if (error) throw toApiError(error, status)
   return (data ?? []).map((ev) => normalizeShortageEvent(ev as unknown as EventRow))
 }

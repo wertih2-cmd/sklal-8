@@ -5,6 +5,7 @@ import { toast, errorMessage } from '@/lib/toast'
 import { useLiveRefresh } from '@/lib/realtime'
 import { formatDate, formatQty } from '@/lib/format'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Modal } from '@/components/Modal'
 import {
   fetchPurchaseOrders,
   fetchPurchaseOrderLines,
@@ -16,7 +17,7 @@ import {
   type PurchaseOrderLine,
   type PurchaseOrderStatus,
 } from '@/modules/admin/api'
-import { ShoppingCart, ChevronRight, X, Loader } from 'lucide-react'
+import { ShoppingCart, ChevronRight, Loader } from 'lucide-react'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 
 type Filter = 'all' | PurchaseOrderStatus
@@ -90,7 +91,7 @@ export function OrdersPage() {
         <button
           onClick={handleGenerate}
           disabled={generating}
-          className="bg-accent text-white rounded-lg px-3.5 py-2 text-sm font-medium disabled:opacity-40 flex items-center gap-1.5"
+          className="bg-accent text-on-accent rounded-lg px-3.5 py-2 text-sm font-medium disabled:opacity-40 flex items-center gap-1.5"
         >
           {generating ? <Loader className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
           {t.admin.orders.generate}
@@ -103,7 +104,7 @@ export function OrdersPage() {
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={`rounded-full px-3.5 py-1.5 text-sm transition-colors border ${
-              filter === f.key ? 'bg-accent border-accent text-white' : 'bg-surface border-line text-muted'
+              filter === f.key ? 'bg-accent border-accent text-on-accent' : 'well text-muted'
             }`}
           >
             {f.label}
@@ -123,7 +124,7 @@ export function OrdersPage() {
             <button
               key={o.id}
               onClick={() => setOpenId(o.id)}
-              className="w-full bg-surface border border-line rounded-xl px-4 py-3 flex items-center gap-3 text-left hover:border-accent transition-colors"
+              className="w-full tile rounded-[20px] px-4 py-3 flex items-center gap-3 text-start hover:border-accent transition-colors"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -135,7 +136,7 @@ export function OrdersPage() {
                   {o.status === 'sent' && o.received_qty > 0 && ` · ${t.admin.orders.partlyReceived}`}
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-muted shrink-0" />
+              <ChevronRight className="w-4 h-4 text-muted shrink-0 rtl:rotate-180" />
             </button>
           ))}
         </div>
@@ -239,16 +240,11 @@ function OrderSheet({ order, onClose, onChanged }: { order: PurchaseOrderRow; on
     loadLines()
   }, t.admin.orders.receivedOk)
 
-  const inputCls = 'w-full bg-app rounded-lg px-3 py-2 text-sm focus:outline-none'
+  const inputCls = 'w-full well rounded-lg px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none'
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-modal" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal bg-surface rounded-2xl w-full max-w-lg p-5 border border-line max-h-[90vh] overflow-auto max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-t-2xl max-md:rounded-b-none max-md:max-h-[85vh]">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-base font-semibold text-ink">{order.number ?? '—'}</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-muted" /></button>
-        </div>
+      <Modal open title={order.number ?? '—'} onClose={onClose} size="lg">
         <p className="text-xs text-muted mb-3">
           {order.supplier ?? t.admin.orders.noSupplier} · {formatDate(order.created_at)}
           {order.est_cost != null && ` · ${t.admin.orders.estCost}: ${n(String(Math.round(order.est_cost)))}`}
@@ -315,14 +311,14 @@ function OrderSheet({ order, onClose, onChanged }: { order: PurchaseOrderRow; on
                 {t.admin.orders.save}
               </button>
               <button onClick={() => setConfirm('send')} disabled={busy || dirty || lines.length === 0}
-                className="flex-1 bg-accent text-white rounded-xl py-3 text-sm font-medium disabled:opacity-40">
+                className="flex-1 bg-accent text-on-accent rounded-xl py-3 text-sm font-medium disabled:opacity-40">
                 {t.admin.orders.send}
               </button>
             </>
           )}
           {isSent && (
             <button onClick={receive} disabled={busy || recvInvalid || recvTotal === 0}
-              className="flex-1 bg-accent text-white rounded-xl py-3 text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2">
+              className="flex-1 bg-accent text-on-accent rounded-xl py-3 text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2">
               {busy && <Loader className="w-4 h-4 animate-spin" />}
               {t.admin.orders.receiveAction}
             </button>
@@ -334,7 +330,7 @@ function OrderSheet({ order, onClose, onChanged }: { order: PurchaseOrderRow; on
             </button>
           )}
         </div>
-      </div>
+      </Modal>
 
       {confirm && (
         <ConfirmDialog

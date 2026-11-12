@@ -5,6 +5,7 @@ import { toast, errorMessage } from '@/lib/toast'
 import { useLiveRefresh } from '@/lib/realtime'
 import { formatDate, formatQty } from '@/lib/format'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Modal } from '@/components/Modal'
 import {
   fetchInventories,
   fetchInventoryLines,
@@ -19,7 +20,7 @@ import {
   type InventoryStatus,
 } from '@/modules/admin/api'
 import type { Apartment, WarehouseStockRow } from '@/lib/database.types'
-import { ClipboardCheck, ChevronRight, X, Loader } from 'lucide-react'
+import { ClipboardCheck, ChevronRight, Loader } from 'lucide-react'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 
 type Filter = 'all' | InventoryStatus
@@ -74,7 +75,7 @@ export function InventoryPage() {
         <h1 className="text-xl font-semibold text-ink">{t.admin.inventory.title}</h1>
         <button
           onClick={() => setStarting(true)}
-          className="bg-accent text-white rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5"
+          className="bg-accent text-on-accent rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5"
         >
           <ClipboardCheck className="w-4 h-4" />
           {t.admin.inventory.start}
@@ -87,7 +88,7 @@ export function InventoryPage() {
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={`rounded-full px-3.5 py-1.5 text-sm transition-colors border ${
-              filter === f.key ? 'bg-accent border-accent text-white' : 'bg-surface border-line text-muted'
+              filter === f.key ? 'bg-accent border-accent text-on-accent' : 'well text-muted'
             }`}
           >
             {f.label}
@@ -107,7 +108,7 @@ export function InventoryPage() {
             <button
               key={r.id}
               onClick={() => setOpenId(r.id)}
-              className="w-full bg-surface border border-line rounded-xl px-4 py-3 flex items-center gap-3 text-left hover:border-accent transition-colors"
+              className="w-full tile rounded-[20px] px-4 py-3 flex items-center gap-3 text-start hover:border-accent transition-colors"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -120,7 +121,7 @@ export function InventoryPage() {
                   {formatDate(r.created_at)}{r.note ? ` · ${r.note}` : ''}
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-muted shrink-0" />
+              <ChevronRight className="w-4 h-4 text-muted shrink-0 rtl:rotate-180" />
             </button>
           ))}
         </div>
@@ -166,16 +167,11 @@ function StartModal({ onClose, onStarted }: { onClose: () => void; onStarted: (i
   }
 
   const tabCls = (active: boolean) =>
-    `flex-1 rounded-lg py-2.5 text-sm font-medium border ${active ? 'bg-accent border-accent text-white' : 'bg-app border-line text-muted'}`
+    `flex-1 rounded-lg py-2.5 text-sm font-medium border ${active ? 'bg-accent border-accent text-on-accent' : 'well text-muted'}`
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-modal" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal bg-surface rounded-2xl w-full max-w-sm p-5 border border-line max-h-[90vh] overflow-auto max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-t-2xl max-md:rounded-b-none">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-ink">{t.admin.inventory.startTitle}</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-muted" /></button>
-        </div>
+      <Modal open title={t.admin.inventory.startTitle} onClose={onClose} size="sm">
         <div className="space-y-3">
           <div className="flex gap-2">
             <button onClick={() => setScope('warehouse')} className={tabCls(scope === 'warehouse')}>{t.admin.inventory.scopeWarehouse}</button>
@@ -183,23 +179,23 @@ function StartModal({ onClose, onStarted }: { onClose: () => void; onStarted: (i
           </div>
           {scope === 'apartment' && (
             <select value={apartmentId} onChange={(e) => setApartmentId(e.target.value)}
-              className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none">
+              className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none">
               <option value="">{t.admin.inventory.chooseApartment}</option>
               {apartments.map((a) => <option key={a.id} value={a.id}>{a.code}</option>)}
             </select>
           )}
           <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} placeholder={t.admin.inventory.note}
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
         </div>
         <div className="flex gap-3 mt-4">
           <button onClick={onClose} className="flex-1 bg-app text-ink rounded-xl py-3 text-sm font-medium">{t.cleaning.cancel}</button>
           <button onClick={begin} disabled={busy || (scope === 'apartment' && !apartmentId)}
-            className="flex-1 bg-accent text-white rounded-xl py-3 text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2">
+            className="flex-1 bg-accent text-on-accent rounded-xl py-3 text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2">
             {busy && <Loader className="w-4 h-4 animate-spin" />}
             {t.admin.inventory.begin}
           </button>
         </div>
-      </div>
+      </Modal>
     </>
   )
 }
@@ -288,24 +284,19 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
   )
   const addable = stock.filter((s) => !lines.some((l) => l.item_id === s.item_id))
   const title = inv.scope === 'warehouse' ? t.admin.inventory.scopeWarehouse : `${t.admin.inventory.scopeApartment} ${inv.apartment_code ?? ''}`
-  const inputCls = 'w-full bg-app rounded-lg px-3 py-2 text-sm focus:outline-none'
+  const inputCls = 'w-full well rounded-lg px-3 py-2 text-sm border border-line focus:border-accent focus:outline-none'
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-modal" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal bg-surface rounded-2xl w-full max-w-lg p-5 border border-line max-h-[90vh] overflow-auto max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-t-2xl max-md:rounded-b-none max-md:max-h-[85vh]">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-base font-semibold text-ink">{title}</h3>
-          <button onClick={onClose}><X className="w-5 h-5 text-muted" /></button>
-        </div>
+      <Modal open title={title} onClose={onClose} size="lg">
         <p className="text-xs text-muted mb-3">
           {formatDate(inv.created_at)}{inv.note ? ` · ${inv.note}` : ''}
         </p>
-        {isOpen && <p className="text-xs text-muted bg-app rounded-lg px-3 py-2 mb-3">{t.admin.inventory.countHint}</p>}
+        {isOpen && <p className="text-xs text-muted well rounded-lg px-3 py-2 mb-3">{t.admin.inventory.countHint}</p>}
 
         {lines.length > 6 && (
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t.admin.inventory.search}
-            className="w-full bg-app rounded-lg px-4 py-2.5 text-sm focus:outline-none mb-3" />
+            className="w-full well rounded-lg px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none mb-3" />
         )}
 
         {loading ? (
@@ -336,7 +327,7 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
                         <input type="number" min="0" step="any" value={l.actStr}
                           onChange={(e) => patch(l.item_id, { actStr: e.target.value })} className={inputCls} />
                       </label>
-                      <div className={`text-sm w-24 text-right pb-2 ${diff < 0 ? 'text-bad' : diff > 0 ? 'text-ok' : 'text-muted'}`}>
+                      <div className={`text-sm w-24 text-end pb-2 ${diff < 0 ? 'text-bad' : diff > 0 ? 'text-ok' : 'text-muted'}`}>
                         {diff === 0 ? '0' : `${diff > 0 ? '+' : '−'}${n(formatQty(Math.abs(diff), l))}`}
                       </div>
                     </div>
@@ -358,7 +349,7 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
 
         {isOpen && (
           <div className="flex gap-2 mt-3">
-            <select value={addId} onChange={(e) => setAddId(e.target.value)} className="flex-1 bg-app rounded-lg px-3 py-2.5 text-sm focus:outline-none min-w-0">
+            <select value={addId} onChange={(e) => setAddId(e.target.value)} className="flex-1 well rounded-lg px-3 py-2.5 text-sm border border-line focus:border-accent focus:outline-none min-w-0">
               <option value="">{t.admin.inventory.addItem}</option>
               {addable.map((s) => <option key={s.item_id} value={s.item_id}>{cat.itemName(s.name)}</option>)}
             </select>
@@ -374,12 +365,12 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
             <button onClick={saveFact} disabled={busy || !dirty || invalid}
               className="flex-1 bg-app text-ink rounded-xl py-3 text-sm font-medium disabled:opacity-40">{t.admin.inventory.saveFact}</button>
             <button onClick={() => setConfirm('close')} disabled={busy || dirty || invalid || lines.length === 0}
-              className="flex-1 bg-accent text-white rounded-xl py-3 text-sm font-medium disabled:opacity-40">{t.admin.inventory.closeInv}</button>
+              className="flex-1 bg-accent text-on-accent rounded-xl py-3 text-sm font-medium disabled:opacity-40">{t.admin.inventory.closeInv}</button>
             <button onClick={() => setConfirm('cancel')} disabled={busy}
               className="bg-bad-soft text-bad rounded-xl px-4 py-3 text-sm font-medium disabled:opacity-40">{t.admin.inventory.cancelInv}</button>
           </div>
         )}
-      </div>
+      </Modal>
 
       {confirm && (
         <ConfirmDialog

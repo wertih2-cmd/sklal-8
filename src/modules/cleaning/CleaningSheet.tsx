@@ -15,6 +15,7 @@ import { validateCleaningMedia, isVideoFile, isHeicFile } from '@/lib/files'
 import { compressImage } from '@/lib/compress'
 import { X, Check, Loader as Loader2, TriangleAlert as AlertTriangle, Star, RefreshCw, Camera, Video as VideoIcon } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { useModalLayer } from '@/components/useModalLayer'
 
 const writeoffTypes: NormType[] = ['turnover_replenish', 'cleaning_consumption']
 const MAX_MEDIA = 6
@@ -78,14 +79,8 @@ export function CleaningSheet({ backTo }: { backTo?: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aptId, profile?.id])
 
-  useEffect(() => {
-    if (loading) return
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') goBack()
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [loading, goBack])
+  // Escape asks before discarding input and reaches only the topmost layer (the confirmation, if open).
+  useModalLayer(!loading, handleBackdropClick)
 
   useEffect(() => {
     previewsRef.current = mediaPreviews
@@ -256,21 +251,21 @@ export function CleaningSheet({ backTo }: { backTo?: string }) {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-modal">
         <Loader2 className="w-6 h-6 text-white animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex flex-col justify-end anim-scrim" onClick={handleBackdropClick} role="dialog" aria-modal="true" aria-label={t.cleaning.title}>
+    <div className="fixed inset-0 bg-black/40 z-modal flex flex-col justify-end anim-scrim" onClick={handleBackdropClick} role="dialog" aria-modal="true" aria-label={t.cleaning.title}>
       <div className="bg-surface rounded-t-2xl max-h-[90dvh] overflow-y-auto anim-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full" style={{ background: 'var(--line)' }} />
         </div>
         <div className="px-5 py-3 flex items-center justify-between border-b border-line">
           <h2 className="text-base font-semibold text-ink">{t.cleaning.title}</h2>
-          <button onClick={goBack} className="p-2.5 -mr-1 rounded-lg hover:bg-app transition-colors" aria-label={t.common.close}>
+          <button onClick={goBack} className="p-2.5 -me-1 rounded-lg hover:bg-app transition-colors" aria-label={t.common.close}>
             <X className="w-5 h-5 text-muted" />
           </button>
         </div>
@@ -295,7 +290,7 @@ export function CleaningSheet({ backTo }: { backTo?: string }) {
                   const isLead = leadStaffId === s.id
                   return (
                     <div key={s.id} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors ${selected ? 'border-accent bg-accent-soft' : 'border-line'}`}>
-                      <button onClick={() => toggleStaff(s.id)} aria-label={s.full_name} aria-pressed={selected} className="min-w-11 min-h-11 flex items-center justify-center shrink-0 -ml-2.5 transition-colors">
+                      <button onClick={() => toggleStaff(s.id)} aria-label={s.full_name} aria-pressed={selected} className="min-w-11 min-h-11 flex items-center justify-center shrink-0 -ms-2.5 transition-colors">
                         <span className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${selected ? 'border-accent bg-accent' : 'border-[var(--line)]'}`}>
                           {selected && <Check className="w-4 h-4 text-on-accent" />}
                         </span>
@@ -318,7 +313,7 @@ export function CleaningSheet({ backTo }: { backTo?: string }) {
             {writeoffItems.length === 0 ? (
               <p className="text-sm text-muted">{t.cleaning.noWriteoff}</p>
             ) : (
-              <div className="bg-app rounded-xl border border-line divide-y divide-[var(--line)]">
+              <div className="well rounded-xl border border-line divide-y divide-[var(--line)]">
                 {writeoffItems.map((nr) => (
                   <div key={`${nr.item_id}-${nr.norm_type}`} className="px-3 py-2.5 flex items-center justify-between">
                     <span className="text-sm text-ink">{itemName(nr.item_name)}</span>
@@ -331,7 +326,7 @@ export function CleaningSheet({ backTo }: { backTo?: string }) {
           <div>
             <label className="block text-sm font-medium text-ink mb-2">{t.cleaning.note}</label>
             <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder={t.cleaning.notePlaceholder} rows={2}
-              className="w-full bg-app rounded-xl px-3 py-2.5 text-sm border border-line focus:border-accent focus:outline-none resize-none" />
+              className="w-full well rounded-xl px-3 py-2.5 text-sm border border-line focus:border-accent focus:outline-none resize-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-ink mb-2">{t.cleaning.media}</label>
@@ -348,7 +343,7 @@ export function CleaningSheet({ backTo }: { backTo?: string }) {
                     ) : (
                       <img src={src} alt="" className="w-full h-full object-cover rounded-xl" />
                     )}
-                    <button onClick={() => removeMedia(idx)} className="absolute -top-1 -right-1 w-5 h-5 bg-bad text-white rounded-full flex items-center justify-center">
+                    <button onClick={() => removeMedia(idx)} className="absolute -top-1 -end-1 w-5 h-5 bg-bad text-on-accent rounded-full flex items-center justify-center">
                       <X className="w-3 h-3" />
                     </button>
                   </div>
@@ -395,13 +390,13 @@ export function CleaningSheet({ backTo }: { backTo?: string }) {
         </div>
         <div className="sticky bottom-0 bg-surface border-t border-line px-5 py-3 flex gap-3">
           {notifyText ? (
-            <button onClick={goBack} className="flex-1 bg-accent text-white rounded-xl py-3.5 min-h-[48px] font-medium">{t.notify.done}</button>
+            <button onClick={goBack} className="flex-1 bg-accent text-on-accent rounded-xl py-3.5 min-h-[48px] font-medium">{t.notify.done}</button>
           ) : (<>
           <button onClick={goBack} className="flex-1 bg-app text-ink rounded-xl py-3.5 min-h-[48px] font-medium">{t.cleaning.cancel}</button>
           <button
             onClick={handleConfirm}
             disabled={submitting || converting || (needsStaff && selectedStaff.length === 0) || (!!loadError && norms.length === 0)}
-            className="flex-1 bg-accent text-white rounded-xl py-3.5 min-h-[48px] font-medium disabled:opacity-40 flex items-center justify-center gap-2">
+            className="flex-1 bg-accent text-on-accent rounded-xl py-3.5 min-h-[48px] font-medium disabled:opacity-40 flex items-center justify-center gap-2">
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             {t.cleaning.confirm}
           </button>

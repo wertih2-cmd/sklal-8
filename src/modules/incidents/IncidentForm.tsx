@@ -8,6 +8,7 @@ import { useI18n } from '@/i18n'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 import { friendlyMessage } from '@/lib/errors'
 import { ErrorState } from '@/components/ErrorState'
+import { useModalLayer } from '@/components/useModalLayer'
 import { resolveMime, isHeicFile } from '@/lib/files'
 import { compressImage } from '@/lib/compress'
 import { currentDict } from '@/i18n'
@@ -209,16 +210,19 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
     else navigate(-1)
   }
 
+  // Escape closes the sheet (not on the success screen, which has its own button).
+  useModalLayer(!sentText, handleClose)
+
   if (loading) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-modal">
         <Loader2 className="w-6 h-6 text-white animate-spin" />
       </div>
     )
   }
   if (loadError) {
     return (
-      <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+      <div className="fixed inset-0 bg-black/50 z-modal flex items-end sm:items-center justify-center">
         <div className="absolute inset-0" onClick={handleClose} />
         <div className="relative bg-surface w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-line p-4">
           <ErrorState onRetry={loadReferenceData} />
@@ -233,7 +237,7 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
       else navigate('/sv/incidents')
     }
     return (
-      <div className="fixed inset-0 bg-black/40 z-50 flex flex-col justify-end anim-scrim" role="dialog" aria-modal="true" aria-label={t.incidents.title}>
+      <div className="fixed inset-0 bg-black/40 z-modal flex flex-col justify-end anim-scrim" role="dialog" aria-modal="true" aria-label={t.incidents.title}>
         <div className="bg-surface rounded-t-2xl px-5 pt-6 pb-6 space-y-3 anim-sheet">
           <div className="flex items-center gap-2 bg-ok-soft border border-line rounded-xl px-3 py-2.5">
             <Check className="w-4 h-4 text-ok" />
@@ -247,21 +251,21 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex flex-col justify-end anim-scrim" onClick={handleClose} role="dialog" aria-modal="true" aria-label={t.incidents.title}>
+    <div className="fixed inset-0 bg-black/40 z-modal flex flex-col justify-end anim-scrim" onClick={handleClose} role="dialog" aria-modal="true" aria-label={t.incidents.title}>
       <div className="bg-surface rounded-t-2xl max-h-[92dvh] overflow-y-auto anim-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full" style={{ background: 'var(--line)' }} />
         </div>
         <div className="px-5 py-3 flex items-center justify-between border-b border-line">
           <h2 className="text-base font-semibold text-ink">{t.incidents.title}</h2>
-          <button onClick={handleClose} className="p-2.5 -mr-1 rounded-lg hover:bg-app transition-colors" aria-label={t.common.close}>
+          <button onClick={handleClose} className="p-2.5 -me-1 rounded-lg hover:bg-app transition-colors" aria-label={t.common.close}>
             <X className="w-5 h-5 text-muted" />
           </button>
         </div>
         <div className="px-5 py-4 space-y-5">
           <Field label={t.incidents.apartment}>
             <select value={aptId ?? ''} onChange={(e) => { const v = e.target.value; setAptId(v ? Number(v) : null); setItemId(null); setFreeText(''); setShowAllItems(false) }}
-              className="w-full bg-app rounded-xl px-4 py-3 text-sm border border-line focus:border-accent focus:outline-none">
+              className="w-full well rounded-xl px-4 py-3 text-sm border border-line focus:border-accent focus:outline-none">
               <option value="">—</option>
               {apartments.map((a) => <option key={a.id} value={a.id}>{a.code}</option>)}
             </select>
@@ -273,26 +277,26 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
                 <button
                   type="button"
                   onClick={() => setShowAllItems(false)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${!showAllItems ? 'bg-accent border-accent text-white' : 'bg-surface border-line text-muted'}`}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${!showAllItems ? 'bg-accent border-accent text-on-accent' : 'well text-muted'}`}
                 >
                   {t.incidents.fromNorms}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowAllItems(true)}
-                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${showAllItems ? 'bg-accent border-accent text-white' : 'bg-surface border-line text-muted'}`}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${showAllItems ? 'bg-accent border-accent text-on-accent' : 'well text-muted'}`}
                 >
                   {t.incidents.allItems}
                 </button>
               </div>
               <select value={itemId ?? ''} onChange={(e) => { const v = e.target.value; setItemId(v ? Number(v) : null); if (v) setFreeText('') }}
-                className="w-full bg-app rounded-xl px-4 py-3 text-sm border border-line focus:border-accent focus:outline-none mb-2">
+                className="w-full well rounded-xl px-4 py-3 text-sm border border-line focus:border-accent focus:outline-none mb-2">
                 <option value="">— {t.incidents.freeText} —</option>
                 {itemOptions.map((i) => <option key={i.id} value={i.id}>{itemName(i.name)}</option>)}
               </select>
               {!itemId && (
                 <input value={freeText} onChange={(e) => setFreeText(e.target.value)} placeholder={t.incidents.freeText}
-                  className="w-full bg-app rounded-xl px-4 py-3 text-sm border border-line focus:border-accent focus:outline-none" />
+                  className="w-full well rounded-xl px-4 py-3 text-sm border border-line focus:border-accent focus:outline-none" />
               )}
               {selectedItem && (
                 <p className="text-xs text-muted mt-1">{categoryName(selectedItem.category)}</p>
@@ -304,7 +308,7 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
             <div className="grid grid-cols-2 gap-2">
               {kinds.map((k) => (
                 <button key={k.value} type="button" onClick={() => setKind(k.value)}
-                  className={`rounded-xl py-2.5 text-sm border transition-colors ${kind === k.value ? 'border-accent bg-accent-soft text-accent font-medium' : 'border-line bg-app text-muted'}`}>
+                  className={`rounded-xl py-2.5 text-sm border transition-colors ${kind === k.value ? 'border-accent bg-accent-soft text-accent font-medium' : 'well text-muted'}`}>
                   {k.label}
                 </button>
               ))}
@@ -313,12 +317,12 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
 
           <Field label={t.incidents.qty}>
             <input type="number" min="1" value={qty} onChange={(e) => setQty(e.target.value)}
-              className="w-full bg-app rounded-xl px-4 py-3 text-sm border border-line focus:border-accent focus:outline-none" />
+              className="w-full well rounded-xl px-4 py-3 text-sm border border-line focus:border-accent focus:outline-none" />
           </Field>
 
           <Field label={t.incidents.comment}>
             <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2}
-              className="w-full bg-app rounded-xl px-4 py-3 text-sm border border-line focus:border-accent focus:outline-none resize-none" />
+              className="w-full well rounded-xl px-4 py-3 text-sm border border-line focus:border-accent focus:outline-none resize-none" />
           </Field>
 
           <Field label={t.incidents.photos}>
@@ -335,7 +339,7 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
                     ) : (
                       <img src={src} alt="" className="w-full h-full object-cover rounded-xl" />
                     )}
-                    <button type="button" onClick={() => removePhoto(idx)} className="absolute -top-1 -right-1 w-5 h-5 bg-bad text-white rounded-full flex items-center justify-center">
+                    <button type="button" onClick={() => removePhoto(idx)} className="absolute -top-1 -end-1 w-5 h-5 bg-bad text-on-accent rounded-full flex items-center justify-center">
                       <X className="w-3 h-3" />
                     </button>
                   </div>
@@ -380,7 +384,7 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
           <button
             onClick={handleSubmit}
             disabled={submitting || converting || !isOnline || !aptId || photos.length === 0}
-            className="flex-1 bg-accent text-white rounded-xl py-3.5 min-h-[48px] font-medium disabled:opacity-40 flex items-center justify-center gap-2">
+            className="flex-1 bg-accent text-on-accent rounded-xl py-3.5 min-h-[48px] font-medium disabled:opacity-40 flex items-center justify-center gap-2">
             {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {isOnline ? t.incidents.submit : t.errors.needsNetworkAction}
           </button>

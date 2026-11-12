@@ -2,9 +2,10 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useI18n } from '@/i18n'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 import { toast, errorMessage } from '@/lib/toast'
-import { Plus, X, Loader as Loader2 } from 'lucide-react'
+import { Plus, Loader as Loader2 } from 'lucide-react'
 import { ErrorState } from '@/components/ErrorState'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Modal } from '@/components/Modal'
 import { friendlyMessage } from '@/lib/errors'
 import { unitLabel } from '@/lib/format'
 import { useLiveRefresh } from '@/lib/realtime'
@@ -151,7 +152,7 @@ export function RoomsPanel({ apartmentId, aptType, canEdit, totals }: Props) {
   if (loadError) return <ErrorState onRetry={() => load()} />
 
   const chip = (active: boolean) =>
-    `shrink-0 whitespace-nowrap min-h-[40px] rounded-full px-3 py-1.5 text-sm border ${active ? 'bg-accent text-white border-accent' : 'bg-surface text-ink border-line'}`
+    `shrink-0 whitespace-nowrap min-h-[40px] rounded-full px-3 py-1.5 text-sm border ${active ? 'bg-accent text-on-accent border-accent' : 'well text-ink'}`
 
   return (
     <div>
@@ -177,7 +178,7 @@ export function RoomsPanel({ apartmentId, aptType, canEdit, totals }: Props) {
           {groups.map(({ room, items }) => (
             <div key={room.id}>
               {filter === 'all' && <div className="text-xs font-semibold text-muted mb-1">{roomLabel(room.name)}</div>}
-              <div className="bg-surface border border-line rounded-lg divide-y divide-[var(--line)]">
+              <div className="tile rounded-xl divide-y divide-[var(--line)]">
                 {items.map((r) => {
                   const total = totals?.get(r.item_id)
                   const sum = itemSums.get(r.item_id) ?? 0
@@ -186,7 +187,7 @@ export function RoomsPanel({ apartmentId, aptType, canEdit, totals }: Props) {
                       <button
                         disabled={!canEdit}
                         onClick={() => openEdit(r)}
-                        className="w-full flex items-center justify-between gap-2 text-left disabled:cursor-default"
+                        className="w-full flex items-center justify-between gap-2 text-start disabled:cursor-default"
                       >
                         <span className="text-sm text-ink">{itemName(r.item_name)}</span>
                         <span className="flex items-center gap-2 shrink-0">
@@ -220,7 +221,7 @@ export function RoomsPanel({ apartmentId, aptType, canEdit, totals }: Props) {
         ) : (
           <button
             onClick={openAdd}
-            className="mt-3 bg-accent text-white rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5"
+            className="mt-3 bg-accent text-on-accent rounded-lg px-3.5 py-2 text-sm font-medium flex items-center gap-1.5"
           >
             <Plus className="w-3.5 h-3.5" />
             {t.rooms.addItem}
@@ -295,16 +296,11 @@ function RoomEditor({ state, roomName, catalog, categories, takenItemIds, canFor
   const selected = catalog.find((i) => i.id === itemId)
   const unit = creating ? t.common.units.pcs : selected ? unitLabel(selected.base_unit as BaseUnit) : state.unit
 
-  const inputCls = 'w-full bg-app rounded-xl px-4 py-2.5 text-sm focus:outline-none'
+  const inputCls = 'w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none'
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-modal" onClick={onClose} />
-      <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-modal bg-surface rounded-2xl w-full max-w-sm p-5 border border-line max-md:bottom-0 max-md:left-0 max-md:top-auto max-md:translate-x-0 max-md:translate-y-0 max-md:w-full max-md:rounded-t-2xl max-md:rounded-b-none max-md:anim-sheet">
-        <div className="flex items-center justify-between mb-1">
-          <h3 className="text-base font-semibold text-ink">{isEdit ? t.rooms.editTitle : t.rooms.addTitle}</h3>
-          <button onClick={onClose} className="p-1"><X className="w-5 h-5 text-muted" /></button>
-        </div>
+      <Modal open title={isEdit ? t.rooms.editTitle : t.rooms.addTitle} onClose={onClose} size="sm">
         <p className="text-xs text-muted mb-3">{roomName}</p>
         <div className="space-y-3">
           <div>
@@ -373,13 +369,13 @@ function RoomEditor({ state, roomName, catalog, categories, takenItemIds, canFor
               forType,
             })}
             disabled={!valid || saving}
-            className="flex-1 bg-accent text-white rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
+            className="flex-1 bg-accent text-on-accent rounded-xl py-3 font-medium disabled:opacity-40 flex items-center justify-center gap-2"
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {t.rooms.save}
           </button>
         </div>
-      </div>
+      </Modal>
     </>
   )
 }

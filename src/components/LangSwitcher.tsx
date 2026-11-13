@@ -16,7 +16,7 @@ export function LangSwitcher({ compact = false }: { compact?: boolean }) {
           <button
             key={l.code}
             onClick={() => setLang(l.code)}
-            className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+            className={`px-2.5 py-2 rounded-md text-xs font-medium transition-colors ${
               lang === l.code ? 'bg-accent text-on-accent' : 'text-muted'
             }`}
           >

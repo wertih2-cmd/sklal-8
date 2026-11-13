@@ -192,7 +192,7 @@ export function AdminApartmentDetail() {
         ) : (
           <div className="p-5 pb-8">
             <div className="flex items-center justify-between mb-4">
-              <button onClick={close} className="bg-surface border border-line text-ink rounded-lg px-3 py-1.5 text-sm font-medium">
+              <button onClick={close} className="bg-surface border border-line text-ink rounded-lg px-3 min-h-[44px] text-sm font-medium">
                 {t.common.close}
               </button>
             </div>

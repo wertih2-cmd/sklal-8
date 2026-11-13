@@ -1,5 +1,8 @@
-export type NavKey = 'home' | 'stock' | 'move' | 'apartments' | 'incidents' | 'cleanings' | 'reports' | 'more'
-export type NavGroup = 'work' | 'control'
+export type NavKey =
+  | 'home' | 'stock' | 'move' | 'apartments'
+  | 'orders' | 'inventory' | 'documents' | 'catalog'
+  | 'incidents' | 'cleanings' | 'reports' | 'more'
+export type NavGroup = 'work' | 'warehouse' | 'control'
 export type BadgeKey = 'incidents' | 'cleanings'
 
 export interface NavItem {
@@ -21,6 +24,10 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { key: 'move', to: '/admin/move', end: true, group: 'work' },
   { key: 'apartments', to: '/admin/apartments', group: 'work' },
   { key: 'stock', to: '/admin/stock', group: 'work' },
+  { key: 'orders', to: '/admin/more/orders', group: 'warehouse' },
+  { key: 'inventory', to: '/admin/more/inventory', group: 'warehouse' },
+  { key: 'documents', to: '/admin/more/documents', group: 'warehouse' },
+  { key: 'catalog', to: '/admin/more/catalog', group: 'warehouse' },
   { key: 'incidents', to: '/admin/more/incidents', group: 'control', badge: 'incidents' },
   { key: 'cleanings', to: '/admin/more/cleaning-approvals', group: 'control', badge: 'cleanings' },
   { key: 'reports', to: '/admin/more/reports', group: 'control' },
@@ -63,4 +70,76 @@ export function formatBadge(n: number | null | undefined): string | null {
 /** Sum for the "More" tab on a phone: everything that waits for a decision. Unknown counts as 0. */
 export function totalBadge(c: NavCounts): number {
   return (c.incidents ?? 0) + (c.cleanings ?? 0)
+}
+
+export type MoreKey =
+  | 'orders' | 'inventory' | 'documents' | 'catalog'
+  | 'incidents' | 'cleaningApprovals' | 'reports' | 'history'
+  | 'normTemplates' | 'qr' | 'contacts'
+  | 'staff' | 'users'
+export type MoreSectionKey = 'warehouse' | 'control' | 'directories' | 'admin'
+
+export interface MoreItem {
+  key: MoreKey
+  to: string
+  badge?: BadgeKey
+}
+
+export interface MoreSection {
+  key: MoreSectionKey
+  items: readonly MoreItem[]
+}
+
+/** The "More" page: every sub-page of /admin/more, grouped by what the person is doing there. */
+export const MORE_SECTIONS: readonly MoreSection[] = [
+  {
+    key: 'warehouse',
+    items: [
+      { key: 'orders', to: '/admin/more/orders' },
+      { key: 'inventory', to: '/admin/more/inventory' },
+      { key: 'documents', to: '/admin/more/documents' },
+      { key: 'catalog', to: '/admin/more/catalog' },
+    ],
+  },
+  {
+    key: 'control',
+    items: [
+      { key: 'incidents', to: '/admin/more/incidents', badge: 'incidents' },
+      { key: 'cleaningApprovals', to: '/admin/more/cleaning-approvals', badge: 'cleanings' },
+      { key: 'reports', to: '/admin/more/reports' },
+      { key: 'history', to: '/admin/more/history' },
+    ],
+  },
+  {
+    key: 'directories',
+    items: [
+      { key: 'normTemplates', to: '/admin/more/norm-templates' },
+      { key: 'qr', to: '/admin/more/qr' },
+      { key: 'contacts', to: '/admin/more/contacts' },
+    ],
+  },
+  {
+    key: 'admin',
+    items: [
+      { key: 'staff', to: '/admin/more/staff' },
+      { key: 'users', to: '/admin/more/users' },
+    ],
+  },
+]
+
+const MORE_ITEMS: readonly MoreItem[] = MORE_SECTIONS.flatMap((s) => s.items)
+
+export type TitleKey = NavKey | MoreKey
+
+/**
+ * Which section the page belongs to, for the title of the phone top bar. A main navigation item wins; then a page
+ * of the "More" list; then "More" itself. null for an unknown path.
+ */
+export function titleKeyFor(pathname: string): TitleKey | null {
+  const nav = NAV_ITEMS.filter((i) => i.key !== 'more').find((i) => isNavActive(pathname, i))
+  if (nav) return nav.key
+  const more = MORE_ITEMS.find((i) => pathname === i.to || pathname.startsWith(i.to + '/'))
+  if (more) return more.key
+  const hub = NAV_ITEMS.find((i) => i.key === 'more')
+  return hub && isNavActive(pathname, hub) ? 'more' : null
 }

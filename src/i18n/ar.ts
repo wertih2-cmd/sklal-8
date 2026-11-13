@@ -385,6 +385,8 @@ export const ar: Dict = {
       cleanings: 'التنظيف',
       reports: 'التقارير',
       newOperation: 'عملية جديدة',
+      groupWarehouse: 'المخزن والمشتريات',
+      search: 'ابحث عن شقة',
     },
     dashboard: {
       ringTitle: 'اكتمال الشقق',
@@ -767,6 +769,10 @@ export const ar: Dict = {
       qr: 'QR الشقق',
       reports: 'التقارير',
       history: 'السجل',
+      sectionWarehouse: 'المخزن والمشتريات',
+      sectionControl: 'المتابعة',
+      sectionDirectories: 'الأدلة',
+      sectionAdmin: 'الصلاحيات والموظفين',
     },
     reports: {
       tableSearch: 'بحث: الشقة، الصنف، الفئة',

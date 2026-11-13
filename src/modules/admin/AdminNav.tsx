@@ -1,10 +1,11 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { Plus, House, Package, Building2, Ellipsis, Wrench, BadgeCheck, ChartBar, Users } from 'lucide-react'
+import { Plus, House, Package, Building2, Ellipsis, Wrench, BadgeCheck, ChartBar, Users, Search, ShoppingCart, ClipboardCheck, FileText, FolderTree } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { LangSwitcher } from '@/components/LangSwitcher'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { useAuth } from '@/modules/core/store'
+import { useNavLabels } from './useNavLabels'
 import {
   MOBILE_NAV_ITEMS, sidebarItems, isNavActive, formatBadge, totalBadge,
   type NavItem, type NavKey, type NavCounts,
@@ -15,19 +16,14 @@ const ICONS: Record<NavKey, LucideIcon> = {
   stock: Package,
   move: Plus,
   apartments: Building2,
+  orders: ShoppingCart,
+  inventory: ClipboardCheck,
+  documents: FileText,
+  catalog: FolderTree,
   incidents: Wrench,
   cleanings: BadgeCheck,
   reports: ChartBar,
   more: Ellipsis,
-}
-
-function useNavLabels(): Record<NavKey, string> {
-  const { t } = useI18n()
-  const n = t.admin.nav
-  return {
-    home: n.home, stock: n.stock, move: n.move, apartments: n.apartments,
-    incidents: n.incidents, cleanings: n.cleanings, reports: n.reports, more: n.more,
-  }
 }
 
 function countFor(item: NavItem, counts: NavCounts): number | null {
@@ -35,13 +31,14 @@ function countFor(item: NavItem, counts: NavCounts): number | null {
 }
 
 /** Desktop: a glass side panel with the profile, two groups, the main "new operation" button and the switchers. */
-export function AdminSidebar({ counts }: { counts: NavCounts }) {
+export function AdminSidebar({ counts, onSearch }: { counts: NavCounts; onSearch: () => void }) {
   const { t } = useI18n()
   const { pathname } = useLocation()
   const profile = useAuth((s) => s.profile)
   const labels = useNavLabels()
   const groups = [
     { title: t.admin.nav.groupWork, items: sidebarItems('work') },
+    { title: t.admin.nav.groupWarehouse, items: sidebarItems('warehouse') },
     { title: t.admin.nav.groupControl, items: sidebarItems('control') },
   ]
 
@@ -61,9 +58,20 @@ export function AdminSidebar({ counts }: { counts: NavCounts }) {
         </div>
       )}
 
+      <button
+        type="button"
+        onClick={onSearch}
+        data-testid="apt-search-open"
+        className="glass-inset rounded-xl px-3 min-h-[44px] flex items-center gap-2.5 text-sm text-muted hover:text-ink transition-colors"
+      >
+        <Search className="w-[18px] h-[18px] flex-none" />
+        <span className="flex-1 text-start truncate">{t.admin.nav.search}</span>
+        <kbd className="text-xs font-sans px-1.5 py-0.5 rounded-md border border-line">Ctrl K</kbd>
+      </button>
+
       <NavLink
         to="/admin/move"
-        className="flex items-center justify-center gap-2 rounded-xl bg-accent py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity"
+        className="flex items-center justify-center gap-2 rounded-xl bg-accent min-h-[44px] text-sm font-semibold hover:opacity-90 transition-opacity"
         style={{ boxShadow: '0 0 24px var(--glow-1)' }}
       >
         <Plus className="w-4 h-4" strokeWidth={2.4} />
@@ -73,7 +81,7 @@ export function AdminSidebar({ counts }: { counts: NavCounts }) {
       <nav className="flex flex-col gap-4">
         {groups.map((g) => (
           <div key={g.title} className="flex flex-col gap-0.5">
-            <p className="px-2.5 pb-1 text-[11px] font-medium tracking-wide uppercase text-glass-accent">{g.title}</p>
+            <p className="px-2.5 pb-1 text-xs font-medium tracking-wide uppercase text-glass-accent">{g.title}</p>
             {g.items.map((item) => {
               const active = isNavActive(pathname, item)
               const Icon = ICONS[item.key]
@@ -83,14 +91,14 @@ export function AdminSidebar({ counts }: { counts: NavCounts }) {
                   key={item.key}
                   to={item.to}
                   end={item.end}
-                  className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] transition-colors ${
+                  className={`flex items-center gap-2.5 rounded-xl px-2.5 min-h-[40px] text-sm transition-colors ${
                     active ? 'bg-accent-soft text-accent font-semibold' : 'text-muted hover:text-ink hover:bg-[var(--line)]'
                   }`}
                 >
                   <Icon className="w-[18px] h-[18px] flex-none" strokeWidth={active ? 2.2 : 1.8} />
                   <span className="truncate">{labels[item.key]}</span>
                   {badge && (
-                    <span className="ms-auto min-w-5 h-5 px-1.5 rounded-full bg-warn text-[11px] font-semibold flex items-center justify-center">
+                    <span className="ms-auto min-w-[22px] h-[22px] px-1.5 rounded-full bg-warn text-xs font-semibold flex items-center justify-center">
                       {badge}
                     </span>
                   )}
@@ -133,7 +141,7 @@ export function AdminBottomBar({ counts }: { counts: NavCounts }) {
                 >
                   <Icon className="w-7 h-7" strokeWidth={2.4} />
                 </span>
-                <span className={`text-[10px] ${active ? 'text-accent font-medium' : 'text-muted'}`}>{labels.move}</span>
+                <span className={`text-[11px] ${active ? 'text-accent font-medium' : 'text-muted'}`}>{labels.move}</span>
               </NavLink>
             )
           }
@@ -149,12 +157,12 @@ export function AdminBottomBar({ counts }: { counts: NavCounts }) {
               <span className="relative">
                 <Icon className={`w-5 h-5 ${active ? 'text-accent' : 'text-muted'}`} strokeWidth={active ? 2.2 : 1.8} />
                 {badge && (
-                  <span className="absolute -top-2 -end-3 min-w-4 h-4 px-1 rounded-full bg-warn text-[10px] font-semibold leading-none flex items-center justify-center">
+                  <span className="absolute -top-2 -end-3 min-w-[18px] h-[18px] px-1 rounded-full bg-warn text-[11px] font-semibold leading-none flex items-center justify-center">
                     {badge}
                   </span>
                 )}
               </span>
-              <span className={`text-[10px] ${active ? 'text-accent font-medium' : 'text-muted'}`}>{labels[item.key]}</span>
+              <span className={`text-[11px] ${active ? 'text-accent font-medium' : 'text-muted'}`}>{labels[item.key]}</span>
             </NavLink>
           )
         })}

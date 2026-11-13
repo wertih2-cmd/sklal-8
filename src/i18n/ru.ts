@@ -382,6 +382,8 @@ export const ru = {
       cleanings: 'Уборки',
       reports: 'Отчёты',
       newOperation: 'Новая операция',
+      groupWarehouse: 'Склад и закупки',
+      search: 'Поиск квартиры',
     },
     dashboard: {
       ringTitle: 'Укомплектованность квартир',
@@ -764,6 +766,10 @@ export const ru = {
       qr: 'QR квартир',
       reports: 'Отчёты',
       history: 'История',
+      sectionWarehouse: 'Склад и закупки',
+      sectionControl: 'Контроль',
+      sectionDirectories: 'Справочники',
+      sectionAdmin: 'Доступ и персонал',
     },
     reports: {
       tableSearch: 'Поиск: квартира, предмет, категория',

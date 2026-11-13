@@ -174,7 +174,7 @@ export function AdminApartmentList() {
                 >
                   <button
                     onClick={() => setEditingApt(apt)}
-                    className="absolute top-1.5 end-1.5 p-1 rounded text-muted hover:text-accent"
+                    className="absolute top-0 end-0 w-10 h-10 flex items-center justify-center rounded text-muted hover:text-accent"
                     aria-label={t.admin.apartments.edit}
                   >
                     <Edit3 className="w-3.5 h-3.5" />

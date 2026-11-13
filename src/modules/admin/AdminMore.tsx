@@ -1,50 +1,72 @@
 import { useNavigate } from 'react-router-dom'
 import { useI18n } from '@/i18n'
 import { Users, Wrench, Phone, ExternalLink, CircleUser as UserCircle, ChevronRight, ClipboardList, FolderTree, FileText, ShoppingCart, ClipboardCheck, QrCode, ChartBar as BarChart3, History, BadgeCheck } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/modules/core/store'
+import { MORE_SECTIONS, formatBadge, type MoreKey, type MoreSectionKey } from './adminNavModel'
+import { useAdminBadges } from './useAdminBadges'
+
+const ICONS: Record<MoreKey, LucideIcon> = {
+  orders: ShoppingCart,
+  inventory: ClipboardCheck,
+  documents: FileText,
+  catalog: FolderTree,
+  incidents: Wrench,
+  cleaningApprovals: BadgeCheck,
+  reports: BarChart3,
+  history: History,
+  normTemplates: ClipboardList,
+  qr: QrCode,
+  contacts: Phone,
+  staff: UserCircle,
+  users: Users,
+}
 
 export function AdminMore() {
   const { t } = useI18n()
   const navigate = useNavigate()
   const signOut = useAuth((s) => s.signOut)
   const profile = useAuth((s) => s.profile)
+  const counts = useAdminBadges()
 
-  const items = [
-    { icon: FolderTree, label: t.admin.more.catalog, path: '/admin/more/catalog' },
-    { icon: UserCircle, label: t.admin.more.staff, path: '/admin/more/staff' },
-    { icon: Users, label: t.admin.more.users, path: '/admin/more/users' },
-    { icon: Wrench, label: t.admin.more.incidents, path: '/admin/more/incidents' },
-    { icon: BadgeCheck, label: t.admin.more.cleaningApprovals, path: '/admin/more/cleaning-approvals' },
-    { icon: Phone, label: t.admin.more.contacts, path: '/admin/more/contacts' },
-    { icon: ClipboardList, label: t.admin.more.normTemplates, path: '/admin/more/norm-templates' },
-    { icon: ShoppingCart, label: t.admin.more.orders, path: '/admin/more/orders' },
-    { icon: ClipboardCheck, label: t.admin.more.inventory, path: '/admin/more/inventory' },
-    { icon: FileText, label: t.admin.more.documents, path: '/admin/more/documents' },
-    { icon: QrCode, label: t.admin.more.qr, path: '/admin/more/qr' },
-    { icon: BarChart3, label: t.admin.more.reports, path: '/admin/more/reports' },
-    { icon: History, label: t.admin.more.history, path: '/admin/more/history' },
-  ]
+  const sectionTitles: Record<MoreSectionKey, string> = {
+    warehouse: t.admin.more.sectionWarehouse,
+    control: t.admin.more.sectionControl,
+    directories: t.admin.more.sectionDirectories,
+    admin: t.admin.more.sectionAdmin,
+  }
 
   return (
     <div className="px-4 pt-6 pb-28">
       <h1 className="text-xl font-semibold text-ink mb-4">{t.admin.more.title}</h1>
 
-      <div className="panel rounded-[20px] p-2.5 mb-4 flex flex-col gap-2">
-        {items.map((item) => {
-          const Icon = item.icon
-          return (
-            <button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              className="well w-full min-h-[48px] rounded-xl px-4 py-3 flex items-center gap-3 text-start transition-colors hover:border-accent"
-            >
-              <Icon className="w-5 h-5 text-muted" />
-              <span className="flex-1 text-sm text-ink">{item.label}</span>
-              <ChevronRight className="w-4 h-4 text-muted rtl:rotate-180" />
-            </button>
-          )
-        })}
-      </div>
+      {MORE_SECTIONS.map((section) => (
+        <section key={section.key} className="mb-4">
+          <h2 className="px-2 pb-1.5 text-xs font-medium tracking-wide uppercase text-glass-accent">{sectionTitles[section.key]}</h2>
+          <div className="panel rounded-[20px] p-2 flex flex-col gap-1.5">
+            {section.items.map((item) => {
+              const Icon = ICONS[item.key]
+              const badge = item.badge ? formatBadge(counts[item.badge]) : null
+              return (
+                <button
+                  key={item.to}
+                  onClick={() => navigate(item.to)}
+                  className="well w-full min-h-[52px] rounded-xl px-4 py-3 flex items-center gap-3 text-start transition-colors hover:border-accent"
+                >
+                  <Icon className="w-5 h-5 text-muted flex-none" />
+                  <span className="flex-1 text-[15px] text-ink">{t.admin.more[item.key]}</span>
+                  {badge && (
+                    <span className="min-w-[22px] h-[22px] px-1.5 rounded-full bg-warn text-xs font-semibold flex items-center justify-center">
+                      {badge}
+                    </span>
+                  )}
+                  <ChevronRight className="w-4 h-4 text-muted rtl:rotate-180 flex-none" />
+                </button>
+              )
+            })}
+          </div>
+        </section>
+      ))}
 
       <button
         onClick={() => navigate('/sv')}

@@ -384,6 +384,8 @@ export const en: Dict = {
       cleanings: 'Cleanings',
       reports: 'Reports',
       newOperation: 'New operation',
+      groupWarehouse: 'Stock and purchasing',
+      search: 'Find apartment',
     },
     dashboard: {
       ringTitle: 'Apartment completeness',
@@ -766,6 +768,10 @@ export const en: Dict = {
       qr: 'Apartment QR',
       reports: 'Reports',
       history: 'History',
+      sectionWarehouse: 'Stock and purchasing',
+      sectionControl: 'Control',
+      sectionDirectories: 'Directories',
+      sectionAdmin: 'Access and staff',
     },
     reports: {
       tableSearch: 'Search: apartment, item, category',

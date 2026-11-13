@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { toApiError } from '@/lib/errors'
 import type { NormRuleRow, NormType, ItemKind, Category } from '@/lib/database.types'
+import { ALL_NORM_TYPES, countByApartment, readCount } from '@/modules/admin/aptNormsModel'
 
 export interface MergedNormRow {
   itemId: number
@@ -140,4 +141,47 @@ export async function apartmentNormsCopy(
   })
   if (error) throw toApiError(error, status)
   return data
+}
+
+const PAGE = 1000
+
+/** Number of own rules per apartment, for every apartment that has any. Read in pages: the table can be large. */
+export async function fetchApartmentNormCounts(): Promise<Map<number, number>> {
+  const rows: Array<{ apartment_id: number | null }> = []
+  for (let from = 0; ; from += PAGE) {
+    const { data, error, status } = await supabase
+      .from('norm_rules')
+      .select('apartment_id')
+      .not('apartment_id', 'is', null)
+      .order('id')
+      .range(from, from + PAGE - 1)
+    if (error) throw toApiError(error, status)
+    rows.push(...(data ?? []))
+    if (!data || data.length < PAGE) break
+  }
+  return countByApartment(rows)
+}
+
+export async function fetchApartmentNormCount(apartmentId: number): Promise<number> {
+  const { count, error, status } = await supabase
+    .from('norm_rules')
+    .select('id', { head: true, count: 'exact' })
+    .eq('apartment_id', apartmentId)
+  if (error) throw toApiError(error, status)
+  return count ?? 0
+}
+
+/** Copies the template of the apartment type into the apartment; items it already has are kept. Returns rows added. */
+export async function makeApartmentNormsIndividual(apartmentId: number): Promise<number> {
+  return readCount(await apartmentNormsMaterialize(apartmentId, ALL_NORM_TYPES), 'materialized')
+}
+
+/** Replaces the norms of the apartment with those of another apartment. Returns rows written. */
+export async function replaceApartmentNormsFrom(sourceId: number, apartmentId: number): Promise<number> {
+  return readCount(await apartmentNormsCopy(sourceId, [apartmentId], ALL_NORM_TYPES, true), 'upserted')
+}
+
+/** Deletes every own rule of the apartment, so the template of its type applies again. Returns rows deleted. */
+export async function resetApartmentNormsToType(apartmentId: number): Promise<number> {
+  return readCount(await apartmentNormsReset(apartmentId, ALL_NORM_TYPES), 'reset')
 }

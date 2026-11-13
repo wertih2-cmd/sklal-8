@@ -10,6 +10,7 @@ import { friendlyMessage } from '@/lib/errors'
 import { toast, errorMessage } from '@/lib/toast'
 import { useLiveRefresh } from '@/lib/realtime'
 import { OwnerBadge } from '@/components/OwnerBadge'
+import { ApartmentNormMode } from '@/modules/admin/ApartmentNormMode'
 
 function pctColor(p: number): string {
   if (p >= 100) return 'var(--ok)'
@@ -391,6 +392,7 @@ export function EditApartmentModal({ apartment, buildings, typeLabels, onClose, 
               <p className="text-xs text-warn mt-1">{t.admin.apartments.editTypeWarn}</p>
             )}
           </div>
+          <ApartmentNormMode apartment={apartment} typeLabels={typeLabels} disabled={typeChanged || saving} />
           <label className="flex items-start gap-2.5 cursor-pointer">
             <input type="checkbox" checked={isOwner} onChange={(e) => setIsOwner(e.target.checked)}
               className="w-4 h-4 mt-0.5 shrink-0 accent-[var(--accent)]" />

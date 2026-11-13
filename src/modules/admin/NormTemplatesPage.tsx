@@ -10,6 +10,7 @@ import { Modal } from '@/components/Modal'
 import { ErrorState } from '@/components/ErrorState'
 import { friendlyMessage } from '@/lib/errors'
 import { useCatalogName } from '@/modules/core/useCatalogName'
+import { ApartmentNormsSection } from '@/modules/admin/ApartmentNormsSection'
 
 const aptTypes: AptType[] = ['studio', '1br', '2br']
 
@@ -34,6 +35,7 @@ export function NormTemplatesPage() {
   }
   const navigate = useNavigate()
   const [selectedType, setSelectedType] = useState<AptType>('studio')
+  const [showApartments, setShowApartments] = useState(false)
   const [norms, setNorms] = useState<NormRuleRow[]>([])
   const [stock, setStock] = useState<WarehouseStockRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -101,10 +103,10 @@ export function NormTemplatesPage() {
     }
   }
 
-  if (loading) {
+  if (loading && !showApartments) {
     return <div className="px-4 pt-8 text-center text-muted">{t.app.loading}</div>
   }
-  if (loadError) return <ErrorState onRetry={() => loadNorms(selectedType)} />
+  if (loadError && !showApartments) return <ErrorState onRetry={() => loadNorms(selectedType)} />
 
   return (
     <div className="min-h-screen bg-app">
@@ -119,15 +121,24 @@ export function NormTemplatesPage() {
           {aptTypes.map((tp) => (
             <button
               key={tp}
-              onClick={() => setSelectedType(tp)}
-              className={`px-3 py-2.5 text-sm border-b-2 transition-colors ${selectedType === tp ? 'border-accent text-accent font-medium' : 'border-transparent text-muted'}`}
+              onClick={() => { setSelectedType(tp); setShowApartments(false) }}
+              className={`px-3 py-2.5 text-sm border-b-2 transition-colors ${!showApartments && selectedType === tp ? 'border-accent text-accent font-medium' : 'border-transparent text-muted'}`}
             >
               {aptTypeLabels[tp]}
             </button>
           ))}
+          <button
+            onClick={() => setShowApartments(true)}
+            className={`px-3 py-2.5 text-sm border-b-2 transition-colors ${showApartments ? 'border-accent text-accent font-medium' : 'border-transparent text-muted'}`}
+          >
+            {t.admin.aptNorms.tab}
+          </button>
         </div>
       </div>
 
+      {showApartments ? (
+        <ApartmentNormsSection typeLabels={aptTypeLabels} />
+      ) : (
       <div className="px-4 pt-4 pb-28">
         <p className="text-xs text-muted bg-app rounded-xl px-3 py-2.5 mb-2">
           {t.admin.normTemplates.hint}
@@ -181,6 +192,7 @@ export function NormTemplatesPage() {
           )
         })}
       </div>
+      )}
 
       {(editingNorm || addingNormType) && (
         <NormEditorModal

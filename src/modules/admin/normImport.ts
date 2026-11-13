@@ -99,7 +99,7 @@ export interface ImportRow {
 export type IssueCode =
   | 'no_scope' | 'both_scopes' | 'unknown_type' | 'unknown_apartment' | 'ambiguous_apartment'
   | 'unknown_norm_type' | 'unknown_category' | 'unknown_item' | 'ambiguous_item' | 'item_category_mismatch'
-  | 'item_inactive' | 'bad_qty' | 'duplicate'
+  | 'item_inactive' | 'bad_qty' | 'duplicate' | 'other_scope'
 
 export interface ImportIssue { line: number; code: IssueCode; value: string }
 
@@ -131,14 +131,19 @@ function lookup<T extends string>(names: Record<T, string[]>, raw: string): T | 
 
 const norm = (s: string | null | undefined) => tidy(s ?? '')
 
-export function parseNormRows(table: string[][], ctx: ImportContext): ParsedImport {
+/**
+ * `forced` is for a file that belongs to one apartment: the columns with the apartment or its type may be missing or empty
+ * (every row then goes to that apartment); a row that points to another apartment or to an apartment type is an issue.
+ * A type cell next to this apartment's own cell is ignored.
+ */
+export function parseNormRows(table: string[][], ctx: ImportContext, forced?: { apartmentId: number }): ParsedImport {
   const out: ParsedImport = { missing: [], rows: [], issues: [], lines: 0 }
-  if (table.length === 0) { out.missing = ['item', 'qty', 'normType', 'scope']; return out }
+  if (table.length === 0) { out.missing = forced ? ['item', 'qty', 'normType'] : ['item', 'qty', 'normType', 'scope']; return out }
   const cols = mapHeader(table[0])
   if (cols.item === undefined) out.missing.push('item')
   if (cols.qty === undefined) out.missing.push('qty')
   if (cols.normType === undefined) out.missing.push('normType')
-  if (cols.type === undefined && cols.apartment === undefined) out.missing.push('scope')
+  if (cols.type === undefined && cols.apartment === undefined && !forced) out.missing.push('scope')
   if (out.missing.length > 0) return out
 
   const cell = (r: string[], c: Column) => (cols[c] === undefined ? '' : (r[cols[c] as number] ?? '').trim())
@@ -177,9 +182,13 @@ export function parseNormRows(table: string[][], ctx: ImportContext): ParsedImpo
     const typeRaw = cell(row, 'type')
     const aptRaw = cell(row, 'apartment')
     let scope: Scope | null = null
-    if (typeRaw && aptRaw) { fail('both_scopes'); continue }
-    if (!typeRaw && !aptRaw) { fail('no_scope'); continue }
-    if (typeRaw) {
+    // For a file of one apartment a type next to the apartment is redundant (older backups wrote both): the apartment decides.
+    if (typeRaw && aptRaw && !forced) { fail('both_scopes'); continue }
+    if (!typeRaw && !aptRaw && !forced) { fail('no_scope'); continue }
+    if (!typeRaw && !aptRaw && forced) {
+      scope = { kind: 'apartment', apartmentId: forced.apartmentId }
+    } else if (typeRaw && !aptRaw) {
+      if (forced) { fail('other_scope', typeRaw); continue }
       const aptType = lookup(ctx.aptTypeNames, typeRaw)
       if (!aptType) { fail('unknown_type', typeRaw); continue }
       scope = { kind: 'type', aptType }
@@ -188,6 +197,7 @@ export function parseNormRows(table: string[][], ctx: ImportContext): ParsedImpo
       if (hits.length === 0) hits = byNumber.get(norm(aptRaw)) ?? []
       if (hits.length === 0) { fail('unknown_apartment', aptRaw); continue }
       if (hits.length > 1) { fail('ambiguous_apartment', aptRaw); continue }
+      if (forced && ctx.apartments[hits[0]].id !== forced.apartmentId) { fail('other_scope', aptRaw); continue }
       scope = { kind: 'apartment', apartmentId: ctx.apartments[hits[0]].id }
     }
 
@@ -334,5 +344,13 @@ export function buildTemplateTable(labels: FileLabels, sample: { apartment: stri
     [labels.type, labels.apartment, labels.normType, labels.category, labels.item, labels.qty, labels.unit, labels.note],
     [labels.aptTypeNames.studio, '', labels.normTypeNames.asset_standing, sample.category, sample.item, '2', sample.unit, ''],
     ['', sample.apartment, labels.normTypeNames.asset_standing, sample.category, sample.item, '4', sample.unit, ''],
+  ]
+}
+
+/** Example file for one apartment: the apartment column is filled in, so the file can also be loaded on the shared import page. */
+export function buildApartmentTemplateTable(labels: FileLabels, sample: { apartment: string; item: string; category: string; unit: string }): string[][] {
+  return [
+    [labels.type, labels.apartment, labels.normType, labels.category, labels.item, labels.qty, labels.unit, labels.note],
+    ['', sample.apartment, labels.normTypeNames.asset_standing, sample.category, sample.item, '2', sample.unit, ''],
   ]
 }

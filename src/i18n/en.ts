@@ -1150,6 +1150,12 @@ export const en: Dict = {
       clearBody: 'The apartment will have no norms: every item, its own and from the type template, gets a quantity of 0 ("not needed"). Before the clear, a file with the current norms of the apartment is downloaded to your computer; it can be loaded back with "Import from file". Past cleanings are not recalculated.',
       clearDone: 'Apartment norms cleared',
       clearNothing: 'The apartment has no norms already',
+      importApartmentButton: 'Load norms from a file',
+      titleApartment: 'Apartment norms from a file',
+      hintApartment: 'Upload a CSV file (in Excel: Save as → CSV UTF-8). Columns: “Norm kind”, “Item”, “Quantity” (in base units of the item), and optionally “Category” and “Note”. The “Apartment” column may be left empty: every row goes to this apartment. A row for another apartment or for an apartment type counts as an error. The file is checked first and nothing changes until you confirm.',
+      issueOtherScope: 'the row belongs to another apartment or to an apartment type',
+      modeReplaceApartment: 'Replace the norms of this apartment',
+      modeReplaceNoteApartment: 'Own items of the apartment that are not in the file will be deleted (the apartment takes them from the template again).',
     },
     catalog: {
       title: 'Categories and items',

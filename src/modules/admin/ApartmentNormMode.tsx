@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { Apartment, AptType } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { NormImportModal } from '@/modules/admin/NormImportModal'
 import { toast, errorMessage } from '@/lib/toast'
 import { useLiveRefresh } from '@/lib/realtime'
 import { fetchApartmentsAdmin } from '@/modules/admin/api'
@@ -37,6 +38,7 @@ export function ApartmentNormMode({ apartment, typeLabels, disabled = false }: {
   const [others, setOthers] = useState<Apartment[] | null>(null)
   const [srcId, setSrcId] = useState('')
   const [pending, setPending] = useState<Pending | null>(null)
+  const [importOpen, setImportOpen] = useState(false)
 
   const load = useCallback(() => {
     fetchApartmentNormCount(apartment.id).then(setCount).catch((e) => toast(errorMessage(e), 'error'))
@@ -136,7 +138,10 @@ export function ApartmentNormMode({ apartment, typeLabels, disabled = false }: {
       )}
 
       {chooser == null && mode != null && (
-        <button type="button" className={`${btn} !text-bad`} disabled={off} onClick={() => setPending({ kind: 'clear' })} data-testid="apt-norms-clear">{ni.clearButton}</button>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className={btn} disabled={off} onClick={() => setImportOpen(true)} data-testid="apt-norms-import">{ni.importApartmentButton}</button>
+          <button type="button" className={`${btn} !text-bad`} disabled={off} onClick={() => setPending({ kind: 'clear' })} data-testid="apt-norms-clear">{ni.clearButton}</button>
+        </div>
       )}
 
       {chooser != null && (
@@ -166,6 +171,12 @@ export function ApartmentNormMode({ apartment, typeLabels, disabled = false }: {
         </div>
       )}
 
+      <NormImportModal
+        open={importOpen}
+        apartment={{ id: apartment.id, code: apartment.code, type: apartment.type }}
+        onClose={() => setImportOpen(false)}
+        onDone={load}
+      />
       <ConfirmDialog
         open={pending?.kind === 'make'}
         title={a.confirmMakeTitle}

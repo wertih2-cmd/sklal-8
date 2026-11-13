@@ -4,9 +4,10 @@ import { useI18n } from '@/i18n'
 import { Modal } from '@/components/Modal'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { toast, errorMessage } from '@/lib/toast'
-import { applyImportPlan, fetchAllNormRules } from '@/modules/admin/norms'
+import type { AptType } from '@/lib/database.types'
+import { applyImportPlan, fetchAllNormRules, loadApartmentNormsForClear } from '@/modules/admin/norms'
 import {
-  buildNormsTable, buildTemplateTable, decodeCsvBytes, parseCsv, parseNormRows, planImport,
+  buildApartmentTemplateTable, buildNormsTable, buildTemplateTable, decodeCsvBytes, effectiveRules, parseCsv, parseNormRows, planImport,
   type ExistingRule, type ImportMode, type ImportIssue, type ParsedImport,
 } from '@/modules/admin/normImport'
 import { catalogRows, fileLabels, importContext, loadImportCatalog, saveTable, type ImportCatalog } from '@/modules/admin/normImportFiles'
@@ -16,13 +17,22 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024
 
 const btn = 'well rounded-xl px-3 py-2 text-xs font-medium text-accent min-h-[44px] flex items-center gap-1.5 disabled:opacity-60'
 
-/** Import of norms (by apartment type and by apartment) from a CSV file, with a check before anything is written. */
-export function NormImportModal({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: () => void }) {
+/**
+ * Import of norms (by apartment type and by apartment) from a CSV file, with a check before anything is written.
+ * With `apartment` the file belongs to that one apartment: rows without an apartment go to it, rows for anything else are issues.
+ */
+export function NormImportModal({ open, onClose, onDone, apartment }: {
+  open: boolean
+  onClose: () => void
+  onDone: () => void
+  apartment?: { id: number; code?: string; type: AptType }
+}) {
   const { t, n } = useI18n()
   const a = t.admin.normImport
   const fileRef = useRef<HTMLInputElement>(null)
   const [catalog, setCatalog] = useState<ImportCatalog | null>(null)
   const [existing, setExisting] = useState<ExistingRule[]>([])
+  const [template, setTemplate] = useState<ExistingRule[]>([])
   const [loadFailed, setLoadFailed] = useState(false)
   const [fileName, setFileName] = useState('')
   const [parsed, setParsed] = useState<ParsedImport | null>(null)
@@ -31,12 +41,19 @@ export function NormImportModal({ open, onClose, onDone }: { open: boolean; onCl
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
 
+  const apartmentId = apartment?.id
+  const apartmentType = apartment?.type
+
   const load = useCallback(() => {
     setLoadFailed(false)
-    Promise.all([loadImportCatalog(), fetchAllNormRules()])
-      .then(([cat, rules]) => { setCatalog(cat); setExisting(rules) })
+    // For one apartment only its own rules matter for the plan; the template is read to save the norms it has now.
+    const rules = apartmentId != null && apartmentType != null
+      ? loadApartmentNormsForClear(apartmentId, apartmentType).then(({ own, template: tpl }) => ({ own, tpl }))
+      : fetchAllNormRules().then((all) => ({ own: all, tpl: [] as ExistingRule[] }))
+    Promise.all([loadImportCatalog(), rules])
+      .then(([cat, r]) => { setCatalog(cat); setExisting(r.own); setTemplate(r.tpl) })
       .catch((e) => { setLoadFailed(true); toast(errorMessage(e), 'error') })
-  }, [])
+  }, [apartmentId, apartmentType])
 
   useEffect(() => { if (open) load() }, [open, load])
 
@@ -46,20 +63,32 @@ export function NormImportModal({ open, onClose, onDone }: { open: boolean; onCl
   const blocked = parsed != null && parsed.issues.length > 0 && !skipErrors
   const canApply = !busy && catalog != null && plan != null && !nothingToDo && !blocked
 
+  const apartmentCode = apartment && catalog
+    ? catalog.apartments.find((x) => x.id === apartment.id)?.code ?? apartment.code ?? String(apartment.id)
+    : ''
+  const fileSuffix = apartmentCode.replace(/[^\p{L}\p{N}]+/gu, '-')
+
   const downloadTemplate = () => {
     if (!catalog) return
     const first = catalog.items.find((i) => i.active) ?? catalog.items[0]
     const cats = new Map(catalog.categories.map((c) => [c.id, c.name]))
-    saveTable('norms-template.csv', buildTemplateTable(labels, {
-      apartment: catalog.apartments[0]?.code ?? '',
+    const sample = {
+      apartment: apartment ? apartmentCode : catalog.apartments[0]?.code ?? '',
       item: first?.name ?? '',
       category: first ? cats.get(first.category_id) ?? '' : '',
       unit: first?.base_unit ?? '',
-    }))
+    }
+    saveTable('norms-template.csv', apartment ? buildApartmentTemplateTable(labels, sample) : buildTemplateTable(labels, sample))
   }
 
   const downloadCurrent = () => {
     if (!catalog) return
+    if (apartment) {
+      // The norms the apartment has now: its own rules over the template of its type.
+      const asApartment = effectiveRules(existing, template).map((r) => ({ ...r, apt_type: null, apartment_id: apartment.id }))
+      saveTable(`norms-${fileSuffix}.csv`, buildNormsTable(asApartment, catalogRows(catalog), new Map([[apartment.id, apartmentCode]]), labels))
+      return
+    }
     const codes = new Map(catalog.apartments.map((x) => [x.id, x.code]))
     saveTable('norms-current.csv', buildNormsTable(existing, catalogRows(catalog), codes, labels))
   }
@@ -72,7 +101,7 @@ export function NormImportModal({ open, onClose, onDone }: { open: boolean; onCl
     if (file.size > MAX_FILE_BYTES) { toast(a.fileTooBig, 'error'); return }
     try {
       const text = decodeCsvBytes(new Uint8Array(await file.arrayBuffer()))
-      setParsed(parseNormRows(parseCsv(text), importContext(catalog)))
+      setParsed(parseNormRows(parseCsv(text), importContext(catalog), apartment ? { apartmentId: apartment.id } : undefined))
     } catch (e) {
       toast(errorMessage(e), 'error')
     }
@@ -104,7 +133,7 @@ export function NormImportModal({ open, onClose, onDone }: { open: boolean; onCl
       unknown_apartment: a.issueUnknownApartment, ambiguous_apartment: a.issueAmbiguousApartment,
       unknown_norm_type: a.issueUnknownNormType, unknown_category: a.issueUnknownCategory, unknown_item: a.issueUnknownItem,
       ambiguous_item: a.issueAmbiguousItem, item_category_mismatch: a.issueCategoryMismatch,
-      item_inactive: a.issueInactive, bad_qty: a.issueBadQty, duplicate: a.issueDuplicate,
+      item_inactive: a.issueInactive, bad_qty: a.issueBadQty, duplicate: a.issueDuplicate, other_scope: a.issueOtherScope,
     }
     return `${a.line} ${n(String(i.line))}: ${messages[i.code]}${i.value ? ` «${i.value}»` : ''}`
   }
@@ -113,9 +142,9 @@ export function NormImportModal({ open, onClose, onDone }: { open: boolean; onCl
     ({ item: a.missingItem, qty: a.missingQty, normType: a.missingNormType, scope: a.missingScope })[m]
 
   return (
-    <Modal open={open} title={a.title} onClose={() => { if (!busy) onClose() }} size="lg" closeOnBackdrop={false}>
+    <Modal open={open} title={apartment ? `${a.titleApartment}${apartmentCode ? `: ${apartmentCode}` : ''}` : a.title} onClose={() => { if (!busy) onClose() }} size="lg" closeOnBackdrop={false}>
       <div className="space-y-3">
-        <p className="text-xs text-muted bg-app rounded-xl px-3 py-2.5">{a.hint}</p>
+        <p className="text-xs text-muted bg-app rounded-xl px-3 py-2.5">{apartment ? a.hintApartment : a.hint}</p>
         {loadFailed && <p className="text-bad text-sm">{a.loadFailed}</p>}
 
         <div className="flex flex-wrap gap-2">
@@ -152,7 +181,7 @@ export function NormImportModal({ open, onClose, onDone }: { open: boolean; onCl
                 <p className="text-xs text-muted">
                   {a.willAdd}: {n(String(plan.inserts.length))}; {a.willUpdate}: {n(String(plan.updates.length))}; {a.unchanged}: {n(String(plan.unchanged))}
                   {mode === 'replace' ? `; ${a.willDelete}: ${n(String(plan.deletes.length))}` : ''}
-                  {` · ${a.scopeTypes}: ${n(String(plan.types.length))}, ${a.scopeApartments}: ${n(String(plan.apartments.length))}`}
+                  {!apartment && ` · ${a.scopeTypes}: ${n(String(plan.types.length))}, ${a.scopeApartments}: ${n(String(plan.apartments.length))}`}
                 </p>
               )}
             </div>
@@ -177,7 +206,7 @@ export function NormImportModal({ open, onClose, onDone }: { open: boolean; onCl
               </label>
               <label className="flex items-start gap-2 text-sm text-ink">
                 <input type="radio" name="norm-import-mode" checked={mode === 'replace'} onChange={() => setMode('replace')} className="mt-1 accent-[var(--accent)]" />
-                <span>{a.modeReplace}<span className="block text-xs text-muted">{a.modeReplaceNote}</span></span>
+                <span>{apartment ? a.modeReplaceApartment : a.modeReplace}<span className="block text-xs text-muted">{apartment ? a.modeReplaceNoteApartment : a.modeReplaceNote}</span></span>
               </label>
             </div>
 

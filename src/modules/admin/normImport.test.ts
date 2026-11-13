@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   decodeCsvBytes, parseCsv, mapHeader, parseQty, parseNormRows, planImport, planClearApartment, effectiveRules,
-  buildNormsTable, buildTemplateTable, type ImportContext, type ExistingRule, type FileLabels,
+  buildNormsTable, buildTemplateTable, buildApartmentTemplateTable, type ImportContext, type ExistingRule, type FileLabels,
 } from './normImport'
 
 const ctx: ImportContext = {
@@ -201,5 +201,92 @@ describe('the file written and read back', () => {
     const t = buildTemplateTable(labels, { apartment: 'Tower A/12', item: 'Полотенце', category: 'Текстиль', unit: 'шт' })
     expect(t).toHaveLength(3)
     expect(parseNormRows(t, ctx).issues).toEqual([])
+  })
+})
+
+describe('parseNormRows for one apartment', () => {
+  const only = { apartmentId: 1 }
+  const run = (table: string[][]) => parseNormRows(table, ctx, only)
+
+  it('does not need the apartment or type columns and sends every row to the apartment', () => {
+    const r = run(parseCsv('Вид нормы;Предмет;Количество\nИнвентарь;Полотенце;3\nИнвентарь;Шампунь;1,5'))
+    expect(r.missing).toEqual([])
+    expect(r.issues).toEqual([])
+    expect(r.rows.map((x) => [x.scope, x.itemId, x.qty])).toEqual([
+      [{ kind: 'apartment', apartmentId: 1 }, 10, 3],
+      [{ kind: 'apartment', apartmentId: 1 }, 11, 1.5],
+    ])
+  })
+
+  it('still asks for the item, quantity and norm kind columns', () => {
+    expect(run(parseCsv('Предмет;Количество\nПолотенце;3')).missing).toEqual(['normType'])
+    expect(parseNormRows([], ctx, only).missing).toEqual(['item', 'qty', 'normType'])
+  })
+
+  it('takes empty apartment cells and the cell with this apartment', () => {
+    const r = run(parseCsv([HEAD, ';;Инвентарь;;Полотенце;2;', ';Tower A/12;Инвентарь;;Шампунь;4;'].join('\n')))
+    expect(r.issues).toEqual([])
+    expect(r.rows.map((x) => x.itemId)).toEqual([10, 11])
+    expect(r.rows.every((x) => x.scope.kind === 'apartment' && x.scope.apartmentId === 1)).toBe(true)
+  })
+
+  it('flags rows of another apartment or of an apartment type', () => {
+    const r = run(parseCsv([HEAD, ';Tower A/7;Инвентарь;;Полотенце;2;', 'Студия;;Инвентарь;;Шампунь;4;', ';;Инвентарь;;Подушка;1;'].join('\n')))
+    expect(r.issues.map((i) => [i.line, i.code, i.value])).toEqual([
+      [2, 'other_scope', 'Tower A/7'],
+      [3, 'other_scope', 'Студия'],
+      [4, 'ambiguous_item', 'Подушка'],
+    ])
+    expect(r.rows).toEqual([])
+  })
+
+  it('keeps the other checks, such as an unknown apartment', () => {
+    const r = run(parseCsv([HEAD, ';Нет такой;Инвентарь;;Полотенце;2;'].join('\n')))
+    expect(r.issues.map((i) => i.code)).toEqual(['unknown_apartment'])
+  })
+
+  it('ignores a type written next to this apartment (older backups had both), but not next to another one', () => {
+    const r = run(parseCsv([HEAD, 'Студия;Tower A/12;Инвентарь;;Полотенце;2;', '1 спальня;Tower A/12;Инвентарь;;Шампунь;1;', 'Студия;Tower A/7;Инвентарь;;Подушка;1;'].join('\n')))
+    expect(r.rows.map((x) => [x.scope, x.itemId])).toEqual([[{ kind: 'apartment', apartmentId: 1 }, 10], [{ kind: 'apartment', apartmentId: 1 }, 11]])
+    expect(r.issues.map((i) => [i.line, i.code])).toEqual([[4, 'other_scope']])
+  })
+
+  it('without the apartment argument both a type and an apartment is still an error', () => {
+    expect(parse('Студия;Tower A/12;Инвентарь;;Полотенце;2;').issues.map((i) => i.code)).toEqual(['both_scopes'])
+  })
+
+  it('treats a repeated item as a duplicate', () => {
+    const r = run(parseCsv('Вид нормы;Предмет;Количество\nИнвентарь;Полотенце;3\nИнвентарь;Полотенце;5'))
+    expect(r.rows).toHaveLength(1)
+    expect(r.issues.map((i) => i.code)).toEqual(['duplicate'])
+  })
+
+  it('without the apartment argument a row with no scope is still an error', () => {
+    expect(parse(';;Инвентарь;;Полотенце;2;').issues.map((i) => i.code)).toEqual(['no_scope'])
+  })
+
+  it('a merge plan for the apartment touches only its own rules', () => {
+    const r = run(parseCsv('Вид нормы;Предмет;Количество\nИнвентарь;Полотенце;3\nИнвентарь;Шампунь;1'))
+    const own: ExistingRule[] = [
+      { id: 7, norm_type: 'asset_standing', apt_type: null, apartment_id: 1, item_id: 10, qty: 2, note: null },
+      { id: 8, norm_type: 'asset_standing', apt_type: null, apartment_id: 1, item_id: 12, qty: 1, note: null },
+    ]
+    const merge = planImport(r.rows, own, 'merge')
+    expect(merge.updates.map((u) => [u.id, u.qty])).toEqual([[7, 3]])
+    expect(merge.inserts.map((i) => [i.item_id, i.apartment_id])).toEqual([[11, 1]])
+    expect(merge.deletes).toEqual([])
+    expect(planImport(r.rows, own, 'replace').deletes).toEqual([8])
+  })
+})
+
+describe('buildApartmentTemplateTable', () => {
+  it('has the same header as the shared file and one row filled in for the apartment', () => {
+    const labels = { type: 'T', apartment: 'A', normType: 'N', category: 'C', item: 'I', qty: 'Q', unit: 'U', note: 'M',
+      normTypeNames: { asset_standing: 'inv', turnover_replenish: 'tur', cleaning_consumption: 'cln' },
+      aptTypeNames: { studio: 's', '1br': '1', '2br': '2' } } as FileLabels
+    const t = buildApartmentTemplateTable(labels, { apartment: 'B/1', item: 'Towel', category: 'Textile', unit: 'pcs' })
+    expect(t[0]).toEqual(['T', 'A', 'N', 'C', 'I', 'Q', 'U', 'M'])
+    expect(t[1]).toEqual(['', 'B/1', 'inv', 'Textile', 'Towel', '2', 'pcs', ''])
+    expect(t).toHaveLength(2)
   })
 })

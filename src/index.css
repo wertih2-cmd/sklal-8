@@ -41,6 +41,10 @@
   --glow-1: rgba(62, 231, 255, 0.4);
   --glow-2: rgba(61, 255, 160, 0.22);
   --glow-3: rgba(0, 0, 0, 0);
+  /* Neutral light spots behind the glass (not the coloured --glow-* used for button glow). */
+  --ambient-1: rgba(255, 255, 255, 0.11);
+  --ambient-2: rgba(255, 255, 255, 0.07);
+  --ambient-3: rgba(255, 255, 255, 0.06);
   --glass-accent: #3ee7ff;
   --glass-ok: #3dffa0;
   --glass-warn: #ffb84d;
@@ -75,6 +79,9 @@
   --glow-1: rgba(11, 138, 163, 0.35);
   --glow-2: rgba(18, 183, 106, 0.22);
   --glow-3: rgba(139, 92, 246, 0.2);
+  --ambient-1: rgba(255, 255, 255, 0.95);
+  --ambient-2: rgba(255, 255, 255, 0.7);
+  --ambient-3: rgba(110, 125, 140, 0.12);
   --glass-accent: #0b8aa3;
   --glass-ok: #12b76a;
   --glass-warn: #f5a524;
@@ -170,9 +177,9 @@ body {
   /* Soft colour spots behind the glass: put on the page wrapper. */
   .app-glow {
     background-image:
-      radial-gradient(60% 50% at 12% 8%, var(--glow-1), transparent 70%),
-      radial-gradient(50% 45% at 90% 20%, var(--glow-2), transparent 70%),
-      radial-gradient(55% 50% at 60% 100%, var(--glow-3), transparent 70%);
+      radial-gradient(95% 80% at 12% 6%, var(--ambient-1), transparent 100%),
+      radial-gradient(85% 75% at 92% 18%, var(--ambient-2), transparent 100%),
+      radial-gradient(100% 85% at 58% 104%, var(--ambient-3), transparent 100%);
     background-attachment: fixed;
   }
   /* A fixed background is heavy on phones: let it scroll with the page there. */

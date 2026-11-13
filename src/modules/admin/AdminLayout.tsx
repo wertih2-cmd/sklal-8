@@ -16,7 +16,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const showBack = /^\/admin\/more\/[^/]+$/.test(pathname) && pathname !== '/admin/more/norm-templates'
 
   return (
-    <div className="min-h-screen bg-app flex flex-col lg:grid lg:grid-cols-[248px_1fr]">
+    <div className="min-h-screen bg-app app-glow flex flex-col lg:grid lg:grid-cols-[248px_1fr]">
       <AdminSidebar counts={counts} />
 
       {/* Main content: the bottom padding keeps the floating bar from covering the last block on a phone */}

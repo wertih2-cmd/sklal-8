@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase'
 import { toApiError } from '@/lib/errors'
 import type { NormRuleRow, NormType, ItemKind, Category } from '@/lib/database.types'
 import { ALL_NORM_TYPES, countByApartment, readCount } from '@/modules/admin/aptNormsModel'
+import { planClearApartment, effectiveRules, type ExistingRule, type ImportPlan, type NewRule } from '@/modules/admin/normImport'
 
 export interface MergedNormRow {
   itemId: number
@@ -185,3 +186,64 @@ export async function replaceApartmentNormsFrom(sourceId: number, apartmentId: n
 export async function resetApartmentNormsToType(apartmentId: number): Promise<number> {
   return readCount(await apartmentNormsReset(apartmentId, ALL_NORM_TYPES), 'reset')
 }
+
+// ---- Import from a file and emergency clear. Writes go in chunks: inserts, then updates, then deletes. ----
+// An import is idempotent, so a run that stopped half way is finished by running the same file again.
+
+const RULE_COLUMNS = 'id,norm_type,apt_type,apartment_id,item_id,qty,note'
+const CHUNK = 400
+
+function toRule(r: ExistingRule): ExistingRule {
+  return { id: r.id, norm_type: r.norm_type, apt_type: r.apt_type, apartment_id: r.apartment_id, item_id: r.item_id, qty: Number(r.qty), note: r.note }
+}
+
+/** Every rule of the table: templates and apartments. Read in pages. */
+export async function fetchAllNormRules(): Promise<ExistingRule[]> {
+  const rows: ExistingRule[] = []
+  for (let from = 0; ; from += PAGE) {
+    const { data, error, status } = await supabase.from('norm_rules').select(RULE_COLUMNS).order('id').range(from, from + PAGE - 1)
+    if (error) throw toApiError(error, status)
+    rows.push(...((data ?? []) as ExistingRule[]).map(toRule))
+    if (!data || data.length < PAGE) break
+  }
+  return rows
+}
+
+async function writePlan(inserts: NewRule[], updates: ExistingRule[], deletes: number[]): Promise<void> {
+  for (let i = 0; i < inserts.length; i += CHUNK) {
+    const { error, status } = await supabase.from('norm_rules').insert(inserts.slice(i, i + CHUNK))
+    if (error) throw toApiError(error, status)
+  }
+  for (let i = 0; i < updates.length; i += CHUNK) {
+    const { error, status } = await supabase.from('norm_rules').upsert(updates.slice(i, i + CHUNK), { onConflict: 'id' })
+    if (error) throw toApiError(error, status)
+  }
+  for (let i = 0; i < deletes.length; i += CHUNK) {
+    const { error, status } = await supabase.from('norm_rules').delete().in('id', deletes.slice(i, i + CHUNK))
+    if (error) throw toApiError(error, status)
+  }
+}
+
+export async function applyImportPlan(plan: ImportPlan): Promise<void> {
+  await writePlan(plan.inserts, plan.updates, plan.deletes)
+}
+
+/**
+ * Emergency clear of an apartment: every item it has, own or from the template of its type, is set to 0 ("not needed").
+ * Returns the norms it had, so the caller can save them to a file first, and how many rules were written.
+ */
+export async function loadApartmentNormsForClear(apartmentId: number, aptType: string): Promise<{ own: ExistingRule[]; template: ExistingRule[] }> {
+  const own = await supabase.from('norm_rules').select(RULE_COLUMNS).eq('apartment_id', apartmentId)
+  if (own.error) throw toApiError(own.error, own.status)
+  const tpl = await supabase.from('norm_rules').select(RULE_COLUMNS).eq('apt_type', aptType)
+  if (tpl.error) throw toApiError(tpl.error, tpl.status)
+  return { own: ((own.data ?? []) as ExistingRule[]).map(toRule), template: ((tpl.data ?? []) as ExistingRule[]).map(toRule) }
+}
+
+export async function clearApartmentNorms(apartmentId: number, own: ExistingRule[], template: ExistingRule[]): Promise<number> {
+  const plan = planClearApartment(apartmentId, own, template)
+  await writePlan(plan.inserts, plan.updates, [])
+  return plan.inserts.length + plan.updates.length
+}
+
+export { effectiveRules }

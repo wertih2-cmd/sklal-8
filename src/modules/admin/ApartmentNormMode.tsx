@@ -6,11 +6,13 @@ import { toast, errorMessage } from '@/lib/toast'
 import { useLiveRefresh } from '@/lib/realtime'
 import { fetchApartmentsAdmin } from '@/modules/admin/api'
 import {
-  fetchApartmentNormCount, makeApartmentNormsIndividual, replaceApartmentNormsFrom, resetApartmentNormsToType,
+  clearApartmentNorms, fetchApartmentNormCount, loadApartmentNormsForClear, makeApartmentNormsIndividual, replaceApartmentNormsFrom, resetApartmentNormsToType,
 } from '@/modules/admin/norms'
 import { normMode } from '@/modules/admin/aptNormsModel'
+import { buildNormsTable, effectiveRules } from '@/modules/admin/normImport'
+import { catalogRows, fileLabels, loadImportCatalog, saveTable } from '@/modules/admin/normImportFiles'
 
-type Pending = { kind: 'make' } | { kind: 'copy'; sourceId: number } | { kind: 'back' }
+type Pending = { kind: 'make' } | { kind: 'copy'; sourceId: number } | { kind: 'back' } | { kind: 'clear' }
 
 const btn = 'well rounded-xl px-3 py-2 text-xs font-medium text-accent min-h-[44px] disabled:opacity-60'
 
@@ -20,13 +22,14 @@ const btn = 'well rounded-xl px-3 py-2 text-xs font-medium text-accent min-h-[44
  * so a change here is picked up there without further work.
  */
 export function ApartmentNormMode({ apartment, typeLabels, disabled = false }: {
-  apartment: Pick<Apartment, 'id' | 'type'>
+  apartment: Pick<Apartment, 'id' | 'type'> & { code?: string }
   typeLabels: Record<AptType, string>
   /** True while the type of the apartment is being changed: the tools work on the saved type. */
   disabled?: boolean
 }) {
   const { t, n } = useI18n()
   const a = t.admin.aptNorms
+  const ni = t.admin.normImport
   const [count, setCount] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const [chooser, setChooser] = useState<'make' | 'copy' | null>(null)
@@ -72,9 +75,23 @@ export function ApartmentNormMode({ apartment, typeLabels, disabled = false }: {
       } else if (p.kind === 'copy') {
         await replaceApartmentNormsFrom(p.sourceId, apartment.id)
         toast(a.doneCopy, 'success')
-      } else {
+      } else if (p.kind === 'back') {
         await resetApartmentNormsToType(apartment.id)
         toast(a.doneBack, 'success')
+      } else {
+        // The file with the current norms is saved first; if that fails, nothing is cleared.
+        const { own, template } = await loadApartmentNormsForClear(apartment.id, apartment.type)
+        const had = effectiveRules(own, template).filter((r) => r.qty !== 0 || r.apartment_id != null)
+        if (had.length === 0) {
+          toast(ni.clearNothing, 'info')
+        } else {
+          const cat = await loadImportCatalog()
+          const code = cat.apartments.find((x) => x.id === apartment.id)?.code ?? String(apartment.id)
+          const asApartment = effectiveRules(own, template).map((r) => ({ ...r, apt_type: null, apartment_id: apartment.id }))
+          saveTable(`norms-backup-${code.replace(/[^\p{L}\p{N}]+/gu, '-')}.csv`, buildNormsTable(asApartment, catalogRows(cat), new Map([[apartment.id, code]]), fileLabels(t)))
+          await clearApartmentNorms(apartment.id, own, template)
+          toast(ni.clearDone, 'success')
+        }
       }
       setChooser(null)
       setSrcId('')
@@ -118,6 +135,10 @@ export function ApartmentNormMode({ apartment, typeLabels, disabled = false }: {
         </div>
       )}
 
+      {chooser == null && mode != null && (
+        <button type="button" className={`${btn} !text-bad`} disabled={off} onClick={() => setPending({ kind: 'clear' })} data-testid="apt-norms-clear">{ni.clearButton}</button>
+      )}
+
       {chooser != null && (
         <div className="space-y-2">
           {chooser === 'make' && (
@@ -158,6 +179,14 @@ export function ApartmentNormMode({ apartment, typeLabels, disabled = false }: {
         title={a.confirmCopyTitle}
         message={a.confirmCopyBody}
         tone="warn"
+        onConfirm={() => void run()}
+        onCancel={() => setPending(null)}
+      />
+      <ConfirmDialog
+        open={pending?.kind === 'clear'}
+        title={ni.clearTitle}
+        message={ni.clearBody}
+        tone="bad"
         onConfirm={() => void run()}
         onCancel={() => setPending(null)}
       />

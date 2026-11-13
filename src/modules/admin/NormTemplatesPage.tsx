@@ -11,6 +11,7 @@ import { ErrorState } from '@/components/ErrorState'
 import { friendlyMessage } from '@/lib/errors'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 import { ApartmentNormsSection } from '@/modules/admin/ApartmentNormsSection'
+import { NormImportModal } from '@/modules/admin/NormImportModal'
 
 const aptTypes: AptType[] = ['studio', '1br', '2br']
 
@@ -36,6 +37,7 @@ export function NormTemplatesPage() {
   const navigate = useNavigate()
   const [selectedType, setSelectedType] = useState<AptType>('studio')
   const [showApartments, setShowApartments] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [norms, setNorms] = useState<NormRuleRow[]>([])
   const [stock, setStock] = useState<WarehouseStockRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -116,6 +118,14 @@ export function NormTemplatesPage() {
             <ArrowLeft className="w-5 h-5 text-ink" />
           </button>
           <h1 className="text-lg font-semibold text-ink">{t.admin.normTemplates.title}</h1>
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="ms-auto well rounded-xl px-3 py-2 text-xs font-medium text-accent min-h-[40px]"
+            data-testid="norm-import-open"
+          >
+            {t.admin.normImport.button}
+          </button>
         </div>
         <div className="flex px-4 gap-1">
           {aptTypes.map((tp) => (
@@ -193,6 +203,8 @@ export function NormTemplatesPage() {
         })}
       </div>
       )}
+
+      <NormImportModal open={importOpen} onClose={() => setImportOpen(false)} onDone={() => loadNorms(selectedType)} />
 
       {(editingNorm || addingNormType) && (
         <NormEditorModal

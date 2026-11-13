@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -93,7 +93,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: "IBM Plex Sans", system-ui, "Segoe UI", Arial, sans-serif;
+  font-family: "IBM Plex Sans", "IBM Plex Sans Arabic", system-ui, "Segoe UI", Arial, sans-serif;
   font-size: 15px;
   line-height: 1.5;
 }

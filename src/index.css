@@ -105,6 +105,16 @@ body {
   line-height: 1.5;
 }
 
+/*
+ * Native <select> pop-ups are drawn by the browser on their own surface. The field itself is a translucent
+ * "well", so without an explicit colour the list came out white with light text. Opaque theme colours fix it.
+ */
+select option,
+select optgroup {
+  background-color: var(--surface);
+  color: var(--ink);
+}
+
 @layer utilities {
   .bg-app { background-color: var(--bg); }
   .bg-surface { background-color: var(--surface); }

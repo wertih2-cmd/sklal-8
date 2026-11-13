@@ -131,7 +131,7 @@ export function Dashboard() {
     const map = new Map<number, { code: string; items: ApartmentGapRow[]; totalNorms: number }>()
     for (const g of gaps) {
       const entry = map.get(g.apartment_id) ?? { code: g.code, items: [], totalNorms: 0 }
-      entry.totalNorms++
+      if (g.norm > 0) entry.totalNorms++
       if (g.gap > 0) entry.items.push(g)
       map.set(g.apartment_id, entry)
     }

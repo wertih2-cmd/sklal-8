@@ -74,7 +74,7 @@ export function AdminApartmentList() {
     const totalGaps = new Map<number, number>()
     const totalMissingQty = new Map<number, number>()
     for (const g of gaps) {
-      totalNorms.set(g.apartment_id, (totalNorms.get(g.apartment_id) ?? 0) + 1)
+      if (g.norm > 0) totalNorms.set(g.apartment_id, (totalNorms.get(g.apartment_id) ?? 0) + 1)
       if (g.gap > 0) {
         totalGaps.set(g.apartment_id, (totalGaps.get(g.apartment_id) ?? 0) + 1)
         totalMissingQty.set(g.apartment_id, (totalMissingQty.get(g.apartment_id) ?? 0) + g.gap)

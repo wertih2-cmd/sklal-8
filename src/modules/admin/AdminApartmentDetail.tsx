@@ -175,7 +175,7 @@ export function AdminApartmentDetail() {
   // Escape closes the side panel; a dialog opened above it is closed first.
   useModalLayer(true, close)
 
-  const totalNorms = gaps.length
+  const totalNorms = gaps.filter((g) => g.norm > 0).length
   const missingCount = gapItems.length
   const completenessPct = coveredPct(totalNorms, missingCount)
 

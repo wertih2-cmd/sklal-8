@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { LogIn, ScanLine } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { useAuth } from '@/modules/core/store'
+import { mainAppAccess } from '@/modules/core/roleAccess'
 import { QrScanner } from './QrScanner'
 import { parseApartmentId } from './parseQr'
 import { markWelcomeSeen } from './welcomeState'
@@ -18,10 +19,10 @@ export function WelcomePage({ onContinue }: Props) {
   const [autoDismissed, setAutoDismissed] = useState(false)
   const authState = useAuth((s) => s.state)
   const role = useAuth((s) => s.profile?.role)
-  // The main app is for administrators only; hide the entry for a signed-in manager or supervisor.
-  const canEnterApp = authState !== 'loading' && (!role || role === 'admin')
-  // A signed-in manager or supervisor goes straight to the scanner; closing it shows this screen.
-  const isFieldRole = authState !== 'loading' && !!role && role !== 'admin'
+  // The main app is for administrators and supervisors; hide the entry for a signed-in manager.
+  const canEnterApp = authState !== 'loading' && (!role || mainAppAccess(role) !== 'none')
+  // A signed-in manager goes straight to the scanner; closing it shows this screen.
+  const isFieldRole = authState !== 'loading' && !!role && mainAppAccess(role) === 'none'
   const scanOpen = scanRequested || (isFieldRole && !autoDismissed)
 
   const closeScanner = () => {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth, homePathForRole, setupAuthListener } from '@/modules/core/store'
+import { mainAppAccess } from '@/modules/core/roleAccess'
 import { BootstrapScreen, LoginScreen } from '@/modules/core/AuthScreens'
 import { SvRoutes, AdminRoutes } from '@/modules/registry'
 import { useI18n, useDocumentDir } from '@/i18n'
@@ -81,13 +82,25 @@ function App() {
     content = <LoginScreen />
   } else {
     const home = homePathForRole(profile.role)
-    if (profile.role !== 'admin') {
-      // Managers and supervisors work only through apartment QR codes; old /qr links still redirect.
+    const access = mainAppAccess(profile.role)
+    if (access === 'none') {
+      // Managers work only through apartment QR codes; old /qr links still redirect.
       content = (
         <BrowserRouter>
           <Routes>
             <Route path="/qr/*" element={<QrRedirect />} />
             <Route path="*" element={<AdminOnlyScreen onScanner={() => setShowWelcome(true)} />} />
+          </Routes>
+        </BrowserRouter>
+      )
+    } else if (access === 'supervisor') {
+      // Supervisors get the supervisor interface only; the admin panel stays closed to them.
+      content = (
+        <BrowserRouter>
+          <Routes>
+            <Route path="/qr/*" element={<QrRedirect />} />
+            <Route path="/sv/*" element={<SvRoutes />} />
+            <Route path="*" element={<Navigate to="/sv" replace />} />
           </Routes>
         </BrowserRouter>
       )

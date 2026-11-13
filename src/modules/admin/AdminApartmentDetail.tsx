@@ -28,6 +28,7 @@ import { EditApartmentModal } from './AdminApartmentList'
 import { Modal } from '@/components/Modal'
 import { useModalLayer } from '@/components/useModalLayer'
 import { useCatalogName } from '@/modules/core/useCatalogName'
+import { coveredPct } from '@/modules/admin/completeness'
 
 type Tab = 'norms' | 'rooms' | 'cleaning' | 'incidents'
 
@@ -176,7 +177,7 @@ export function AdminApartmentDetail() {
 
   const totalNorms = gaps.length
   const missingCount = gapItems.length
-  const completenessPct = totalNorms > 0 ? Math.round(((totalNorms - missingCount) / totalNorms) * 100) : 100
+  const completenessPct = coveredPct(totalNorms, missingCount)
 
   return (
     <>

@@ -21,6 +21,17 @@ export interface CompletenessSummary {
   pct: number
 }
 
+/**
+ * Share of norm lines an apartment covers, 0..100. An apartment without any norm line has nothing covered, so 0 (not 100).
+ * Only a full cover rounds up to 100: 1 short line out of 300 shows 99.
+ */
+export function coveredPct(total: number, missing: number): number {
+  if (!(total > 0)) return 0
+  const short = Math.min(Math.max(missing, 0), total)
+  if (short === 0) return 100
+  return Math.min(99, Math.round(((total - short) / total) * 100))
+}
+
 export function levelOf(n: ApartmentNorms | undefined): CompletenessLevel {
   if (!n || n.total <= 0) return 'none'
   if (n.missing <= 0) return 'complete'

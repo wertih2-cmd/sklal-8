@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { CompletenessRing } from '@/modules/admin/CompletenessRing'
-import { summarizeCompleteness } from '@/modules/admin/completeness'
+import { coveredPct, summarizeCompleteness } from '@/modules/admin/completeness'
 import { fetchToOrder, fetchApartmentGaps, fetchShortageEvents, fetchApartmentsAdmin, fetchBuildings, fetchAllIncidents, fetchPendingCleanings, ackEvents, fetchValuation, fetchCurrency } from '@/modules/admin/api'
 import type { ToOrderRow, ApartmentGapRow, Apartment, Building, AptType, Incident, NormalizedShortageEvent } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
@@ -348,7 +348,7 @@ export function Dashboard() {
                   const gapData = gapApartments.get(apt.id)
                   const total = gapData?.totalNorms ?? 0
                   const missing = gapData?.items.length ?? 0
-                  const p = total > 0 ? Math.round(((total - missing) / total) * 100) : 100
+                  const p = coveredPct(total, missing)
                   const missingQty = gapData?.items.reduce((s, x) => s + x.gap, 0) ?? 0
                   return (
                     <button
@@ -360,7 +360,7 @@ export function Dashboard() {
                       <div className="text-muted text-xs">{buildingMap.get(apt.building_id) ?? '?'}</div>
                       <ProgressBar value={p} color={pctColor(p)} className="mt-1.5" />
                       <div className="text-muted text-xs mt-1">
-                        {missingQty > 0 ? `${t.admin.dashboard.gap} ${n(String(missingQty))}` : t.admin.apartments.completeness}
+                        {missingQty > 0 ? `${t.admin.dashboard.gap} ${n(String(missingQty))}` : total === 0 ? t.admin.apartments.noNorms : t.admin.apartments.completeness}
                       </div>
                     </button>
                   )

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { ALMOST_PCT, levelOf, summarizeCompleteness, ringArcs } from './completeness'
+import { ALMOST_PCT, coveredPct, levelOf, summarizeCompleteness, ringArcs } from './completeness'
 
 describe('levelOf', () => {
   it('no norm lines at all is "none"', () => {
@@ -77,5 +77,31 @@ describe('ringArcs', () => {
   it('nothing to draw when all values are zero', () => {
     expect(ringArcs([0, 0, 0], R)).toEqual([])
     expect(ringArcs([], R)).toEqual([])
+  })
+})
+
+describe('coveredPct', () => {
+  it('an apartment without any norm line shows 0, not 100', () => {
+    expect(coveredPct(0, 0)).toBe(0)
+    expect(coveredPct(0, 3)).toBe(0)
+    expect(coveredPct(-1, 0)).toBe(0)
+    expect(coveredPct(Number.NaN, 0)).toBe(0)
+  })
+  it('everything covered is 100', () => {
+    expect(coveredPct(12, 0)).toBe(100)
+  })
+  it('everything short is 0', () => {
+    expect(coveredPct(12, 12)).toBe(0)
+  })
+  it('a share in between is rounded', () => {
+    expect(coveredPct(4, 1)).toBe(75)
+    expect(coveredPct(3, 1)).toBe(67)
+  })
+  it('one short line never rounds up to 100', () => {
+    expect(coveredPct(300, 1)).toBe(99)
+  })
+  it('a missing count above the total or below zero is kept in range', () => {
+    expect(coveredPct(5, 9)).toBe(0)
+    expect(coveredPct(5, -2)).toBe(100)
   })
 })

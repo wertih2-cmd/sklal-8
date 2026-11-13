@@ -11,6 +11,7 @@ import { toast, errorMessage } from '@/lib/toast'
 import { useLiveRefresh } from '@/lib/realtime'
 import { OwnerBadge } from '@/components/OwnerBadge'
 import { ApartmentNormMode } from '@/modules/admin/ApartmentNormMode'
+import { coveredPct } from '@/modules/admin/completeness'
 
 function pctColor(p: number): string {
   if (p >= 100) return 'var(--ok)'
@@ -165,7 +166,7 @@ export function AdminApartmentList() {
               const total = gapApartments.totalNorms.get(apt.id) ?? 0
               const missing = gapApartments.totalGaps.get(apt.id) ?? 0
               const missingQty = gapApartments.totalMissingQty.get(apt.id) ?? 0
-              const p = total > 0 ? Math.round(((total - missing) / total) * 100) : 100
+              const p = coveredPct(total, missing)
               return (
                 <div
                   key={apt.id}
@@ -189,7 +190,7 @@ export function AdminApartmentList() {
                   <div className="text-muted text-xs">{buildingMap.get(apt.building_id) ?? '?'}</div>
                   <ProgressBar value={p} color={pctColor(p)} />
                   <div className="text-muted text-xs mt-1">
-                    {missingQty > 0 ? `${t.admin.dashboard.gap} ${n(String(missingQty))}` : t.admin.apartments.completeness}
+                    {missingQty > 0 ? `${t.admin.dashboard.gap} ${n(String(missingQty))}` : total === 0 ? t.admin.apartments.noNorms : t.admin.apartments.completeness}
                   </div>
                   </div>
                 </div>

@@ -1,5 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
-import { MAX_BODY_CHARS, buildPrompt, describeModelAnswer, extractModelText, parseLang, parseModelTextDetailed, sanitizePayload } from './logic.ts';
+import { MAX_BODY_CHARS, buildPrompt, describeModelAnswer, describeUpstreamError, extractModelText, parseLang, parseModelTextDetailed, sanitizePayload } from './logic.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -71,15 +71,21 @@ Deno.serve(async (req) => {
         signal: ctrl.signal,
       });
     } catch (e) {
-      console.error('gemini request failed:', e instanceof Error ? e.name : 'error');
-      return json({ error: 'ai_unavailable' }, 502);
+      const upstreamError = e instanceof Error && e.name === 'AbortError' ? 'timeout' : 'network';
+      console.error('gemini request failed:', upstreamError);
+      return json({ error: 'ai_unavailable', upstream_error: upstreamError }, 502);
     } finally {
       clearTimeout(timer);
     }
 
     // Neither the key, the payload nor the model answer is logged.
-    if (res.status === 429) return json({ error: 'ai_rate_limited' }, 429);
-    if (!res.ok) { console.error('gemini status:', res.status); return json({ error: 'ai_unavailable' }, 502); }
+    if (!res.ok) {
+      let errBody: unknown = null;
+      try { errBody = JSON.parse((await res.text()).slice(0, 20_000)); } catch { /* not JSON */ }
+      const upstream = describeUpstreamError(res.status, errBody);
+      console.error('gemini status:', JSON.stringify(upstream));
+      return json({ error: res.status === 429 ? 'ai_rate_limited' : 'ai_unavailable', ...upstream }, res.status === 429 ? 429 : 502);
+    }
 
     const answer = await res.json();
     const parsed = parseModelTextDetailed(extractModelText(answer));

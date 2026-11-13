@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
-  sanitizePayload, buildPrompt, parseModelText, parseModelTextDetailed, describeModelAnswer, extractModelText, parseLang, MAX_APARTMENTS, MAX_BULLETS,
+  sanitizePayload, buildPrompt, parseModelText, parseModelTextDetailed, describeModelAnswer, describeUpstreamError, extractModelText, parseLang, MAX_APARTMENTS, MAX_BULLETS,
 } from '../../../supabase/functions/ai-digest/logic'
 import { errorCodeFromServer, describeServerBody, AiDigestError } from './aiDigestErrors'
 
@@ -167,5 +167,24 @@ describe('describeServerBody', () => {
     const e = new AiDigestError('unavailable', 'http=502')
     expect([e.code, e.detail]).toEqual(['unavailable', 'http=502'])
     expect(new AiDigestError('rate_limited').detail).toBe('')
+  })
+})
+
+describe('describeUpstreamError', () => {
+  it('keeps the status and the fixed code words of a Google error', () => {
+    const body = { error: { code: 400, message: 'API key not valid. Please pass a valid API key.', status: 'INVALID_ARGUMENT', details: [{ '@type': 'x', reason: 'API_KEY_INVALID', domain: 'googleapis.com' }] } }
+    expect(describeUpstreamError(400, body)).toEqual({ upstream_status: 400, upstream_code: 'INVALID_ARGUMENT', upstream_reason: 'API_KEY_INVALID' })
+    expect(JSON.stringify(describeUpstreamError(400, body))).not.toMatch(/valid API key/)
+  })
+
+  it('copes with bodies that are not Google errors', () => {
+    expect(describeUpstreamError(503, null)).toEqual({ upstream_status: 503, upstream_code: null, upstream_reason: null })
+    expect(describeUpstreamError(404, { error: { status: 'not found please', details: [{ reason: 'bad reason text' }] } })).toEqual({ upstream_status: 404, upstream_code: null, upstream_reason: null })
+  })
+
+  it('shows up in the one-line description for the card', () => {
+    expect(describeServerBody({ error: 'ai_unavailable', upstream_status: 403, upstream_code: 'PERMISSION_DENIED', upstream_reason: 'API_KEY_SERVICE_BLOCKED' }, 502))
+      .toBe('http=502, error=ai_unavailable, upstream_status=403, upstream_code=PERMISSION_DENIED, upstream_reason=API_KEY_SERVICE_BLOCKED')
+    expect(describeServerBody({ error: 'ai_unavailable', upstream_error: 'timeout' }, 502)).toBe('http=502, error=ai_unavailable, upstream_error=timeout')
   })
 })

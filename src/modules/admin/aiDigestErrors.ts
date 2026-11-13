@@ -20,6 +20,7 @@ export function errorCodeFromServer(code: string | undefined): AiDigestErrorCode
 const DETAIL_KEYS = [
   'error', 'reason', 'finish_reason', 'block_reason', 'candidates', 'parts',
   'text_length', 'prompt_tokens', 'output_tokens', 'thoughts_tokens',
+  'upstream_status', 'upstream_code', 'upstream_reason', 'upstream_error',
 ] as const
 
 const SAFE_WORD = /^[A-Za-z0-9_]{1,40}$/

@@ -245,3 +245,26 @@ export function describeModelAnswer(data: unknown): AnswerDiagnostics {
   out.text_length = extractModelText(data).length
   return out
 }
+
+export interface UpstreamError {
+  upstream_status: number | null
+  upstream_code: string | null
+  upstream_reason: string | null
+}
+
+/**
+ * Safe facts about an error answer of the Gemini API: the HTTP status and fixed code words
+ * (error.status such as INVALID_ARGUMENT, details[].reason such as API_KEY_INVALID). No message text.
+ */
+export function describeUpstreamError(status: number, body: unknown): UpstreamError {
+  const out: UpstreamError = { upstream_status: count(status), upstream_code: null, upstream_reason: null }
+  if (!isObj(body) || !isObj(body.error)) return out
+  out.upstream_code = codeWord(body.error.status)
+  if (Array.isArray(body.error.details)) {
+    for (const d of body.error.details) {
+      const reason = isObj(d) ? codeWord(d.reason) : null
+      if (reason) { out.upstream_reason = reason; break }
+    }
+  }
+  return out
+}

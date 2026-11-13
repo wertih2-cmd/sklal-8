@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { fetchWarehouseStock, fetchApartmentsAdmin, fetchAllStaff, fetchSuppliers, fetchItems, fetchOwnerStock, fetchTrackedUnits, postDocument, postTransfer } from '@/modules/admin/api'
+import { fetchWarehouseStock, fetchApartmentsAdmin, fetchAllStaff, fetchSuppliers, fetchItems, fetchOwnerStock, fetchTrackedUnits, fetchApartmentStock, postDocument, postTransfer } from '@/modules/admin/api'
 import type { WarehouseStockRow, Apartment, Staff, Supplier, PostDocumentResult, OwnerStockRow, ItemKind, ItemUnit } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { formatQty } from '@/lib/format'
 import { toast, errorMessage } from '@/lib/toast'
-import { lineSource, isTransferBlocked, transferOwnerFlags, buildOwnerStockMap, ownerAvailable, type MoveOp } from '@/modules/admin/moveRules'
+import { lineSource, isTransferBlocked, transferOwnerFlags, buildOwnerStockMap, ownerAvailable, isFromApartmentOp, buildBalanceMap, rowsInLocation, type MoveOp } from '@/modules/admin/moveRules'
 import { unitSource, candidateUnits, effectiveSelection, toggleUnit, type UnitLocation } from '@/modules/admin/unitSelection'
 import { Plus, Minus, Trash2, Loader as Loader2, Check, FileText, TriangleAlert as AlertTriangle, Info } from 'lucide-react'
 import { useCatalogName } from '@/modules/core/useCatalogName'
@@ -86,6 +86,9 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   const [unitLocs, setUnitLocs] = useState<Map<number, UnitLocation>>(new Map())
   const [unitsLoading, setUnitsLoading] = useState(false)
   const [showPicker, setShowPicker] = useState(true)
+  // what the selected apartment holds (item_id -> qty); null until loaded
+  const [aptBalances, setAptBalances] = useState<Map<number, number> | null>(null)
+  const [aptBalancesLoading, setAptBalancesLoading] = useState(false)
 
   useEffect(() => {
     Promise.all([fetchWarehouseStock(), fetchApartmentsAdmin(), fetchAllStaff(), fetchSuppliers(), fetchItems(), fetchOwnerStock()])
@@ -114,10 +117,30 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   const isOutbound = op === 'issue_apartment' || op === 'writeoff_warehouse' || op === 'issue_holder'
   const isTransfer = op === 'transfer_apartment' || op === 'transfer_holder'
   const showOwnershipToggle = op === 'receipt' || op === 'writeoff_warehouse'
+  // return / write-off / transfer take items out of the selected apartment: the list shows what is in it
+  const fromApt = isFromApartmentOp(op as MoveOp)
+
+  useEffect(() => {
+    if (!fromApt || !apartmentId) {
+      setAptBalances(null)
+      setAptBalancesLoading(false)
+      return
+    }
+    let cancelled = false
+    setAptBalances(null)
+    setAptBalancesLoading(true)
+    fetchApartmentStock(apartmentId)
+      .then((rows) => { if (!cancelled) setAptBalances(buildBalanceMap(rows)) })
+      .catch((e) => { if (!cancelled) toast(errorMessage(e), 'error') })
+      .finally(() => { if (!cancelled) setAptBalancesLoading(false) })
+    return () => { cancelled = true }
+  }, [fromApt, apartmentId])
   const showOwnerAptInfo = (op === 'issue_apartment' || op === 'return_apartment') && selectedAptIsOwner
 
   const filteredStock = useMemo(() => {
-    let list = stock.filter((s) => cat.matches(search.trim(), s.name, 'item'))
+    let list = stock
+    if (fromApt) list = aptBalances ? rowsInLocation(stock, aptBalances) : []
+    list = list.filter((s) => cat.matches(search.trim(), s.name, 'item'))
     if (showOwnershipToggle && ownership === 'owner') {
       list = list.filter((s) => s.kind === 'asset')
     }
@@ -125,7 +148,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
       list = list.filter((s) => ownerAvailable(ownerStockMap, ownerAptId ?? -1, s.item_id) > 0)
     }
     return list.slice(0, 100)
-  }, [stock, search, showOwnershipToggle, ownership, op, ownerStockMap, ownerAptId, cat])
+  }, [stock, search, showOwnershipToggle, ownership, op, ownerStockMap, ownerAptId, cat, fromApt, aptBalances])
 
   const addToCart = (item: WarehouseStockRow) => {
     const meta = itemMeta.get(item.item_id)
@@ -176,6 +199,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
   }
 
   const effectiveStockQty = useCallback((line: CartLine): number | null => {
+    if (fromApt) return aptBalances ? (aptBalances.get(line.itemId) ?? 0) : null
     if (isTransfer) return null
     if (op === 'writeoff_warehouse' && ownership === 'owner') {
       return ownerAvailable(ownerStockMap, ownerAptId ?? -1, line.itemId)
@@ -186,7 +210,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
       return line.stockQty ?? stockMap.get(line.itemId) ?? null
     }
     return line.stockQty ?? stockMap.get(line.itemId) ?? null
-  }, [isTransfer, op, ownership, ownerStockMap, ownerAptId, selectedAptIsOwner, apartmentId, stockMap])
+  }, [fromApt, aptBalances, isTransfer, op, ownership, ownerStockMap, ownerAptId, selectedAptIsOwner, apartmentId, stockMap])
 
   const transferBlocked = useCallback((line: CartLine): boolean => {
     if (!isTransfer) return false
@@ -311,6 +335,10 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
     }
     if (hasEmptyUnitSelection) {
       toast(t.admin.move.unitsRequired, 'error')
+      return
+    }
+    if (fromApt && cart.some((l) => !pickUnits(l) && getBaseQty(l) > (effectiveStockQty(l) ?? 0))) {
+      toast(t.admin.move.overApartment, 'error')
       return
     }
     if (cart.some((l) => l.tracked && !Number.isInteger(getBaseQty(l)))) {
@@ -576,7 +604,15 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
             {showPicker && (
               <div className="well rounded-lg border border-line max-h-56 overflow-y-auto">
                 {filteredStock.length === 0 && (
-                  <p className="px-4 py-2.5 text-sm text-muted">{t.common.noResults}</p>
+                  <p className="px-4 py-2.5 text-sm text-muted">
+                    {fromApt && !apartmentId
+                      ? t.admin.move.pickApartmentFirst
+                      : fromApt && aptBalancesLoading
+                        ? t.app.loading
+                        : fromApt && aptBalances && aptBalances.size === 0
+                          ? t.admin.move.apartmentEmpty
+                          : t.common.noResults}
+                  </p>
                 )}
                 {filteredStock.map((s) => {
                   const availLabel = op === 'writeoff_warehouse' && ownership === 'owner' && ownerAptId
@@ -608,7 +644,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
               {cart.map((line, idx) => {
                 const baseQty = getBaseQty(line)
                 const stockQty = effectiveStockQty(line)
-                const overStock = !pickUnits(line) && isOutbound && stockQty !== null && baseQty > stockQty
+                const overStock = !pickUnits(line) && (isOutbound || fromApt) && stockQty !== null && baseQty > stockQty
                 const blocked = transferBlocked(line)
                 const src = (op === 'issue_apartment' || op === 'return_apartment') && selectedAptIsOwner
                   ? lineSource(op as MoveOp, true, line.kind)
@@ -622,9 +658,9 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                    {stockQty !== null && !isTransfer && (
+                    {stockQty !== null && (!isTransfer || fromApt) && (
                       <p className="text-xs text-muted mb-2">
-                        {t.admin.move.inStock}: {n(formatQty(stockQty, { base_unit: line.baseUnit as WarehouseStockRow['base_unit'], pack_size: line.packSize, pack_label: line.packLabel }))}
+                        {fromApt ? t.admin.move.inApartment : t.admin.move.inStock}: {n(formatQty(stockQty, { base_unit: line.baseUnit as WarehouseStockRow['base_unit'], pack_size: line.packSize, pack_label: line.packLabel }))}
                       </p>
                     )}
                     {src && (
@@ -639,7 +675,7 @@ export function MoveModal({ onClose, onDone }: { onClose: () => void; onDone: ()
                         <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                         {ownership === 'owner' && (op === 'writeoff_warehouse' || src === 'owner')
                           ? t.admin.move.ownerNoStock
-                          : t.admin.move.overStock}
+                          : fromApt ? t.admin.move.overApartment : t.admin.move.overStock}
                       </div>
                     )}
                     {blocked && (

@@ -1440,6 +1440,25 @@ export async function fetchItemStockSummary(
   return { ...sum, total: sum.warehouse + sum.apartments + sum.holders }
 }
 
+/** What one apartment holds right now: item_id and quantity (> 0), read from the stock_balance view. */
+export async function fetchApartmentStock(apartmentId: number): Promise<{ item_id: number; qty: number }[]> {
+  const loc = await supabase
+    .from('locations')
+    .select('id')
+    .eq('type', 'apartment')
+    .eq('apartment_id', apartmentId)
+    .maybeSingle()
+  if (loc.error) throw toApiError(loc.error, loc.status)
+  if (!loc.data) return []
+  const bal = await supabase
+    .from('stock_balance')
+    .select('item_id,qty')
+    .eq('loc_id', (loc.data as { id: number }).id)
+    .gt('qty', 0)
+  if (bal.error) throw toApiError(bal.error, bal.status)
+  return ((bal.data ?? []) as { item_id: number; qty: number | string }[]).map((r) => ({ item_id: r.item_id, qty: Number(r.qty) }))
+}
+
 export async function itemHasHistory(itemId: number): Promise<boolean> {
   const [moves, norms, poLines, invLines, roomNorms, roomStock, incidents, cleanLines] = await Promise.all([
     supabase.from('stock_moves').select('id', { head: true, count: 'exact' }).eq('item_id', itemId),

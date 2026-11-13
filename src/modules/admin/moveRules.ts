@@ -16,6 +16,35 @@ export type MoveOp =
 
 export type ItemKind = 'asset' | 'consumable'
 
+/** Operations that take items out of the selected apartment, so the list must show what that apartment holds. */
+export function isFromApartmentOp(op: MoveOp): boolean {
+  return op === 'return_apartment' || op === 'writeoff_apartment' || op === 'transfer_apartment'
+}
+
+/** item_id -> quantity in one location, from stock_balance rows. Only positive quantities are kept. */
+export function buildBalanceMap(rows: { item_id: number; qty: number | string }[]): Map<number, number> {
+  const map = new Map<number, number>()
+  for (const r of rows) {
+    const q = Number(r.qty)
+    if (!(q > 0)) continue
+    map.set(r.item_id, (map.get(r.item_id) ?? 0) + q)
+  }
+  return map
+}
+
+/**
+ * Catalogue rows restricted to what a location holds, with qty replaced by that location's balance.
+ * Items with nothing there are dropped; the order of the input is kept.
+ */
+export function rowsInLocation<T extends { item_id: number; qty: number }>(rows: T[], balances: Map<number, number>): T[] {
+  const out: T[] = []
+  for (const r of rows) {
+    const q = balances.get(r.item_id) ?? 0
+    if (q > 0) out.push({ ...r, qty: q })
+  }
+  return out
+}
+
 /**
  * Determines which stock shelf a line item is sourced from for a given operation.
  * - 'owner' for assets when issuing to / returning from an owner apartment

@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useI18n, currentDict } from '@/i18n'
 import { toast, errorMessage } from '@/lib/toast'
-import { Plus, Trash2, Eye, EyeOff, Copy, Check, Lock, CreditCard as Edit3, Shield, QrCode, UserCheck, ShieldCheck } from 'lucide-react'
+import { Plus, Trash2, Eye, EyeOff, Copy, Check, Lock, CreditCard as Edit3, Shield, QrCode, UserCheck, ShieldCheck, Download } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { ErrorState } from '@/components/ErrorState'
 import { Modal } from '@/components/Modal'
 import type { AppRole } from '@/lib/database.types'
+import { INSTALL_APPS, installUrl, type InstallApp } from '@/install/apps'
 
 const EDGE_ERROR_CODES = new Set([
   'weak_password', 'invalid_login', 'name_too_long', 'login_taken', 'create_failed', 'update_failed',
@@ -62,6 +63,60 @@ async function invokeAdminUsers(body: Record<string, unknown>): Promise<Record<s
     }
   }
   throw error
+}
+
+function StaffAppsCard() {
+  const { t } = useI18n()
+  const apps: { id: InstallApp; name: string; desc: string }[] = [
+    { id: 'sv', name: t.admin.users.appSv, desc: t.admin.users.appSvDesc },
+    { id: 'qr', name: t.admin.users.appQr, desc: t.admin.users.appQrDesc },
+  ]
+
+  const copyLink = async (id: InstallApp) => {
+    try {
+      await navigator.clipboard.writeText(installUrl(id))
+      toast(t.admin.users.appLinkCopied, 'success')
+    } catch (e) {
+      toast(errorMessage(e), 'error')
+    }
+  }
+
+  return (
+    <section className="tile rounded-[20px] px-4 py-4 mb-4" aria-label={t.admin.users.appsTitle}>
+      <h2 className="text-sm font-semibold text-ink">{t.admin.users.appsTitle}</h2>
+      <p className="text-xs text-muted mt-1 mb-3">{t.admin.users.appsHint}</p>
+      <div className="space-y-2">
+        {apps.map((app) => (
+          <div key={app.id} className="well rounded-xl px-3 py-3 flex items-center gap-3">
+            <img src={INSTALL_APPS[app.id].icon} alt="" width={48} height={48} className="w-12 h-12 rounded-xl shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-ink truncate">{app.name}</p>
+              <p className="text-xs text-muted">{app.desc}</p>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => void copyLink(app.id)}
+                aria-label={t.admin.users.appCopyLink}
+                title={t.admin.users.appCopyLink}
+                className="w-9 h-9 bg-app text-ink rounded-lg flex items-center justify-center"
+              >
+                <Copy className="w-4 h-4" />
+              </button>
+              <a
+                href={INSTALL_APPS[app.id].installPath}
+                target="_blank"
+                rel="noopener"
+                className="bg-accent text-on-accent rounded-lg px-3 h-9 text-xs font-medium flex items-center gap-1.5 whitespace-nowrap"
+              >
+                <Download className="w-3.5 h-3.5" />
+                {t.admin.users.appDownload}
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
 }
 
 interface AdminUser {
@@ -196,6 +251,8 @@ export function UsersPage() {
           {t.admin.users.add}
         </button>
       </div>
+
+      <StaffAppsCard />
 
       <div className="flex gap-1.5 mb-4 overflow-x-auto pb-1">
         {(['all', 'admin', 'manager', 'supervisor'] as const).map((rf) => (

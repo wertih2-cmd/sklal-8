@@ -10,7 +10,17 @@
   Cache-Control: no-cache
 /qr.html
   Cache-Control: no-cache
+/sv.html
+  Cache-Control: no-cache
+/sv-install.html
+  Cache-Control: no-cache
+/qr-install.html
+  Cache-Control: no-cache
 /sw.js
   Cache-Control: no-cache
 /manifest.webmanifest
+  Cache-Control: no-cache
+/manifest-sv.webmanifest
+  Cache-Control: no-cache
+/manifest-qr.webmanifest
   Cache-Control: no-cache

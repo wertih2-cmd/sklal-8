@@ -9,6 +9,12 @@ import { SentryErrorBoundary } from './components/SentryErrorBoundary';
 import { PWAUpdateBanner } from './components/PWAUpdateBanner';
 import { currentDict } from './i18n';
 
+// Установленное приложение супервайзера запускается с /sv.html (там свой манифест и иконка);
+// дальше работаем по обычному маршруту /sv.
+if (window.location.pathname === '/sv.html') {
+  window.history.replaceState(null, '', `/sv${window.location.search}${window.location.hash}`);
+}
+
 initSentry();
 
 const d = currentDict();

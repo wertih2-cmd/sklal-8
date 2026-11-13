@@ -1,0 +1,17 @@
+{
+  "id": "/qr.html",
+  "scope": "/qr",
+  "start_url": "/qr.html",
+  "lang": "ru",
+  "name": "QR Сканер",
+  "short_name": "QR Сканер",
+  "description": "QR-сканер квартир для хаускипинга",
+  "theme_color": "#4338ca",
+  "background_color": "#0f172a",
+  "display": "standalone",
+  "icons": [
+    { "src": "/icons/qr-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/qr-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/qr-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -69,8 +69,8 @@ begin
   perform pg_temp.as_user(v_mgr);
   t := null;
   begin j := approve_incident(i3, 'confirm', 'ZZ ok'); exception when others then t := sqlerrm; end;
-  rep := rep || pg_temp.r('I3 менеджер подтверждает без списания: статус confirmed', t is null and j->>'status' = 'confirmed'
-    and (select status::text from incidents where id = i3) = 'confirmed');
+  rep := rep || pg_temp.r('I3 менеджер: подтверждение заявки с позицией запрещено', t like '%с позицией подтверждает администратор%'
+    and (select status::text from incidents where id = i3) = 'new');
   rep := rep || pg_temp.r('I3 списания нет: writeoff_move_id пуст', (select writeoff_move_id from incidents where id = i3) is null);
   execute 'reset role';
   select count(*) into n2 from stock_moves;

@@ -11,6 +11,8 @@ import { toast } from '@/lib/toast'
 import { useAuth } from '@/modules/core/store'
 import type { AptType } from '@/lib/database.types'
 import { fetchStaffDirectory } from './attendanceApi'
+import { PayrollAdjustments } from './PayrollAdjustments'
+import { PayrollEmployeeModal } from './PayrollEmployeeModal'
 import { cairoToday, formatHours, monthOf, shiftMonth } from './attendanceModel'
 import {
   closePayrollMonth, fetchBonusRates, fetchPayrollReport, fetchPayrollSettings, reopenPayrollMonth, savePayrollSettings, saveBonusRates,
@@ -39,6 +41,7 @@ export function PayrollPage({ timesheetPath }: { timesheetPath: string }) {
   const [confirmClose, setConfirmClose] = useState(false)
   const [reopening, setReopening] = useState(false)
   const [reason, setReason] = useState('')
+  const [openStaff, setOpenStaff] = useState<number | null>(null)
 
   const load = useCallback(async (quiet = false) => {
     if (!quiet) setLoading(true)
@@ -203,7 +206,9 @@ export function PayrollPage({ timesheetPath }: { timesheetPath: string }) {
                 <tbody>
                   {lines.map((l) => (
                     <tr key={l.staff_id}>
-                      <th scope="row" className="sticky start-0 z-10 bg-app text-start text-sm font-medium text-ink px-3 py-1.5 whitespace-nowrap">{l.full_name}</th>
+                      <th scope="row" className="sticky start-0 z-10 bg-app text-start text-sm font-medium text-ink px-3 py-1.5 whitespace-nowrap">
+                        <button type="button" aria-label={`${p.empOpen}: ${l.full_name}`} onClick={() => setOpenStaff(l.staff_id)} className="text-start underline decoration-dotted underline-offset-4 hover:text-accent">{l.full_name}</button>
+                      </th>
                       <td className={td}>{n(String(l.work_days))}</td>
                       <td className={td}>{n(formatHours(l.hours))}</td>
                       <td className={td}>{n(formatHours(l.overtime_hours))}</td>
@@ -233,6 +238,8 @@ export function PayrollPage({ timesheetPath }: { timesheetPath: string }) {
               </table>
             </div>
           )}
+
+          <PayrollAdjustments month={month} staff={names} closed={status === 'closed'} isAdmin={isAdmin} onChanged={() => void load(true)} />
 
           {isAdmin && (
             <div className="flex flex-wrap items-center gap-2 mb-6">
@@ -277,6 +284,15 @@ export function PayrollPage({ timesheetPath }: { timesheetPath: string }) {
             )}
           </section>
         </>
+      )}
+
+      {openStaff !== null && settings && lines.find((l) => l.staff_id === openStaff) && (
+        <PayrollEmployeeModal
+          line={lines.find((l) => l.staff_id === openStaff) as PayrollReport['lines'][number]}
+          hourlyRate={settings.hourly_rate}
+          monthLabel={monthLabel}
+          onClose={() => setOpenStaff(null)}
+        />
       )}
 
       <ConfirmDialog

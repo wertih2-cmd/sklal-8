@@ -7,6 +7,7 @@ import { useLiveRefresh } from '@/lib/realtime'
 import { useAuth } from '@/modules/core/store'
 import { fetchAttendance, fetchMonthClosed, fetchStaffDirectory } from './attendanceApi'
 import { AttendanceMarkModal } from './AttendanceMarkModal'
+import { AttendanceImportModal } from './AttendanceImportModal'
 import {
   cairoToday, dayEditable, formatHours, hoursPerStaff, indexMarks, markKey, monthDays, monthOf, shiftMonth, sortedStaff, workedCount,
   type AttendanceKind, type AttendanceRow, type StaffEntry,
@@ -32,6 +33,7 @@ export function AttendancePage() {
   const [closed, setClosed] = useState(false)
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
+  const [importing, setImporting] = useState(false)
   const [selected, setSelected] = useState<{ staffId: number; day: string } | null>(null)
 
   const days = useMemo(() => monthDays(month), [month])
@@ -62,6 +64,7 @@ export function AttendancePage() {
   const weekday = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateString(lang, { weekday: 'short', timeZone: 'UTC' })
   const monthLabel = new Date(`${month}-01T12:00:00Z`).toLocaleDateString(lang, { month: 'long', year: 'numeric', timeZone: 'UTC' })
   const kindShort: Record<AttendanceKind, string> = { work: '', weekend: a.shortWeekend, leave: a.shortLeave }
+  const isAdmin = role === 'admin'
   const selectedStaff = selected ? staff.find((s) => s.id === selected.staffId) : undefined
 
   return (
@@ -80,6 +83,7 @@ export function AttendancePage() {
           </button>
         </div>
         {closed && <span className="text-xs font-medium rounded-full px-3 py-1 bg-warn-soft text-warn">{a.monthClosed}</span>}
+        {isAdmin && !closed && <button type="button" onClick={() => setImporting(true)} className="well rounded-xl px-4 min-h-[44px] inline-flex items-center text-sm text-ink">{a.importButton}</button>}
         {payrollPath && <Link to={payrollPath} className="well rounded-xl px-4 min-h-[44px] inline-flex items-center text-sm text-ink ms-auto">{a.payroll}</Link>}
       </div>
 
@@ -156,6 +160,10 @@ export function AttendancePage() {
           </div>
           <p className="text-xs text-muted mt-3">{a.noMoney}</p>
         </>
+      )}
+
+      {importing && (
+        <AttendanceImportModal staff={staff} onClose={() => setImporting(false)} onDone={() => void load(true)} />
       )}
 
       {selected && selectedStaff && (

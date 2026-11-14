@@ -17,7 +17,7 @@ declare
   e5 uuid := gen_random_uuid(); e6 uuid := gen_random_uuid(); e7 uuid := gen_random_uuid(); e8 uuid := gen_random_uuid();
   ids bigint[]; ids2 bigint[]; v_foreign bigint; v_ok jsonb; v_mix jsonb;
   insp1 bigint; insp2 bigint; insp3 bigint; insp4 bigint; insp5 bigint;
-  iA bigint; iB bigint; tA bigint; tB bigint; i3 bigint; t3 bigint; t4 bigint; i5 bigint; t5 bigint; i4 bigint;
+  iA bigint; iB bigint; tA bigint; taskB bigint; i3 bigint; t3 bigint; t4 bigint; i5 bigint; t5 bigint; i4 bigint;
 begin
   insert into auth.users(id, email) values
     (v_admin, 'zz-chk-admin@example.invalid'), (v_mgr, 'zz-chk-mgr@example.invalid'),
@@ -171,7 +171,7 @@ begin
   -- C: повторная проверка
   perform pg_temp.as_user(v_sv1);
   select id, task_id into iA, tA from inspection_items where inspection_id = insp2 and position = 1;
-  select id, task_id into iB, tB from inspection_items where inspection_id = insp2 and position = 3;
+  select id, task_id into iB, taskB from inspection_items where inspection_id = insp2 and position = 3;
   t := null;
   begin perform inspection_recheck(iA, true); exception when others then t := sqlerrm; end;
   rep := rep || pg_temp.r('C1 пока доработка не выполнена, повторная проверка отклонена', t is not null);
@@ -200,8 +200,8 @@ begin
     and (select recheck_count from inspection_items where id = iA) = 2
     and cardinality((select recheck_photo_paths from inspection_items where id = iA)) = 1);
   rep := rep || pg_temp.r('C5 второй пункт ещё открыт: инспекция «нужна доработка»', (select status from inspections where id = insp2) = 'needs_rework');
-  perform task_set_status(tB, 'accepted');
-  perform task_set_status(tB, 'done');
+  perform task_set_status(taskB, 'accepted');
+  perform task_set_status(taskB, 'done');
   j := inspection_recheck(iB, true);
   rep := rep || pg_temp.r('C6 оба пункта закрыты: инспекция «проверено»', (select status from inspections where id = insp2) = 'passed');
   t := null;
@@ -215,7 +215,7 @@ begin
   begin perform task_set_status(tA, 'accepted'); exception when others then t := sqlerrm; end;
   rep := rep || pg_temp.r('C9 проверенное задание не меняется даже менеджером', t is not null and (select status from tasks where id = tA) = 'verified');
   t := null;
-  begin perform task_set_status(tB, 'verified'); exception when others then t := sqlerrm; end;
+  begin perform task_set_status(taskB, 'verified'); exception when others then t := sqlerrm; end;
   rep := rep || pg_temp.r('C10 статус «проверено» вручную не ставится', t is not null);
   t := null;
   begin perform task_create(v_apt1, null, 'rework', 'ZZ вручную'); exception when others then t := sqlerrm; end;

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Loader as Loader2 } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { ErrorState } from '@/components/ErrorState'
 import { useLiveRefresh } from '@/lib/realtime'
+import { useAuth } from '@/modules/core/store'
 import { fetchAttendance, fetchMonthClosed, fetchStaffDirectory } from './attendanceApi'
 import { AttendanceMarkModal } from './AttendanceMarkModal'
 import {
@@ -20,6 +22,9 @@ const KIND_TONE: Record<AttendanceKind, string> = {
 export function AttendancePage() {
   const { t, n, lang } = useI18n()
   const a = t.admin.attendance
+  const role = useAuth((s) => s.profile?.role)
+  // Money pages are for the admin and the manager only; the supervisor sees hours.
+  const payrollPath = role === 'admin' ? '/admin/more/attendance/payroll' : role === 'manager' ? '/manager/attendance/payroll' : null
   const today = cairoToday()
   const [month, setMonth] = useState(() => monthOf(today))
   const [staff, setStaff] = useState<StaffEntry[]>([])
@@ -75,6 +80,7 @@ export function AttendancePage() {
           </button>
         </div>
         {closed && <span className="text-xs font-medium rounded-full px-3 py-1 bg-warn-soft text-warn">{a.monthClosed}</span>}
+        {payrollPath && <Link to={payrollPath} className="well rounded-xl px-4 min-h-[44px] inline-flex items-center text-sm text-ink ms-auto">{a.payroll}</Link>}
       </div>
 
       {loading ? (

@@ -30,7 +30,8 @@ const NormTemplatesPage = lazy(() => import('@/modules/admin/NormTemplatesPage')
 const CatalogPage = lazy(() => import('@/modules/admin/CatalogPage').then(m => ({ default: m.CatalogPage })))
 const QrPage = lazy(() => import('@/modules/admin/QrPage').then(m => ({ default: m.QrPage })))
 const ReportsPage = lazy(() => import('@/modules/admin/ReportsPage').then(m => ({ default: m.ReportsPage })))
-const Chessboard = lazy(() => import('@/modules/admin/Chessboard').then(m => ({ default: m.Chessboard })))
+const ChessboardRoute = lazy(() => import('@/modules/admin/ChessboardRoute').then(m => ({ default: m.ChessboardRoute })))
+const PayrollPage = lazy(() => import('@/modules/admin/PayrollPage').then(m => ({ default: m.PayrollPage })))
 const AttendancePage = lazy(() => import('@/modules/admin/AttendancePage').then(m => ({ default: m.AttendancePage })))
 const ManagerHome = lazy(() => import('@/modules/manager/ManagerHome').then(m => ({ default: m.ManagerHome })))
 const HistoryPage = lazy(() => import('@/modules/history/HistoryPage').then(m => ({ default: m.HistoryPage })))
@@ -93,8 +94,9 @@ export function AdminRoutes() {
           <Route path="more/norm-templates" element={<NormTemplatesPage />} />
           <Route path="more/catalog" element={<CatalogPage />} />
           <Route path="more/qr" element={<QrPage />} />
-          <Route path="more/chessboard" element={<Chessboard />} />
+          <Route path="more/chessboard" element={<ChessboardRoute />} />
           <Route path="more/attendance" element={<AttendancePage />} />
+          <Route path="more/attendance/payroll" element={<PayrollPage timesheetPath="/admin/more/attendance" />} />
           <Route path="more/reports" element={<ReportsPage />} />
           <Route path="more/history" element={<HistoryPage />} />
           <Route path="more/inventory" element={<InventoryPage />} />
@@ -116,8 +118,9 @@ export function ManagerRoutes() {
           <Route index element={<ManagerHome />} />
           <Route path="cleaning-approvals" element={<AdminCleaningApprovals />} />
           <Route path="incidents" element={<AdminIncidents />} />
-          <Route path="chessboard" element={<Chessboard apartmentPath={(id) => `/sv/apartments/${id}`} />} />
+          <Route path="chessboard" element={<ChessboardRoute apartmentPath={(id) => `/sv/apartments/${id}`} />} />
           <Route path="attendance" element={<AttendancePage />} />
+          <Route path="attendance/payroll" element={<PayrollPage timesheetPath="/manager/attendance" />} />
           <Route path="*" element={<Navigate to="/manager" replace />} />
         </Routes>
       </Suspense>

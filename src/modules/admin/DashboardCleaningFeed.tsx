@@ -23,7 +23,16 @@ const STATE_CLASS: Record<CleaningState, string> = {
   reversed: 'bg-app text-muted',
 }
 
-export function DashboardCleaningFeed({ apartments }: { apartments: Apartment[] }) {
+export function DashboardCleaningFeed({
+  apartments,
+  approvalsPath = '/admin/more/cleaning-approvals',
+  apartmentPath = (id: number) => `/admin/apartments/${id}`,
+}: {
+  apartments: Apartment[]
+  /** Where the list of cleanings waiting for a decision lives. */
+  approvalsPath?: string
+  apartmentPath?: (apartmentId: number) => string
+}) {
   const { t, n } = useI18n()
   const f = t.admin.dashboard.cleaningFeed
   const navigate = useNavigate()
@@ -71,7 +80,7 @@ export function DashboardCleaningFeed({ apartments }: { apartments: Apartment[] 
     value === 'all' ? f.stateAll : `${stateLabel[value]} (${n(String(counts[value]))})`
 
   const open = (row: CleaningFeedRow) =>
-    navigate(cleaningState(row) === 'pending' ? '/admin/more/cleaning-approvals' : `/admin/apartments/${row.apartment_id}`)
+    navigate(cleaningState(row) === 'pending' ? approvalsPath : apartmentPath(row.apartment_id))
 
   return (
     <section className="panel rounded-[20px] p-4 mb-5" data-testid="dash-cleaning-feed">
@@ -80,7 +89,7 @@ export function DashboardCleaningFeed({ apartments }: { apartments: Apartment[] 
         <span className="text-xs text-muted">{f.period}</span>
         <button
           type="button"
-          onClick={() => navigate('/admin/more/cleaning-approvals')}
+          onClick={() => navigate(approvalsPath)}
           className="ms-auto text-xs text-accent hover:underline"
         >
           {f.openApprovals}

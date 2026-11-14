@@ -7,6 +7,7 @@ import { useCatalogNames } from '@/modules/core/catalogNamesStore'
 import type { UnitLocation } from '@/modules/admin/unitSelection'
 import type { PurchaseDoc } from '@/modules/admin/purchaseReport'
 import type { CleaningFeedRow } from '@/modules/admin/cleaningFeed'
+import type { ApartmentNorms } from '@/modules/admin/completeness'
 import type {
   WarehouseStockRow,
   ReportStockMoveRow,
@@ -303,6 +304,17 @@ export async function fetchStockMoves(itemId: number, offset = 0): Promise<Stock
     author: createdBy ? profileMap.get(createdBy) ?? null : null,
     owner_code: row.owner_apartment_id == null ? null : ownerMap.get(row.owner_apartment_id) ?? null,
   }))
+}
+
+/**
+ * Norm lines per apartment (how many in total, how many are short), without quantities: the manager has no access to
+ * the stock itself. An apartment without norm lines is not in the result.
+ */
+export async function fetchApartmentCompleteness(): Promise<Map<number, ApartmentNorms>> {
+  const { data, error, status } = await supabase.rpc('apartment_completeness')
+  if (error) throw toApiError(error, status)
+  const rows = (data ?? []) as Array<{ apartment_id: number; norm_total: number; norm_missing: number }>
+  return new Map(rows.map((r) => [r.apartment_id, { total: r.norm_total, missing: r.norm_missing }]))
 }
 
 export async function fetchApartmentsAdmin(): Promise<Apartment[]> {

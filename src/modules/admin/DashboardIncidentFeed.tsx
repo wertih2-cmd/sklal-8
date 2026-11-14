@@ -28,7 +28,18 @@ const KIND_ICON: Record<IncidentKind, ComponentType<{ className?: string }>> = {
   other: CircleAlert,
 }
 
-export function DashboardIncidentFeed({ incidents, apartments }: { incidents: Incident[]; apartments: Apartment[] }) {
+export function DashboardIncidentFeed({
+  incidents,
+  apartments,
+  incidentsPath = '/admin/more/incidents',
+  loadItemNames = fetchItems,
+}: {
+  incidents: Incident[]
+  apartments: Apartment[]
+  incidentsPath?: string
+  /** Names of the items; the manager cannot read everything fetchItems reads, so the manager area passes a lighter loader. */
+  loadItemNames?: () => Promise<Array<{ id: number; name: string }>>
+}) {
   const { t, n } = useI18n()
   const f = t.admin.dashboard.feed
   const cat = useCatalogName()
@@ -45,11 +56,11 @@ export function DashboardIncidentFeed({ incidents, apartments }: { incidents: In
   // item names are only needed for search and row text; a failed load falls back to "#id"
   useEffect(() => {
     let cancelled = false
-    fetchItems()
+    loadItemNames()
       .then((items) => { if (!cancelled) setItemNames(new Map(items.map((i) => [i.id, i.name]))) })
       .catch(() => { /* keep the fallback */ })
     return () => { cancelled = true }
-  }, [])
+  }, [loadItemNames])
 
   useEffect(() => {
     if (!selected) return
@@ -104,7 +115,7 @@ export function DashboardIncidentFeed({ incidents, apartments }: { incidents: In
         <h2 className="text-base font-semibold text-ink">{f.title}</h2>
         <button
           type="button"
-          onClick={() => navigate('/admin/more/incidents')}
+          onClick={() => navigate(incidentsPath)}
           className="ms-auto text-xs text-accent hover:underline"
         >
           {f.openAll}

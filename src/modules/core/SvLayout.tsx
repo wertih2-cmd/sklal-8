@@ -2,7 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import { useI18n, useDocumentDir } from '@/i18n'
 import { LangSwitcher } from '@/components/LangSwitcher'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { Building2, Wrench, Phone, User, LayoutDashboard, QrCode } from 'lucide-react'
+import { Building2, Wrench, Phone, User, LayoutDashboard, QrCode, UserCheck } from 'lucide-react'
 
 import { useAuth } from '@/modules/core/store'
 
@@ -21,6 +21,7 @@ export function SvLayout({ children }: { children: React.ReactNode }) {
   const tabs = [
     { to: '/sv', icon: Building2, label: t.nav.apartments, end: true },
     { to: '/sv/incidents', icon: Wrench, label: t.nav.incidents },
+    { to: '/sv/attendance', icon: UserCheck, label: t.nav.attendance },
     { to: '/sv/contacts', icon: Phone, label: t.nav.contacts },
     { to: '/sv/profile', icon: User, label: t.nav.profile },
   ]

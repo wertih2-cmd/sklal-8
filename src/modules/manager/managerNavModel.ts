@@ -1,6 +1,6 @@
 import type { BadgeKey } from '@/modules/admin/adminNavModel'
 
-export type ManagerNavKey = 'home' | 'cleanings' | 'incidents' | 'chessboard' | 'apartments'
+export type ManagerNavKey = 'home' | 'cleanings' | 'incidents' | 'chessboard' | 'attendance' | 'apartments'
 
 export interface ManagerNavItem {
   key: ManagerNavKey
@@ -16,6 +16,7 @@ export const MANAGER_NAV_ITEMS: readonly ManagerNavItem[] = [
   { key: 'cleanings', to: '/manager/cleaning-approvals', badge: 'cleanings' },
   { key: 'incidents', to: '/manager/incidents', badge: 'incidents' },
   { key: 'chessboard', to: '/manager/chessboard' },
+  { key: 'attendance', to: '/manager/attendance' },
   { key: 'apartments', to: '/sv', end: true },
 ]
 

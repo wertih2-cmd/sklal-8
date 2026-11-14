@@ -11,6 +11,7 @@ describe('isManagerNavActive', () => {
     expect(activeKeys('/manager/incidents')).toEqual(['incidents'])
     expect(activeKeys('/manager/cleaning-approvals')).toEqual(['cleanings'])
     expect(activeKeys('/manager/chessboard')).toEqual(['chessboard'])
+    expect(activeKeys('/manager/attendance')).toEqual(['attendance'])
   })
   it('a path that only shares a prefix does not match', () => {
     expect(activeKeys('/manager/incidents-old')).toEqual([])
@@ -29,6 +30,7 @@ describe('managerNavModel', () => {
   it('titleKey follows the section and is null for unknown paths', () => {
     expect(managerTitleKey('/manager')).toBe('home')
     expect(managerTitleKey('/manager/incidents')).toBe('incidents')
+    expect(managerTitleKey('/manager/attendance')).toBe('attendance')
     expect(managerTitleKey('/manager/unknown')).toBeNull()
   })
 })

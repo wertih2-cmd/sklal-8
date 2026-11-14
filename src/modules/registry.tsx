@@ -31,6 +31,7 @@ const CatalogPage = lazy(() => import('@/modules/admin/CatalogPage').then(m => (
 const QrPage = lazy(() => import('@/modules/admin/QrPage').then(m => ({ default: m.QrPage })))
 const ReportsPage = lazy(() => import('@/modules/admin/ReportsPage').then(m => ({ default: m.ReportsPage })))
 const Chessboard = lazy(() => import('@/modules/admin/Chessboard').then(m => ({ default: m.Chessboard })))
+const AttendancePage = lazy(() => import('@/modules/admin/AttendancePage').then(m => ({ default: m.AttendancePage })))
 const ManagerHome = lazy(() => import('@/modules/manager/ManagerHome').then(m => ({ default: m.ManagerHome })))
 const HistoryPage = lazy(() => import('@/modules/history/HistoryPage').then(m => ({ default: m.HistoryPage })))
 const InventoryPage = lazy(() => import('@/modules/admin/InventoryPage').then(m => ({ default: m.InventoryPage })))
@@ -93,6 +94,7 @@ export function AdminRoutes() {
           <Route path="more/catalog" element={<CatalogPage />} />
           <Route path="more/qr" element={<QrPage />} />
           <Route path="more/chessboard" element={<Chessboard />} />
+          <Route path="more/attendance" element={<AttendancePage />} />
           <Route path="more/reports" element={<ReportsPage />} />
           <Route path="more/history" element={<HistoryPage />} />
           <Route path="more/inventory" element={<InventoryPage />} />
@@ -115,6 +117,7 @@ export function ManagerRoutes() {
           <Route path="cleaning-approvals" element={<AdminCleaningApprovals />} />
           <Route path="incidents" element={<AdminIncidents />} />
           <Route path="chessboard" element={<Chessboard apartmentPath={(id) => `/sv/apartments/${id}`} />} />
+          <Route path="attendance" element={<AttendancePage />} />
           <Route path="*" element={<Navigate to="/manager" replace />} />
         </Routes>
       </Suspense>
@@ -136,6 +139,7 @@ export function SvRoutes() {
           <Route path="apartments/:id/clean" element={<><ApartmentDetail /><CleaningSheet /></>} />
           <Route path="incidents" element={<IncidentList />} />
           <Route path="incidents/new" element={<IncidentForm />} />
+          <Route path="attendance" element={<AttendancePage />} />
           <Route path="contacts" element={<ContactsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="*" element={<Navigate to="/sv" replace />} />

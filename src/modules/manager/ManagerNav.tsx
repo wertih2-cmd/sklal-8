@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { House, BadgeCheck, Wrench, CalendarDays, Building2, QrCode, Users } from 'lucide-react'
+import { House, BadgeCheck, Wrench, CalendarDays, Building2, QrCode, Users, UserCheck } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { LangSwitcher } from '@/components/LangSwitcher'
@@ -14,6 +14,7 @@ const ICONS: Record<ManagerNavKey, LucideIcon> = {
   cleanings: BadgeCheck,
   incidents: Wrench,
   chessboard: CalendarDays,
+  attendance: UserCheck,
   apartments: Building2,
 }
 
@@ -81,7 +82,7 @@ export function ManagerSidebar({ counts }: { counts: NavCounts }) {
   )
 }
 
-/** Phone: a floating glass bar with the five sections. */
+/** Phone: a floating glass bar with the sections (six: the labels are short, the full name is for the screen reader). */
 export function ManagerBottomBar({ counts }: { counts: NavCounts }) {
   const { t } = useI18n()
   const { pathname } = useLocation()

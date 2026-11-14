@@ -9,6 +9,7 @@ export function useManagerLabels(): Record<ManagerNavKey, string> {
     cleanings: t.admin.nav.cleanings,
     incidents: t.admin.nav.incidents,
     chessboard: t.admin.more.chessboard,
+    attendance: t.admin.attendance.navTitle,
     apartments: t.admin.nav.apartments,
   }
 }

@@ -21,6 +21,7 @@ describe('isNavActive (sidebar: all items visible)', () => {
     expect(activeKeys('/admin/more/cleaning-approvals')).toEqual(['cleanings'])
     expect(activeKeys('/admin/more/chessboard')).toEqual(['chessboard'])
     expect(activeKeys('/admin/more/reports')).toEqual(['reports'])
+    expect(activeKeys('/admin/more/attendance')).toEqual(['more'])
     expect(activeKeys('/admin/more')).toEqual(['more'])
   })
   it('a path that only shares a prefix does not match', () => {
@@ -78,7 +79,7 @@ describe('formatBadge / totalBadge', () => {
 describe('MORE_SECTIONS', () => {
   const all = MORE_SECTIONS.flatMap((s) => s.items)
   it('lists every sub-page once', () => {
-    expect(all).toHaveLength(14)
+    expect(all).toHaveLength(15)
     expect(new Set(all.map((i) => i.key)).size).toBe(all.length)
     expect(new Set(all.map((i) => i.to)).size).toBe(all.length)
     expect(all.every((i) => i.to.startsWith('/admin/more/'))).toBe(true)

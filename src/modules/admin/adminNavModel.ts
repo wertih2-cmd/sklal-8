@@ -75,7 +75,7 @@ export function totalBadge(c: NavCounts): number {
 
 export type MoreKey =
   | 'orders' | 'inventory' | 'documents' | 'catalog'
-  | 'incidents' | 'cleaningApprovals' | 'chessboard' | 'reports' | 'history'
+  | 'incidents' | 'cleaningApprovals' | 'chessboard' | 'attendance' | 'reports' | 'history'
   | 'normTemplates' | 'qr' | 'contacts'
   | 'staff' | 'users'
 export type MoreSectionKey = 'warehouse' | 'control' | 'directories' | 'admin'
@@ -108,6 +108,7 @@ export const MORE_SECTIONS: readonly MoreSection[] = [
       { key: 'incidents', to: '/admin/more/incidents', badge: 'incidents' },
       { key: 'cleaningApprovals', to: '/admin/more/cleaning-approvals', badge: 'cleanings' },
       { key: 'chessboard', to: '/admin/more/chessboard' },
+      { key: 'attendance', to: '/admin/more/attendance' },
       { key: 'reports', to: '/admin/more/reports' },
       { key: 'history', to: '/admin/more/history' },
     ],

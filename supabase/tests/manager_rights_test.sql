@@ -33,7 +33,7 @@ begin
   insert into norm_rules(norm_type, apartment_id, item_id, qty) values
     ('asset_standing', v_apt, v_A, 2), ('asset_standing', v_apt, v_B, 1);
   perform post_move(p_op => 'receipt', p_item => v_A, p_qty => 5, p_unit_cost => 10);
-  perform post_move(p_op => 'issue_apartment', p_item => v_A, p_qty => 2, p_apartment => v_apt);
+  perform post_move(p_op => 'issue_apartment', p_item => v_A, p_qty => 3, p_apartment => v_apt);
 
   insert into staff(full_name) values ('ZZ MGR staff') returning id into v_st;
   insert into incidents(apartment_id, item_id, kind, qty, created_by) values (v_apt, v_A, 'lost', 1, v_admin) returning id into i1;

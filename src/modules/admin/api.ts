@@ -1340,6 +1340,13 @@ export async function deleteCategory(id: number): Promise<void> {
 
 // ---- Items CRUD (admin_all policy) ----
 
+/** Only the names of the items: every signed-in user may read them (fetchItems also reads the guest coefficients). */
+export async function fetchItemNames(): Promise<Array<{ id: number; name: string }>> {
+  return fetchAllPages<{ id: number; name: string }>((from, to) =>
+    supabase.from('items').select('id,name').order('id').range(from, to),
+  )
+}
+
 export async function fetchItems(): Promise<Item[]> {
   const rows = await fetchAllPages<Item>((from, to) =>
     supabase

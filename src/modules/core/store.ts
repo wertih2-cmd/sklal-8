@@ -274,6 +274,6 @@ export function setupAuthListener() {
 
 export function homePathForRole(role: AppRole): string {
   if (role === 'admin') return '/admin'
-  if (role === 'manager') return '/qr'
+  if (role === 'manager') return '/manager'
   return '/sv'
 }

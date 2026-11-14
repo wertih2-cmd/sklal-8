@@ -33,7 +33,11 @@ const TYPE_TONE: Record<AptType, string> = {
  * `premiumRates` is the premium per cleaning for each apartment category (base premium times the coefficient).
  * Without it the "premium per day" row is not shown: the rates are set by the admin in the payroll settings.
  */
-export function Chessboard({ premiumRates = null }: { premiumRates?: Partial<Record<AptType, number>> | null } = {}) {
+export function Chessboard({ premiumRates = null, apartmentPath = (id: number) => `/admin/apartments/${id}` }: {
+  premiumRates?: Partial<Record<AptType, number>> | null
+  /** Where the apartment card lives for the current role (the manager area has none of its own). */
+  apartmentPath?: (apartmentId: number) => string
+} = {}) {
   const { t, n, lang } = useI18n()
   const c = t.admin.chessboard
   const navigate = useNavigate()
@@ -290,7 +294,7 @@ export function Chessboard({ premiumRates = null }: { premiumRates?: Partial<Rec
           {selectedApt && (
             <button
               type="button"
-              onClick={() => { const id = selectedApt.id; setSelected(null); navigate(`/admin/apartments/${id}`) }}
+              onClick={() => { const id = selectedApt.id; setSelected(null); navigate(apartmentPath(id)) }}
               className="w-full bg-accent text-on-accent rounded-xl min-h-[44px] text-sm font-medium"
             >
               {c.openApartment}
@@ -313,7 +317,7 @@ export function Chessboard({ premiumRates = null }: { premiumRates?: Partial<Rec
               <button
                 key={e.id}
                 type="button"
-                onClick={() => { setSelectedDay(null); navigate(`/admin/apartments/${e.apartment_id}`) }}
+                onClick={() => { setSelectedDay(null); navigate(apartmentPath(e.apartment_id)) }}
                 className="well rounded-xl w-full px-3 py-2 text-start flex items-center justify-between gap-2"
               >
                 <span className="flex items-center gap-2 min-w-0">

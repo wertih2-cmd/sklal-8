@@ -15,7 +15,7 @@ export function SvLayout({ children }: { children: React.ReactNode }) {
   const adminLink = profile?.role === 'admin'
     ? { to: '/admin', ariaLabel: t.admin.nav.home, external: false }
     : profile?.role === 'manager'
-      ? { to: '/qr.html#/qr', ariaLabel: t.nav.qr, external: true }
+      ? { to: '/manager', ariaLabel: t.admin.manager.home, external: false }
       : null
 
   const tabs = [

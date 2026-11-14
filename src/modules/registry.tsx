@@ -5,6 +5,7 @@ import { useAuth } from '@/modules/core/store'
 import { useI18n } from '@/i18n'
 import { Shield } from 'lucide-react'
 import { AdminLayout } from '@/modules/admin/AdminLayout'
+import { ManagerLayout } from '@/modules/manager/ManagerLayout'
 import { MoveModal } from '@/modules/admin/MoveForm'
 
 const ApartmentList = lazy(() => import('@/modules/apartments/ApartmentList').then(m => ({ default: m.ApartmentList })))
@@ -30,6 +31,7 @@ const CatalogPage = lazy(() => import('@/modules/admin/CatalogPage').then(m => (
 const QrPage = lazy(() => import('@/modules/admin/QrPage').then(m => ({ default: m.QrPage })))
 const ReportsPage = lazy(() => import('@/modules/admin/ReportsPage').then(m => ({ default: m.ReportsPage })))
 const Chessboard = lazy(() => import('@/modules/admin/Chessboard').then(m => ({ default: m.Chessboard })))
+const ManagerHome = lazy(() => import('@/modules/manager/ManagerHome').then(m => ({ default: m.ManagerHome })))
 const HistoryPage = lazy(() => import('@/modules/history/HistoryPage').then(m => ({ default: m.HistoryPage })))
 const InventoryPage = lazy(() => import('@/modules/admin/InventoryPage').then(m => ({ default: m.InventoryPage })))
 const OrdersPage = lazy(() => import('@/modules/admin/OrdersPage').then(m => ({ default: m.OrdersPage })))
@@ -101,6 +103,22 @@ export function AdminRoutes() {
         </Routes>
       </Suspense>
     </AdminLayout>
+  )
+}
+
+export function ManagerRoutes() {
+  return (
+    <ManagerLayout>
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          <Route index element={<ManagerHome />} />
+          <Route path="cleaning-approvals" element={<AdminCleaningApprovals />} />
+          <Route path="incidents" element={<AdminIncidents />} />
+          <Route path="chessboard" element={<Chessboard apartmentPath={(id) => `/sv/apartments/${id}`} />} />
+          <Route path="*" element={<Navigate to="/manager" replace />} />
+        </Routes>
+      </Suspense>
+    </ManagerLayout>
   )
 }
 

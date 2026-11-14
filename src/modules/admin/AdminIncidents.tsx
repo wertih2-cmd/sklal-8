@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { fetchAllIncidents, approveIncident, takeIncident, fetchIncidentChargePreview, fetchIncidentCharges, setIncidentChargeStatus } from '@/modules/admin/api'
-import { fetchApartmentsAdmin, fetchItems } from '@/modules/admin/api'
+import { fetchApartmentsAdmin, fetchItems, fetchItemNames } from '@/modules/admin/api'
+import { useAuth } from '@/modules/core/store'
 import type { Incident, Apartment, IncidentStatus, IncidentKind, IncidentCharge, IncidentChargePreview, ChargeStatus } from '@/lib/database.types'
 import { useI18n } from '@/i18n'
 import { formatDateTime, formatEGP } from '@/lib/format'
@@ -36,6 +37,8 @@ const kindIcons: Record<IncidentKind, React.ComponentType<{ className?: string }
 export function AdminIncidents() {
   const { t, n } = useI18n()
   const cat = useCatalogName()
+  // Charges, the write-off and the guest-price data belong to the administrator; the manager only takes, rejects and confirms requests without an item.
+  const isAdmin = useAuth((s) => s.profile?.role === 'admin')
   const statusLabels: Record<IncidentStatus, string> = {
     new: t.incidents.statusNew,
     in_progress: t.incidents.statusInProgress,
@@ -73,17 +76,23 @@ export function AdminIncidents() {
   const load = (silent?: boolean) => {
     const quiet = silent === true
     if (!quiet) { setLoading(true); setLoadError(null) }
-    Promise.all([fetchAllIncidents(), fetchApartmentsAdmin(), fetchItems()])
-      .then(([inc, apts, items]) => {
+    const loadNames = async (): Promise<Map<number, string>> => {
+      const rows: Array<{ id: number; name: string }> = isAdmin ? await fetchItems() : await fetchItemNames()
+      return new Map(rows.map((i) => [i.id, i.name]))
+    }
+    Promise.all([fetchAllIncidents(), fetchApartmentsAdmin(), loadNames()])
+      .then(([inc, apts, names]) => {
         setIncidents(inc)
         setApartments(apts)
-        setItemNames(new Map(items.map((i) => [i.id, i.name])))
+        setItemNames(names)
       })
       .catch((e) => { if (!quiet) setLoadError(friendlyMessage(e)) })
       .finally(() => { if (!quiet) setLoading(false) })
-    fetchIncidentCharges()
-      .then((chs) => setCharges(new Map(chs.map((c) => [c.incident_id, c]))))
-      .catch(() => { if (!quiet) toast(t.admin.adminIncidents.chargesLoadError, 'error') })
+    if (isAdmin) {
+      fetchIncidentCharges()
+        .then((chs) => setCharges(new Map(chs.map((c) => [c.incident_id, c]))))
+        .catch(() => { if (!quiet) toast(t.admin.adminIncidents.chargesLoadError, 'error') })
+    }
   }
 
   useEffect(() => {
@@ -105,7 +114,7 @@ export function AdminIncidents() {
 
   // Fetch charge preview when confirm dialog opens
   useEffect(() => {
-    if (!actionIncident || actionIncident.decision !== 'confirm') {
+    if (!isAdmin || !actionIncident || actionIncident.decision !== 'confirm') {
       setChargeState(null)
       setChargePreview(null)
       setChargeError(null)
@@ -130,7 +139,7 @@ export function AdminIncidents() {
       .finally(() => { if (!cancelled) setChargeLoading(false) })
     // ответ по закрытой или другой заявке не должен попадать в текущий диалог
     return () => { cancelled = true }
-  }, [actionIncident])
+  }, [actionIncident, isAdmin])
 
   const handleAction = async () => {
     if (!actionIncident) return
@@ -152,10 +161,12 @@ export function AdminIncidents() {
       setForce(false)
       const [inc] = await Promise.all([fetchAllIncidents()])
       setIncidents(inc)
-      try {
-        const chs = await fetchIncidentCharges()
-        setCharges(new Map(chs.map((c) => [c.incident_id, c])))
-      } catch { /* charges load error already toasted */ }
+      if (isAdmin) {
+        try {
+          const chs = await fetchIncidentCharges()
+          setCharges(new Map(chs.map((c) => [c.incident_id, c])))
+        } catch { /* charges load error already toasted */ }
+      }
     } catch (e) {
       toast(errorMessage(e), 'error')
     } finally {
@@ -303,7 +314,7 @@ export function AdminIncidents() {
                 )}
 
                 {(inc.status === 'new' || inc.status === 'in_progress') && (
-                  <div className="flex gap-2 mt-2 ps-12">
+                  <div className="flex flex-wrap gap-2 mt-2 ps-12">
                     {inc.status === 'new' && (
                       <button
                         onClick={() => handleTake(inc.id)}
@@ -314,13 +325,15 @@ export function AdminIncidents() {
                         {t.admin.adminIncidents.take}
                       </button>
                     )}
-                    <button
-                      onClick={() => { setActionIncident({ incident: inc, decision: 'confirm' }); setNote(''); setForce(false) }}
-                      className="text-xs bg-ok-soft text-ok rounded-lg px-3 py-1.5 flex items-center gap-1.5"
-                    >
-                      <Check className="w-3 h-3" />
-                      {t.admin.adminIncidents.confirm}
-                    </button>
+                    {(isAdmin || inc.item_id == null) && (
+                      <button
+                        onClick={() => { setActionIncident({ incident: inc, decision: 'confirm' }); setNote(''); setForce(false) }}
+                        className="text-xs bg-ok-soft text-ok rounded-lg px-3 py-1.5 flex items-center gap-1.5"
+                      >
+                        <Check className="w-3 h-3" />
+                        {t.admin.adminIncidents.confirm}
+                      </button>
+                    )}
                     <button
                       onClick={() => { setActionIncident({ incident: inc, decision: 'reject' }); setNote(''); setForce(false) }}
                       className="text-xs bg-bad-soft text-bad rounded-lg px-3 py-1.5 flex items-center gap-1.5"
@@ -328,6 +341,9 @@ export function AdminIncidents() {
                       <X className="w-3 h-3" />
                       {t.admin.adminIncidents.reject}
                     </button>
+                    {!isAdmin && inc.item_id != null && (
+                      <span className="text-xs text-muted self-center">{t.admin.adminIncidents.itemAdminOnly}</span>
+                    )}
                   </div>
                 )}
               </div>
@@ -359,7 +375,7 @@ export function AdminIncidents() {
               placeholder={t.admin.adminIncidents.note}
               className="w-full well rounded-xl px-4 py-2.5 text-sm border border-line focus:border-accent focus:outline-none mb-3"
             />
-            {actionIncident.decision === 'confirm' && actionIncident.incident.item_id && (
+            {isAdmin && actionIncident.decision === 'confirm' && actionIncident.incident.item_id && (
               <label className="flex items-center gap-2 mb-3">
                 <input type="checkbox" checked={force} onChange={(e) => setForce(e.target.checked)} className="w-4 h-4" />
                 <span className="text-sm text-ink">{t.admin.adminIncidents.force}</span>

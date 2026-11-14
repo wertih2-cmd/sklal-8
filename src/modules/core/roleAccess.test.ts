@@ -10,7 +10,7 @@ describe('mainAppAccess', () => {
     expect(mainAppAccess('supervisor')).toBe('supervisor')
   })
 
-  it('keeps the manager out of the main app', () => {
-    expect(mainAppAccess('manager')).toBe('none')
+  it('gives the manager the manager area', () => {
+    expect(mainAppAccess('manager')).toBe('manager')
   })
 })

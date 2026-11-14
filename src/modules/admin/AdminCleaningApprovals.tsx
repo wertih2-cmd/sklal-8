@@ -8,6 +8,7 @@ import { friendlyMessage } from '@/lib/errors'
 import { ErrorState } from '@/components/ErrorState'
 import { MediaViewer } from '@/modules/history/MediaViewer'
 import { useLiveRefresh } from '@/lib/realtime'
+import { useAuth } from '@/modules/core/store'
 import {
   fetchApartmentsAdmin,
   fetchPendingCleanings,
@@ -29,6 +30,8 @@ function isVideoPath(path: string): boolean {
 export function AdminCleaningApprovals() {
   const { t, n } = useI18n()
   const { itemName } = useCatalogName()
+  // The write-off preview reads the warehouse, which only the administrator may see.
+  const isAdmin = useAuth((s) => s.profile?.role === 'admin')
   const [items, setItems] = useState<PendingCleaning[]>([])
   const [apartments, setApartments] = useState<Apartment[]>([])
   const [staff, setStaff] = useState<Map<number, string>>(new Map())
@@ -53,7 +56,7 @@ export function AdminCleaningApprovals() {
         const [names, preview] = await Promise.all([
           Promise.all(userIds.map(async (id) => [id, await fetchProfileName(id)] as const)),
           Promise.all(list.map(async (i) => {
-            const lines = await fetchCleaningPreview(i.id).catch((): CleaningPreviewLine[] => [])
+            const lines = isAdmin ? await fetchCleaningPreview(i.id).catch((): CleaningPreviewLine[] => []) : []
             return [i.id, lines] as const
           })),
         ])
@@ -64,7 +67,7 @@ export function AdminCleaningApprovals() {
       })
       .catch((e) => { if (!quiet) setLoadError(friendlyMessage(e)) })
       .finally(() => { if (!quiet) setLoading(false) })
-  }, [])
+  }, [isAdmin])
 
   useEffect(() => { load() }, [load])
 
@@ -131,16 +134,18 @@ export function AdminCleaningApprovals() {
                   </button>
                 )}
 
-                <div className="mt-3 well rounded-lg px-3 py-2">
-                  <p className="text-xs font-medium text-muted mb-1">{t.admin.approvals.willWriteOff}</p>
-                  {lines.length === 0 ? (
-                    <p className="text-xs text-muted">{t.admin.approvals.noMaterials}</p>
-                  ) : (
-                    lines.map((l) => (
-                      <p key={`${l.norm_type}-${l.item_id}`} className="text-sm text-ink">{itemName(l.item)}: {n(String(l.qty))}</p>
-                    ))
-                  )}
-                </div>
+                {isAdmin && (
+                  <div className="mt-3 well rounded-lg px-3 py-2">
+                    <p className="text-xs font-medium text-muted mb-1">{t.admin.approvals.willWriteOff}</p>
+                    {lines.length === 0 ? (
+                      <p className="text-xs text-muted">{t.admin.approvals.noMaterials}</p>
+                    ) : (
+                      lines.map((l) => (
+                        <p key={`${l.norm_type}-${l.item_id}`} className="text-sm text-ink">{itemName(l.item)}: {n(String(l.qty))}</p>
+                      ))
+                    )}
+                  </div>
+                )}
 
                 <div className="flex gap-3 mt-3">
                   <button

@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { useAuth, homePathForRole, setupAuthListener } from '@/modules/core/store'
 import { mainAppAccess } from '@/modules/core/roleAccess'
 import { BootstrapScreen, LoginScreen } from '@/modules/core/AuthScreens'
-import { SvRoutes, AdminRoutes } from '@/modules/registry'
+import { SvRoutes, AdminRoutes, ManagerRoutes } from '@/modules/registry'
 import { useI18n, useDocumentDir } from '@/i18n'
 import { Package, RefreshCw } from 'lucide-react'
 import { ToastContainer } from '@/lib/toast'
@@ -84,12 +84,24 @@ function App() {
     const home = homePathForRole(profile.role)
     const access = mainAppAccess(profile.role)
     if (access === 'none') {
-      // Managers work only through apartment QR codes; old /qr links still redirect.
+      // An unknown role works only through apartment QR codes; old /qr links still redirect.
       content = (
         <BrowserRouter>
           <Routes>
             <Route path="/qr/*" element={<QrRedirect />} />
             <Route path="*" element={<AdminOnlyScreen onScanner={() => setShowWelcome(true)} />} />
+          </Routes>
+        </BrowserRouter>
+      )
+    } else if (access === 'manager') {
+      // Managers get their own area plus the supervisor screens; the admin panel stays closed to them.
+      content = (
+        <BrowserRouter>
+          <Routes>
+            <Route path="/qr/*" element={<QrRedirect />} />
+            <Route path="/sv/*" element={<SvRoutes />} />
+            <Route path="/manager/*" element={<ManagerRoutes />} />
+            <Route path="*" element={<Navigate to={home} replace />} />
           </Routes>
         </BrowserRouter>
       )

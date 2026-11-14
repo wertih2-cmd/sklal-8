@@ -5,7 +5,12 @@ import { useI18n } from '@/i18n'
 import { ErrorState } from '@/components/ErrorState'
 import { useLiveRefresh } from '@/lib/realtime'
 import { useAuth } from '@/modules/core/store'
+import { fetchApartmentsAdmin } from './api'
 import { fetchAttendance, fetchMonthClosed, fetchStaffDirectory } from './attendanceApi'
+import { fetchBoardCleanings } from './chessboardApi'
+import { aptTypeMap, cleaningEvents, premiumPerDay, queryWindow } from './chessboardModel'
+import { fetchBonusRates, fetchCleaningCoefs } from './payrollApi'
+import { premiumRatesFromBonus } from './payrollModel'
 import { AttendanceMarkModal } from './AttendanceMarkModal'
 import { AttendanceImportModal } from './AttendanceImportModal'
 import {
@@ -17,6 +22,24 @@ const KIND_TONE: Record<AttendanceKind, string> = {
   work: 'bg-accent-soft text-accent',
   weekend: 'bg-warn-soft text-warn',
   leave: 'bg-ok-soft text-ok',
+}
+
+/**
+ * Premium per day of the team for the row under the timesheet: the base premium of the category times the coefficient of each cleaning.
+ * Admin and manager only; any failure just leaves the row out (the timesheet itself does not depend on it). Null while no premium is set.
+ */
+async function loadDayPremium(days: readonly string[], allowed: boolean): Promise<Map<string, number> | null> {
+  if (!allowed) return null
+  const win = queryWindow(days)
+  if (!win) return null
+  try {
+    const [rates, coefs, apartments, cleanings] = await Promise.all([fetchBonusRates(), fetchCleaningCoefs(), fetchApartmentsAdmin(), fetchBoardCleanings(win.fromISO, win.toISO)])
+    const perType = premiumRatesFromBonus(rates)
+    if (!perType) return null
+    return premiumPerDay(cleaningEvents(cleanings, days), days, aptTypeMap(apartments), perType, coefs).byDay
+  } catch {
+    return null
+  }
 }
 
 /** The timesheet: workers in rows, days of the month in columns. Marks are made by the supervisor, the manager or the admin. No rates, no sums of money. */
@@ -34,6 +57,7 @@ export function AttendancePage() {
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [premium, setPremium] = useState<Map<string, number> | null>(null)
   const [selected, setSelected] = useState<{ staffId: number; day: string } | null>(null)
 
   const days = useMemo(() => monthDays(month), [month])
@@ -46,12 +70,13 @@ export function AttendancePage() {
       setStaff(sortedStaff(s))
       setRows(r)
       setClosed(c)
+      setPremium(await loadDayPremium(days, payrollPath !== null))
     } catch {
       setFailed(true)
     } finally {
       setLoading(false)
     }
-  }, [month])
+  }, [month, days, payrollPath])
 
   useEffect(() => { void load() }, [load])
   // Marks of other people arrive when the person comes back to the page (attendance is not a live table).
@@ -148,13 +173,23 @@ export function AttendancePage() {
               </tbody>
               <tfoot>
                 <tr>
-                  <th scope="row" className="sticky start-0 bottom-0 z-20 bg-app text-start text-xs font-medium text-muted px-3 py-2 whitespace-nowrap">{a.workedRow}</th>
+                  <th scope="row" className={`sticky start-0 ${premium ? 'bottom-8' : 'bottom-0'} z-20 bg-app text-start text-xs font-medium text-muted px-3 py-2 whitespace-nowrap`}>{a.workedRow}</th>
                   {days.map((d) => {
                     const v = worked.get(d) ?? 0
-                    return <td key={d} className={`sticky bottom-0 z-10 bg-app px-1 py-2 text-center text-sm ${v > 0 ? 'font-semibold text-ink' : 'text-muted'}`}>{v > 0 ? n(String(v)) : '·'}</td>
+                    return <td key={d} className={`sticky ${premium ? 'bottom-8' : 'bottom-0'} z-10 bg-app px-1 py-2 text-center text-sm ${v > 0 ? 'font-semibold text-ink' : 'text-muted'}`}>{v > 0 ? n(String(v)) : '·'}</td>
                   })}
-                  <td className="sticky end-0 bottom-0 z-20 bg-app" />
+                  <td className={`sticky end-0 ${premium ? 'bottom-8' : 'bottom-0'} z-20 bg-app`} />
                 </tr>
+                {premium && (
+                  <tr>
+                    <th scope="row" className="sticky start-0 bottom-0 z-20 bg-app text-start text-xs font-medium text-muted px-3 py-2 whitespace-nowrap">{a.premiumRow}</th>
+                    {days.map((d) => {
+                      const v = premium.get(d) ?? 0
+                      return <td key={d} className={`sticky bottom-0 z-10 bg-app px-1 py-2 text-center text-sm ${v > 0 ? 'font-semibold text-ink' : 'text-muted'}`}>{v > 0 ? n(String(Math.round(v * 100) / 100)) : '·'}</td>
+                    })}
+                    <td className="sticky end-0 bottom-0 z-20 bg-app px-3 py-2 text-center text-sm font-semibold text-ink">{n(String(Math.round([...premium.values()].reduce((x, y) => x + Math.round(y * 100), 0)) / 100))}</td>
+                  </tr>
+                )}
               </tfoot>
             </table>
           </div>

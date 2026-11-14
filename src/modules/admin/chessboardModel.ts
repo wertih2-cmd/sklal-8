@@ -227,6 +227,8 @@ export function premiumPerDay(
   days: readonly string[],
   typeOf: ReadonlyMap<number, AptType>,
   rates: Partial<Record<AptType, number>>,
+  /** Coefficient of single cleanings by event id; a cleaning without an entry counts with 1. */
+  coefs: ReadonlyMap<string, number> = new Map(),
 ): PremiumPerDay {
   const cents = new Map<string, number>(days.map((d) => [d, 0]))
   let incomplete = false
@@ -235,7 +237,7 @@ export function premiumPerDay(
     const t = typeOf.get(e.apartment_id)
     const rate = t === undefined ? undefined : rates[t]
     if (rate === undefined || !Number.isFinite(rate)) { incomplete = true; continue }
-    cents.set(e.day, (cents.get(e.day) ?? 0) + Math.round(rate * 100))
+    cents.set(e.day, (cents.get(e.day) ?? 0) + Math.round(rate * (coefs.get(e.id) ?? 1) * 100))
   }
   return { byDay: new Map([...cents].map(([d, c]) => [d, c / 100])), incomplete }
 }

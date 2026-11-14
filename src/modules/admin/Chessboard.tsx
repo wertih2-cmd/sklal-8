@@ -8,6 +8,7 @@ import { ErrorState } from '@/components/ErrorState'
 import { Modal } from '@/components/Modal'
 import type { Apartment, AptType } from '@/lib/database.types'
 import { fetchApartmentsAdmin } from './api'
+import { CleaningCoefField } from './CleaningCoefField'
 import { filterApartments } from './apartmentSearch'
 import { fetchBoardCleanings, fetchBoardIncidents } from './chessboardApi'
 import {
@@ -33,8 +34,13 @@ const TYPE_TONE: Record<AptType, string> = {
  * `premiumRates` is the premium per cleaning for each apartment category (base premium times the coefficient).
  * Without it the "premium per day" row is not shown: the rates are set by the admin in the payroll settings.
  */
-export function Chessboard({ premiumRates = null, apartmentPath = (id: number) => `/admin/apartments/${id}` }: {
+export function Chessboard({ premiumRates = null, coefs, canEditCoef = false, onCoefsChanged, apartmentPath = (id: number) => `/admin/apartments/${id}` }: {
   premiumRates?: Partial<Record<AptType, number>> | null
+  /** Coefficients of single cleanings (event id to coefficient); a cleaning without an entry counts with 1. */
+  coefs?: ReadonlyMap<string, number>
+  /** The admin sets the coefficient of a cleaning in the list of the day. */
+  canEditCoef?: boolean
+  onCoefsChanged?: () => void
   /** Where the apartment card lives for the current role (the manager area has none of its own). */
   apartmentPath?: (apartmentId: number) => string
 } = {}) {
@@ -95,7 +101,7 @@ export function Chessboard({ premiumRates = null, apartmentPath = (id: number) =
   // The totals follow the chosen categories, not the search: "cleaned per day" is a fact about the day, not about the rows on screen.
   const dayEvents = useMemo(() => eventsOfTypes(events.filter((e) => e.layer === 'cleanings'), typeFilter, typeOf), [events, typeFilter, typeOf])
   const perDay = useMemo(() => cleanedPerDay(dayEvents, days), [dayEvents, days])
-  const premium = useMemo(() => (premiumRates ? premiumPerDay(dayEvents, days, typeOf, premiumRates) : null), [premiumRates, dayEvents, days, typeOf])
+  const premium = useMemo(() => (premiumRates ? premiumPerDay(dayEvents, days, typeOf, premiumRates, coefs) : null), [premiumRates, dayEvents, days, typeOf, coefs])
   const periodTotal = useMemo(() => sumOf(perDay.values()), [perDay])
   // Both total rows stick to the bottom of the scroll area; with the premium row present, the count row sits above it (32px = bottom-8).
   const countBottom = premium ? 'bottom-8' : 'bottom-0'
@@ -314,18 +320,20 @@ export function Chessboard({ premiumRates = null, apartmentPath = (id: number) =
           {selectedDay && cleaningsOfDay(dayEvents, selectedDay).map((e) => {
             const apt = apartments.find((a) => a.id === e.apartment_id)
             return (
-              <button
-                key={e.id}
-                type="button"
-                onClick={() => { setSelectedDay(null); navigate(apartmentPath(e.apartment_id)) }}
-                className="well rounded-xl w-full px-3 py-2 text-start flex items-center justify-between gap-2"
-              >
-                <span className="flex items-center gap-2 min-w-0">
-                  {apt && <span className={`text-xs font-medium rounded-md px-2 py-0.5 ${TYPE_TONE[apt.type]}`}>{typeLabel[apt.type]}</span>}
-                  <b className="text-sm text-ink truncate">{apt?.code ?? `#${e.apartment_id}`}</b>
-                </span>
-                <span className={`text-xs ${e.pending ? 'text-warn' : 'text-muted'}`}>{formatDateTime(e.at)} · {stateLabel[e.state] ?? e.state}</span>
-              </button>
+              <div key={e.id} className="well rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => { setSelectedDay(null); navigate(apartmentPath(e.apartment_id)) }}
+                  className="w-full px-3 py-2 text-start flex items-center justify-between gap-2"
+                >
+                  <span className="flex items-center gap-2 min-w-0">
+                    {apt && <span className={`text-xs font-medium rounded-md px-2 py-0.5 ${TYPE_TONE[apt.type]}`}>{typeLabel[apt.type]}</span>}
+                    <b className="text-sm text-ink truncate">{apt?.code ?? `#${e.apartment_id}`}</b>
+                  </span>
+                  <span className={`text-xs ${e.pending ? 'text-warn' : 'text-muted'}`}>{formatDateTime(e.at)} · {stateLabel[e.state] ?? e.state}</span>
+                </button>
+                {canEditCoef && <CleaningCoefField key={`${e.id}-${coefs?.get(e.id) ?? ''}`} eventId={e.id} current={coefs?.get(e.id)} onSaved={() => onCoefsChanged?.()} />}
+              </div>
             )
           })}
         </div>

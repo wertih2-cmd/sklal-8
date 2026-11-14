@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase'
 import { toApiError } from '@/lib/errors'
+import { fetchAllPages } from '@/lib/paginate'
 import type { AptType } from '@/lib/database.types'
 import { parseReport, type BonusRate, type PayrollReport, type PayrollSettings } from './payrollModel'
 import type { Adjustment } from './payrollExtraModel'
@@ -84,5 +85,21 @@ export async function addAdjustment(month: string, staffId: number, amount: numb
 
 export async function deleteAdjustment(id: number): Promise<void> {
   const { error, status } = await supabase.from('payroll_adjustments').delete().eq('id', id)
+  if (error) throw toApiError(error, status)
+}
+
+/** Coefficients of single cleanings, by event id (a cleaning without an entry counts with 1). Admin and manager read; for others RLS returns nothing. */
+export async function fetchCleaningCoefs(): Promise<Map<string, number>> {
+  const rows = await fetchAllPages<{ event_id: string; coef: number | string }>((a, b) =>
+    supabase.from('cleaning_bonus_coef').select('event_id,coef').order('id', { ascending: true }).range(a, b),
+  )
+  return new Map(rows.map((r) => [r.event_id, Number(r.coef)]))
+}
+
+/** Admin only (RLS). A null coefficient removes the entry; a closed month is refused by the database trigger. */
+export async function saveCleaningCoef(eventId: string, coef: number | null): Promise<void> {
+  const { error, status } = coef === null
+    ? await supabase.from('cleaning_bonus_coef').delete().eq('event_id', eventId)
+    : await supabase.from('cleaning_bonus_coef').upsert({ event_id: eventId, coef }, { onConflict: 'event_id' })
   if (error) throw toApiError(error, status)
 }

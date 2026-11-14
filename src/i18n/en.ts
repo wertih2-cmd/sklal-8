@@ -772,6 +772,10 @@ export const en: Dict = {
       },
     },
     chessboard: {
+      coefLabel: 'Premium coefficient of this cleaning (empty = 1)',
+      coefSave: 'Save',
+      coefSaved: 'Coefficient saved',
+      coefInvalid: 'Enter a number from 0 to 999.99 (up to two decimals) or leave it empty',
       title: 'Chessboard',
       layerAll: 'All',
       layerCleanings: 'Cleanings',
@@ -898,6 +902,7 @@ export const en: Dict = {
       cancel: 'Cancel',
     },
     attendance: {
+      premiumRow: 'Premium per day, EGP',
       importButton: 'Import from CSV',
       importTitle: 'Import hours from CSV',
       importHelp: 'Columns separated by a semicolon: date (YYYY-MM-DD or DD.MM.YYYY); worker as in the list; hours; shares the pool (1 or 0, optional); kind (В day off, О leave, optional). Rows without hours are skipped and marks of other people are not replaced.',

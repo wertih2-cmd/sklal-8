@@ -126,3 +126,17 @@ export function importSummary(rows: readonly ImportRow[]): { ok: number; skipped
     errors: rows.filter((r) => r.status === 'error').length,
   }
 }
+
+/** Largest coefficient numeric(5,2) accepts. */
+export const MAX_COEF = 999.99
+
+export type CoefInput = { ok: true; value: number | null } | { ok: false }
+
+/** A typed coefficient of one cleaning: empty means "back to 1" (the entry is removed), otherwise 0 to 999.99 with up to two decimals. */
+export function parseCoef(text: string): CoefInput {
+  const cleaned = text.trim().replace(',', '.')
+  if (cleaned === '') return { ok: true, value: null }
+  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return { ok: false }
+  const value = Number(cleaned)
+  return value <= MAX_COEF ? { ok: true, value } : { ok: false }
+}

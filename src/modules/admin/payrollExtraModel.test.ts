@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  adjustmentTotal, importSummary, parseAdjustmentAmount, parseHoursCsv, parseImportDate,
+  adjustmentTotal, importSummary, parseAdjustmentAmount, parseCoef, parseHoursCsv, parseImportDate,
 } from './payrollExtraModel'
 
 const staff = [
@@ -73,5 +73,16 @@ describe('parseHoursCsv', () => {
   it('counts the summary', () => {
     const rows = parseHoursCsv('2026-11-05;Mohamed Nabil;8\n2026-11-06;Mohamed Nabil;\n2026-11-07;Nobody;8', staff, today)
     expect(importSummary(rows)).toEqual({ ok: 1, skipped: 1, errors: 1 })
+  })
+})
+
+describe('parseCoef', () => {
+  it('reads a coefficient, empty means reset', () => {
+    expect(parseCoef('1,5')).toEqual({ ok: true, value: 1.5 })
+    expect(parseCoef('0')).toEqual({ ok: true, value: 0 })
+    expect(parseCoef('  ')).toEqual({ ok: true, value: null })
+  })
+  it('refuses a minus, text, three decimals and more than 999.99', () => {
+    for (const bad of ['-1', 'x', '1.234', '1000', '1e2']) expect(parseCoef(bad)).toEqual({ ok: false })
   })
 })

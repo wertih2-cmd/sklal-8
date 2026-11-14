@@ -201,3 +201,13 @@ describe('categories, daily totals and premium', () => {
     expect(cleaningsOfDay(events, '2026-11-12')).toEqual([])
   })
 })
+
+describe('premium with the coefficient of a cleaning', () => {
+  const ev = (id: string, apt: number) => ({ id, apartment_id: apt, day: '2026-11-05', layer: 'cleanings' as const, at: '', pending: false, state: 'posted', text: null })
+  it('multiplies the rate by the coefficient of that cleaning only', () => {
+    const typeOf = new Map<number, 'studio' | '1br' | '2br'>([[1, 'studio'], [2, '1br']])
+    const res = premiumPerDay([ev('a', 1), ev('b', 2), ev('c', 1)], ['2026-11-05'], typeOf, { studio: 30, '1br': 40 }, new Map([['a', 2], ['b', 0]]))
+    expect(res.byDay.get('2026-11-05')).toBe(30 * 2 + 40 * 0 + 30)
+    expect(res.incomplete).toBe(false)
+  })
+})

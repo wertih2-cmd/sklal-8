@@ -32,6 +32,7 @@ const QrPage = lazy(() => import('@/modules/admin/QrPage').then(m => ({ default:
 const ReportsPage = lazy(() => import('@/modules/admin/ReportsPage').then(m => ({ default: m.ReportsPage })))
 const ChessboardRoute = lazy(() => import('@/modules/admin/ChessboardRoute').then(m => ({ default: m.ChessboardRoute })))
 const PayrollPage = lazy(() => import('@/modules/admin/PayrollPage').then(m => ({ default: m.PayrollPage })))
+const TasksPage = lazy(() => import('@/modules/admin/TasksPage').then(m => ({ default: m.TasksPage })))
 const AttendancePage = lazy(() => import('@/modules/admin/AttendancePage').then(m => ({ default: m.AttendancePage })))
 const ManagerHome = lazy(() => import('@/modules/manager/ManagerHome').then(m => ({ default: m.ManagerHome })))
 const HistoryPage = lazy(() => import('@/modules/history/HistoryPage').then(m => ({ default: m.HistoryPage })))
@@ -96,6 +97,7 @@ export function AdminRoutes() {
           <Route path="more/qr" element={<QrPage />} />
           <Route path="more/chessboard" element={<ChessboardRoute />} />
           <Route path="more/attendance" element={<AttendancePage />} />
+          <Route path="more/tasks" element={<TasksPage />} />
           <Route path="more/attendance/payroll" element={<PayrollPage timesheetPath="/admin/more/attendance" />} />
           <Route path="more/reports" element={<ReportsPage />} />
           <Route path="more/history" element={<HistoryPage />} />
@@ -120,6 +122,7 @@ export function ManagerRoutes() {
           <Route path="incidents" element={<AdminIncidents />} />
           <Route path="chessboard" element={<ChessboardRoute apartmentPath={(id) => `/sv/apartments/${id}`} />} />
           <Route path="attendance" element={<AttendancePage />} />
+          <Route path="tasks" element={<TasksPage />} />
           <Route path="attendance/payroll" element={<PayrollPage timesheetPath="/manager/attendance" />} />
           <Route path="*" element={<Navigate to="/manager" replace />} />
         </Routes>
@@ -143,6 +146,7 @@ export function SvRoutes() {
           <Route path="incidents" element={<IncidentList />} />
           <Route path="incidents/new" element={<IncidentForm />} />
           <Route path="attendance" element={<AttendancePage />} />
+          <Route path="tasks" element={<TasksPage />} />
           <Route path="contacts" element={<ContactsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="*" element={<Navigate to="/sv" replace />} />

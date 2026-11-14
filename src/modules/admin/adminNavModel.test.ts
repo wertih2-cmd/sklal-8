@@ -79,7 +79,7 @@ describe('formatBadge / totalBadge', () => {
 describe('MORE_SECTIONS', () => {
   const all = MORE_SECTIONS.flatMap((s) => s.items)
   it('lists every sub-page once', () => {
-    expect(all).toHaveLength(15)
+    expect(all).toHaveLength(16)
     expect(new Set(all.map((i) => i.key)).size).toBe(all.length)
     expect(new Set(all.map((i) => i.to)).size).toBe(all.length)
     expect(all.every((i) => i.to.startsWith('/admin/more/'))).toBe(true)

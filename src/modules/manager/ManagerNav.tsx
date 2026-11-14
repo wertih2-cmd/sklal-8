@@ -83,8 +83,11 @@ export function ManagerSidebar({ counts }: { counts: NavCounts }) {
 
 /** Phone: a floating glass bar with the five sections. */
 export function ManagerBottomBar({ counts }: { counts: NavCounts }) {
+  const { t } = useI18n()
   const { pathname } = useLocation()
   const labels = useManagerLabels()
+  // The full name of the section does not fit under an icon: the bar shows a short one, the screen reader the full one.
+  const barLabel = (key: ManagerNavKey) => (key === 'cleanings' ? t.admin.nav.cleaningsShort : labels[key])
 
   return (
     <nav
@@ -102,7 +105,7 @@ export function ManagerBottomBar({ counts }: { counts: NavCounts }) {
               to={item.to}
               end={item.end}
               aria-label={labels[item.key]}
-              className="flex-1 min-h-[44px] flex flex-col items-center justify-center gap-0.5"
+              className="flex-1 min-w-0 min-h-[44px] flex flex-col items-center justify-center gap-0.5"
             >
               <span className="relative">
                 <Icon className={`w-5 h-5 ${active ? 'text-accent' : 'text-muted'}`} strokeWidth={active ? 2.2 : 1.8} />
@@ -112,7 +115,7 @@ export function ManagerBottomBar({ counts }: { counts: NavCounts }) {
                   </span>
                 )}
               </span>
-              <span className={`text-[11px] ${active ? 'text-accent font-medium' : 'text-muted'}`}>{labels[item.key]}</span>
+              <span className={`max-w-full truncate text-[11px] ${active ? 'text-accent font-medium' : 'text-muted'}`}>{barLabel(item.key)}</span>
             </NavLink>
           )
         })}

@@ -401,6 +401,7 @@ export const ru = {
       newOperation: 'Новая операция',
       groupWarehouse: 'Склад и закупки',
       search: 'Поиск квартиры',
+      cleaningsShort: 'Уборки',
     },
     dashboard: {
       ringTitle: 'Укомплектованность квартир',

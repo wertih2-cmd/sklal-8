@@ -404,6 +404,7 @@ export const ar: Dict = {
       newOperation: 'عملية جديدة',
       groupWarehouse: 'المخزن والمشتريات',
       search: 'ابحث عن شقة',
+      cleaningsShort: 'التنظيف',
     },
     dashboard: {
       ringTitle: 'اكتمال الشقق',

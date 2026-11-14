@@ -403,6 +403,7 @@ export const en: Dict = {
       newOperation: 'New operation',
       groupWarehouse: 'Stock and purchasing',
       search: 'Find apartment',
+      cleaningsShort: 'Cleanings',
     },
     dashboard: {
       ringTitle: 'Apartment completeness',

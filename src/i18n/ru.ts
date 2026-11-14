@@ -790,6 +790,13 @@ export const ru = {
       stateRejected: 'Отклонена',
       statePending: 'Ждёт подтверждения',
       statePosted: 'Подтверждена',
+      categories: 'Категории квартир',
+      cleanedTotal: 'Убрано за период',
+      cleanedPerDay: 'Убрано за день, шт.',
+      premiumPerDay: 'Премия за день, EGP',
+      premiumMissingRate: 'Для части категорий не задана премия: она не вошла в сумму',
+      dayCleanings: 'Уборки за день',
+      noCleaningsThatDay: 'В этот день уборок нет',
     },
     more: {
       title: 'Ещё',

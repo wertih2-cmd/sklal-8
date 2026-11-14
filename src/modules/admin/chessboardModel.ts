@@ -1,4 +1,4 @@
-import type { EventStatus, IncidentKind, IncidentStatus } from '@/lib/database.types'
+import type { AptType, EventStatus, IncidentKind, IncidentStatus } from '@/lib/database.types'
 import type { PostingStatus } from './cleaningFeed'
 
 /** The board works in the Cairo calendar, like the rest of the app (see lib/format.ts). */
@@ -183,4 +183,70 @@ export function waitingDays(atISO: string, nowISO: string): number {
 
 export function apartmentIdsWithEvents(events: readonly BoardEvent[]): Set<number> {
   return new Set(events.map((e) => e.apartment_id))
+}
+
+/** Apartment categories, in the order of the legend. */
+export const APT_TYPES: readonly AptType[] = ['studio', '1br', '2br']
+
+export function aptTypeMap(apartments: readonly { id: number; type: AptType }[]): Map<number, AptType> {
+  return new Map(apartments.map((a) => [a.id, a.type]))
+}
+
+/** Events of the chosen categories; an empty choice means every category. Events of an unknown apartment are dropped. */
+export function eventsOfTypes(events: readonly BoardEvent[], types: ReadonlySet<AptType>, typeOf: ReadonlyMap<number, AptType>): BoardEvent[] {
+  if (types.size === 0) return [...events]
+  return events.filter((e) => {
+    const t = typeOf.get(e.apartment_id)
+    return t !== undefined && types.has(t)
+  })
+}
+
+/** Cleanings per day: every day of the window is present, with 0 when nothing was cleaned. */
+export function cleanedPerDay(events: readonly BoardEvent[], days: readonly string[]): Map<string, number> {
+  const out = new Map<string, number>(days.map((d) => [d, 0]))
+  for (const e of events) {
+    if (e.layer !== 'cleanings') continue
+    const v = out.get(e.day)
+    if (v !== undefined) out.set(e.day, v + 1)
+  }
+  return out
+}
+
+export interface PremiumPerDay {
+  byDay: Map<string, number>
+  /** True when a cleaning belongs to a category that has no rate: its premium is not in the sums. */
+  incomplete: boolean
+}
+
+/**
+ * Premium of the cleanings of each day: the rate of the apartment category (base premium times coefficient) per cleaning.
+ * Sums are kept in whole cents, so that adding many cleanings does not drift.
+ */
+export function premiumPerDay(
+  events: readonly BoardEvent[],
+  days: readonly string[],
+  typeOf: ReadonlyMap<number, AptType>,
+  rates: Partial<Record<AptType, number>>,
+): PremiumPerDay {
+  const cents = new Map<string, number>(days.map((d) => [d, 0]))
+  let incomplete = false
+  for (const e of events) {
+    if (e.layer !== 'cleanings' || !cents.has(e.day)) continue
+    const t = typeOf.get(e.apartment_id)
+    const rate = t === undefined ? undefined : rates[t]
+    if (rate === undefined || !Number.isFinite(rate)) { incomplete = true; continue }
+    cents.set(e.day, (cents.get(e.day) ?? 0) + Math.round(rate * 100))
+  }
+  return { byDay: new Map([...cents].map(([d, c]) => [d, c / 100])), incomplete }
+}
+
+export function sumOf(values: Iterable<number>): number {
+  let total = 0
+  for (const v of values) total += v
+  return Math.round(total * 100) / 100
+}
+
+/** The cleanings of one day, earliest first. */
+export function cleaningsOfDay(events: readonly BoardEvent[], day: string): BoardEvent[] {
+  return events.filter((e) => e.layer === 'cleanings' && e.day === day).sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0))
 }

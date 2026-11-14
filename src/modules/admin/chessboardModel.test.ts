@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   cairoDay, addDays, buildDays, defaultStart, shiftStart, canShiftForward, queryWindow, cleaningEvents, incidentEvents,
   filterByLayer, buildCells, cellKey, dominantLayer, waitingDays, apartmentIdsWithEvents,
+  APT_TYPES, aptTypeMap, eventsOfTypes, cleanedPerDay, premiumPerDay, sumOf, cleaningsOfDay,
   type BoardCleaningRow, type BoardIncidentRow,
 } from './chessboardModel'
 
@@ -126,5 +127,77 @@ describe('waitingDays', () => {
     expect(waitingDays('2026-11-10T06:00:00Z', '2026-11-10T20:00:00Z')).toBe(0)
     expect(waitingDays('2026-11-15T06:00:00Z', '2026-11-14T05:00:00Z')).toBe(0)
     expect(waitingDays('garbage', '2026-11-14T05:00:00Z')).toBe(0)
+  })
+})
+
+describe('categories, daily totals and premium', () => {
+  const typeOf = aptTypeMap([
+    { id: 1, type: 'studio' }, { id: 2, type: '1br' }, { id: 3, type: '2br' },
+  ])
+  const week = buildDays('2026-11-08', 7)
+  const rows = [
+    cl({ id: 'a', apartment_id: 1, cleaned_at: '2026-11-10T08:00:00Z' }),
+    cl({ id: 'b', apartment_id: 2, cleaned_at: '2026-11-10T09:00:00Z' }),
+    cl({ id: 'c', apartment_id: 3, cleaned_at: '2026-11-11T09:00:00Z' }),
+    cl({ id: 'd', apartment_id: 1, cleaned_at: '2026-11-11T10:00:00Z' }),
+    cl({ id: 'x', apartment_id: 1, cleaned_at: '2026-11-11T11:00:00Z', posting_status: 'rejected' }),
+    cl({ id: 'y', apartment_id: 2, cleaned_at: '2026-11-11T12:00:00Z', status: 'reversed' }),
+  ]
+  const events = cleaningEvents(rows, week)
+
+  it('lists the categories in the order of the legend', () => {
+    expect(APT_TYPES).toEqual(['studio', '1br', '2br'])
+  })
+
+  it('an empty choice keeps every category, a choice keeps only its own', () => {
+    expect(eventsOfTypes(events, new Set(), typeOf)).toHaveLength(4)
+    expect(eventsOfTypes(events, new Set(['studio']), typeOf).map((e) => e.id)).toEqual(['a', 'd'])
+    expect(eventsOfTypes(events, new Set(['1br', '2br']), typeOf).map((e) => e.id)).toEqual(['b', 'c'])
+  })
+
+  it('drops events of an apartment whose category is unknown once a category is chosen', () => {
+    const lone = cleaningEvents([cl({ id: 'z', apartment_id: 99 })], week)
+    expect(eventsOfTypes(lone, new Set(['studio']), typeOf)).toEqual([])
+    expect(eventsOfTypes(lone, new Set(), typeOf)).toHaveLength(1)
+  })
+
+  it('counts cleanings per day, rejected and reversed ones are not counted, empty days are 0', () => {
+    const per = cleanedPerDay(events, week)
+    expect(per.size).toBe(7)
+    expect(per.get('2026-11-10')).toBe(2)
+    expect(per.get('2026-11-11')).toBe(2)
+    expect(per.get('2026-11-08')).toBe(0)
+  })
+
+  it('counts only cleanings, not requests or breakdowns', () => {
+    const mixed = [...events, ...incidentEvents([inc({ id: 'q', apartment_id: 1, created_at: '2026-11-10T10:00:00Z' })], week)]
+    expect(cleanedPerDay(mixed, week).get('2026-11-10')).toBe(2)
+  })
+
+  it('sums the premium per day from the rate of the category', () => {
+    const res = premiumPerDay(events, week, typeOf, { studio: 30, '1br': 40, '2br': 50 })
+    expect(res.incomplete).toBe(false)
+    expect(res.byDay.get('2026-11-10')).toBe(70)
+    expect(res.byDay.get('2026-11-11')).toBe(80)
+    expect(res.byDay.get('2026-11-09')).toBe(0)
+    expect(sumOf(res.byDay.values())).toBe(150)
+  })
+
+  it('keeps cents exact when rates have kopecks', () => {
+    const many = cleaningEvents(Array.from({ length: 10 }, (_, i) => cl({ id: `m${i}`, apartment_id: 1, cleaned_at: '2026-11-10T08:00:00Z' })), week)
+    const res = premiumPerDay(many, week, typeOf, { studio: 0.1 })
+    expect(res.byDay.get('2026-11-10')).toBe(1)
+    expect(sumOf([0.1, 0.2])).toBe(0.3)
+  })
+
+  it('marks the result incomplete when a category has no rate and leaves that cleaning out', () => {
+    const res = premiumPerDay(events, week, typeOf, { studio: 30, '1br': 40 })
+    expect(res.incomplete).toBe(true)
+    expect(res.byDay.get('2026-11-11')).toBe(30)
+  })
+
+  it('lists the cleanings of a day earliest first', () => {
+    expect(cleaningsOfDay(events, '2026-11-11').map((e) => e.id)).toEqual(['c', 'd'])
+    expect(cleaningsOfDay(events, '2026-11-12')).toEqual([])
   })
 })

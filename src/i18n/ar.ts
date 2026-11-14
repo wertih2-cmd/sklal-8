@@ -793,6 +793,13 @@ export const ar: Dict = {
       stateRejected: 'مرفوض',
       statePending: 'في انتظار الاعتماد',
       statePosted: 'معتمد',
+      categories: 'فئات الشقق',
+      cleanedTotal: 'تم تنظيفها خلال الفترة',
+      cleanedPerDay: 'المنظَّف يوميًا',
+      premiumPerDay: 'مكافأة اليوم، جنيه',
+      premiumMissingRate: 'بعض الفئات بلا مكافأة محددة: لم تدخل في المجموع',
+      dayCleanings: 'عمليات تنظيف اليوم',
+      noCleaningsThatDay: 'لا توجد عمليات تنظيف في هذا اليوم',
     },
     more: {
       title: 'كمان',

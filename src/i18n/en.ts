@@ -792,6 +792,13 @@ export const en: Dict = {
       stateRejected: 'Rejected',
       statePending: 'Awaiting approval',
       statePosted: 'Approved',
+      categories: 'Apartment categories',
+      cleanedTotal: 'Cleaned in the period',
+      cleanedPerDay: 'Cleaned per day',
+      premiumPerDay: 'Premium per day, EGP',
+      premiumMissingRate: 'Some categories have no premium set: it is not in the sum',
+      dayCleanings: 'Cleanings of the day',
+      noCleaningsThatDay: 'No cleanings on this day',
     },
     more: {
       title: 'More',

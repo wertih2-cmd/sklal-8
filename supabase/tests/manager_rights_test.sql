@@ -157,6 +157,11 @@ begin
   rep := rep || pg_temp.r('K3 позиция A (2 из 2) не в нехватке, B (0 из 1) в нехватке',
     not exists (select 1 from apartment_gap where apartment_id = v_apt and item_id = v_A and gap > 0)
     and exists (select 1 from apartment_gap where apartment_id = v_apt and item_id = v_B and gap > 0));
+  rep := rep || 'DBG A norm/actual/gap: ' || coalesce((select norm || '/' || actual || '/' || gap from apartment_gap where apartment_id = v_apt and item_id = v_A), 'нет строки')
+    || E' | B norm/actual/gap: ' || coalesce((select norm || '/' || actual || '/' || gap from apartment_gap where apartment_id = v_apt and item_id = v_B), 'нет строки')
+    || E' | выдача A: ' || coalesce((select sum(qty)::text from stock_moves where item_id = v_A and to_loc = (select id from locations where apartment_id = v_apt)), '0')
+    || E' | A на полке: ' || coalesce((select sum(qty)::text from stock_balance where item_id = v_A and loc_id = (select id from locations where apartment_id = v_apt)), '0')
+    || E'\n';
   perform pg_temp.as_user(v_mgr);
   rep := rep || pg_temp.r('K4 менеджер не видит остатки напрямую (stock_balance пуст)', (select count(*) from stock_balance) = 0);
   rep := rep || pg_temp.r('K4 менеджер: apartment_gap пуст по остаткам (actual = 0 у всех строк)',

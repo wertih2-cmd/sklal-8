@@ -19,6 +19,7 @@ describe('isNavActive (sidebar: all items visible)', () => {
   it('the more specific item wins over More', () => {
     expect(activeKeys('/admin/more/incidents')).toEqual(['incidents'])
     expect(activeKeys('/admin/more/cleaning-approvals')).toEqual(['cleanings'])
+    expect(activeKeys('/admin/more/chessboard')).toEqual(['chessboard'])
     expect(activeKeys('/admin/more/reports')).toEqual(['reports'])
     expect(activeKeys('/admin/more')).toEqual(['more'])
   })
@@ -32,6 +33,7 @@ describe('isNavActive (phone: only the five tabs)', () => {
   it('More is lit for every /admin/more page', () => {
     expect(activeKeys('/admin/more/incidents', MOBILE_NAV_ITEMS)).toEqual(['more'])
     expect(activeKeys('/admin/more/reports', MOBILE_NAV_ITEMS)).toEqual(['more'])
+    expect(activeKeys('/admin/more/chessboard', MOBILE_NAV_ITEMS)).toEqual(['more'])
   })
   it('has the five tabs with move in the middle', () => {
     expect(MOBILE_NAV_ITEMS.map((i) => i.key)).toEqual(['home', 'stock', 'move', 'apartments', 'more'])
@@ -46,7 +48,7 @@ describe('sidebarItems', () => {
     expect(sidebarItems('warehouse').map((i) => i.key)).toEqual(['orders', 'inventory', 'documents', 'catalog'])
   })
   it('control group order', () => {
-    expect(sidebarItems('control').map((i) => i.key)).toEqual(['incidents', 'cleanings', 'reports', 'more'])
+    expect(sidebarItems('control').map((i) => i.key)).toEqual(['incidents', 'cleanings', 'chessboard', 'reports', 'more'])
   })
   it('only incidents and cleanings carry a counter', () => {
     expect(NAV_ITEMS.filter((i) => i.badge).map((i) => i.key)).toEqual(['incidents', 'cleanings'])
@@ -76,7 +78,7 @@ describe('formatBadge / totalBadge', () => {
 describe('MORE_SECTIONS', () => {
   const all = MORE_SECTIONS.flatMap((s) => s.items)
   it('lists every sub-page once', () => {
-    expect(all).toHaveLength(13)
+    expect(all).toHaveLength(14)
     expect(new Set(all.map((i) => i.key)).size).toBe(all.length)
     expect(new Set(all.map((i) => i.to)).size).toBe(all.length)
     expect(all.every((i) => i.to.startsWith('/admin/more/'))).toBe(true)
@@ -103,6 +105,7 @@ describe('titleKeyFor', () => {
   it('a sidebar page wins over the More hub', () => {
     expect(titleKeyFor('/admin/more/incidents')).toBe('incidents')
     expect(titleKeyFor('/admin/more/documents/7')).toBe('documents')
+    expect(titleKeyFor('/admin/more/chessboard')).toBe('chessboard')
   })
   it('pages that only live under More', () => {
     expect(titleKeyFor('/admin/more/staff')).toBe('staff')

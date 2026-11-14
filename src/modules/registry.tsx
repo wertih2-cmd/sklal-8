@@ -29,6 +29,7 @@ const NormTemplatesPage = lazy(() => import('@/modules/admin/NormTemplatesPage')
 const CatalogPage = lazy(() => import('@/modules/admin/CatalogPage').then(m => ({ default: m.CatalogPage })))
 const QrPage = lazy(() => import('@/modules/admin/QrPage').then(m => ({ default: m.QrPage })))
 const ReportsPage = lazy(() => import('@/modules/admin/ReportsPage').then(m => ({ default: m.ReportsPage })))
+const Chessboard = lazy(() => import('@/modules/admin/Chessboard').then(m => ({ default: m.Chessboard })))
 const HistoryPage = lazy(() => import('@/modules/history/HistoryPage').then(m => ({ default: m.HistoryPage })))
 const InventoryPage = lazy(() => import('@/modules/admin/InventoryPage').then(m => ({ default: m.InventoryPage })))
 const OrdersPage = lazy(() => import('@/modules/admin/OrdersPage').then(m => ({ default: m.OrdersPage })))
@@ -89,6 +90,7 @@ export function AdminRoutes() {
           <Route path="more/norm-templates" element={<NormTemplatesPage />} />
           <Route path="more/catalog" element={<CatalogPage />} />
           <Route path="more/qr" element={<QrPage />} />
+          <Route path="more/chessboard" element={<Chessboard />} />
           <Route path="more/reports" element={<ReportsPage />} />
           <Route path="more/history" element={<HistoryPage />} />
           <Route path="more/inventory" element={<InventoryPage />} />

@@ -1,7 +1,7 @@
 export type NavKey =
   | 'home' | 'stock' | 'move' | 'apartments'
   | 'orders' | 'inventory' | 'documents' | 'catalog'
-  | 'incidents' | 'cleanings' | 'reports' | 'more'
+  | 'incidents' | 'cleanings' | 'chessboard' | 'reports' | 'more'
 export type NavGroup = 'work' | 'warehouse' | 'control'
 export type BadgeKey = 'incidents' | 'cleanings'
 
@@ -30,6 +30,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { key: 'catalog', to: '/admin/more/catalog', group: 'warehouse' },
   { key: 'incidents', to: '/admin/more/incidents', group: 'control', badge: 'incidents' },
   { key: 'cleanings', to: '/admin/more/cleaning-approvals', group: 'control', badge: 'cleanings' },
+  { key: 'chessboard', to: '/admin/more/chessboard', group: 'control' },
   { key: 'reports', to: '/admin/more/reports', group: 'control' },
   { key: 'more', to: '/admin/more', group: 'control' },
 ]
@@ -74,7 +75,7 @@ export function totalBadge(c: NavCounts): number {
 
 export type MoreKey =
   | 'orders' | 'inventory' | 'documents' | 'catalog'
-  | 'incidents' | 'cleaningApprovals' | 'reports' | 'history'
+  | 'incidents' | 'cleaningApprovals' | 'chessboard' | 'reports' | 'history'
   | 'normTemplates' | 'qr' | 'contacts'
   | 'staff' | 'users'
 export type MoreSectionKey = 'warehouse' | 'control' | 'directories' | 'admin'
@@ -106,6 +107,7 @@ export const MORE_SECTIONS: readonly MoreSection[] = [
     items: [
       { key: 'incidents', to: '/admin/more/incidents', badge: 'incidents' },
       { key: 'cleaningApprovals', to: '/admin/more/cleaning-approvals', badge: 'cleanings' },
+      { key: 'chessboard', to: '/admin/more/chessboard' },
       { key: 'reports', to: '/admin/more/reports' },
       { key: 'history', to: '/admin/more/history' },
     ],

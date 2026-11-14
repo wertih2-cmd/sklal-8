@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useI18n } from '@/i18n'
-import { Users, Wrench, Phone, ExternalLink, CircleUser as UserCircle, ChevronRight, ClipboardList, FolderTree, FileText, ShoppingCart, ClipboardCheck, QrCode, ChartBar as BarChart3, History, BadgeCheck } from 'lucide-react'
+import { Users, Wrench, Phone, ExternalLink, CircleUser as UserCircle, ChevronRight, ClipboardList, FolderTree, FileText, ShoppingCart, ClipboardCheck, QrCode, ChartBar as BarChart3, History, BadgeCheck, CalendarDays } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useAuth } from '@/modules/core/store'
 import { MORE_SECTIONS, formatBadge, type MoreKey, type MoreSectionKey } from './adminNavModel'
@@ -13,6 +13,7 @@ const ICONS: Record<MoreKey, LucideIcon> = {
   catalog: FolderTree,
   incidents: Wrench,
   cleaningApprovals: BadgeCheck,
+  chessboard: CalendarDays,
   reports: BarChart3,
   history: History,
   normTemplates: ClipboardList,

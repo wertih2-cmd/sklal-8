@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { Plus, House, Package, Building2, Ellipsis, Wrench, BadgeCheck, ChartBar, Users, Search, ShoppingCart, ClipboardCheck, FileText, FolderTree } from 'lucide-react'
+import { Plus, House, Package, Building2, Ellipsis, Wrench, BadgeCheck, ChartBar, Users, Search, ShoppingCart, ClipboardCheck, FileText, FolderTree, CalendarDays } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { LangSwitcher } from '@/components/LangSwitcher'
@@ -22,6 +22,7 @@ const ICONS: Record<NavKey, LucideIcon> = {
   catalog: FolderTree,
   incidents: Wrench,
   cleanings: BadgeCheck,
+  chessboard: CalendarDays,
   reports: ChartBar,
   more: Ellipsis,
 }

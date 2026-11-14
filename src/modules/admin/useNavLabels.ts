@@ -8,7 +8,7 @@ export function useNavLabels(): Record<NavKey, string> {
   return {
     home: n.home, stock: n.stock, move: n.move, apartments: n.apartments,
     orders: t.admin.more.orders, inventory: t.admin.more.inventory, documents: t.admin.more.documents, catalog: t.admin.more.catalog,
-    incidents: n.incidents, cleanings: n.cleanings, reports: n.reports, more: n.more,
+    incidents: n.incidents, cleanings: n.cleanings, chessboard: t.admin.more.chessboard, reports: n.reports, more: n.more,
   }
 }
 

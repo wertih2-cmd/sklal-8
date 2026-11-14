@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { summarize, filterRows, formatPct } from './stockMetrics'
+import { summarize, filterRows, formatPct, stockFillPct } from './stockMetrics'
 import type { WarehouseValuationRow } from '@/lib/database.types'
 
 function row(overrides: Partial<WarehouseValuationRow> = {}): WarehouseValuationRow {
@@ -149,5 +149,23 @@ describe('formatPct', () => {
 
   it('formats zero', () => {
     expect(formatPct(0)).toBe('0.0%')
+  })
+})
+
+describe('stockFillPct', () => {
+  it('no stock is an empty bar, with or without a minimum', () => {
+    expect(stockFillPct(0, null)).toBe(0)
+    expect(stockFillPct(0, 0)).toBe(0)
+    expect(stockFillPct(0, 5)).toBe(0)
+    expect(stockFillPct(-2, 5)).toBe(0)
+  })
+  it('stock without a minimum is a full bar', () => {
+    expect(stockFillPct(5, null)).toBe(100)
+    expect(stockFillPct(5, 0)).toBe(100)
+  })
+  it('share of the minimum, capped at 100', () => {
+    expect(stockFillPct(1, 4)).toBe(25)
+    expect(stockFillPct(4, 4)).toBe(100)
+    expect(stockFillPct(30, 1)).toBe(100)
   })
 })

@@ -12,7 +12,7 @@ import { OwnerBadge } from '@/components/OwnerBadge'
 import { ErrorState } from '@/components/ErrorState'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 import { mergeCompany, mergeOwner, type MergedStockRow, type MergedOwnerRow } from './stockRows'
-import { summarize, formatPct } from './stockMetrics'
+import { summarize, formatPct, stockFillPct } from './stockMetrics'
 import { parseGuestPrice, parseCost } from './guestPrice'
 import { canAddToSelection, getIneligibleReason, type IneligibleReason, type TransferCandidate, type TransferSelection } from './transferSelection'
 import { TransferModal } from './TransferModal'
@@ -676,7 +676,7 @@ function StockView({ scope }: { scope: 'company' | 'owner' }) {
                 <tbody>
                   {group.items.map((item) => {
                     const expanded = !isOwner && !selectionMode && expandedId === item.item_id
-                    const minPct = !isOwner && item.min_stock ? Math.min((item.qty / item.min_stock) * 100, 100) : 100
+                    const minPct = stockFillPct(item.qty, !isOwner ? item.min_stock : null)
                     const itemRow = item as MergedStockRow
                     return (
                       <Fragment key={`${item.item_id}-${isOwner ? (item as MergedOwnerRow).apartment_id : ''}`}>
@@ -801,7 +801,7 @@ function StockView({ scope }: { scope: 'company' | 'owner' }) {
                         <div className="mb-2">
                           <span className="text-muted text-xs">/ {n(formatQty(itemRow.min_stock, itemRow))}</span>
                           <div className="mt-1">
-                            <ProgressBar value={Math.min((itemRow.qty / itemRow.min_stock) * 100, 100)} color={itemRow.below_min ? 'var(--bad)' : 'var(--ok)'} />
+                            <ProgressBar value={stockFillPct(itemRow.qty, itemRow.min_stock)} color={itemRow.below_min ? 'var(--bad)' : 'var(--ok)'} />
                           </div>
                         </div>
                       )}

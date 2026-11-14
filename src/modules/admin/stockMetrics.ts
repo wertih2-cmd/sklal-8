@@ -65,3 +65,13 @@ export function formatPct(value: number | null): string {
   if (value == null || Number.isNaN(value)) return '—'
   return `${value.toFixed(1)}%`
 }
+
+/**
+ * Fill of the stock bar, 0..100. No stock is an empty bar. With stock but no minimum there is nothing to compare
+ * against, so the bar is full; otherwise it is the share of the minimum, capped at 100.
+ */
+export function stockFillPct(qty: number, minStock: number | null): number {
+  if (!(qty > 0)) return 0
+  if (minStock == null || !(minStock > 0)) return 100
+  return Math.min((qty / minStock) * 100, 100)
+}

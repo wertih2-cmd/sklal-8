@@ -154,3 +154,47 @@ export function parseOutcome(data: unknown): MarkOutcome {
 export function sortedStaff(staff: readonly StaffEntry[]): StaffEntry[] {
   return staff.filter((s) => s.active).sort((a, b) => a.full_name.localeCompare(b.full_name) || a.id - b.id)
 }
+
+const CLOCK = /^(\d{1,2})(?:[:.,](\d{2}))?$/
+
+/** A time of the day typed by a person ('8', '08:30', '21.15') as minutes since midnight; null when it is not a time. */
+export function parseClock(text: string): number | null {
+  const m = CLOCK.exec(text.trim())
+  if (!m) return null
+  const hours = Number(m[1])
+  const minutes = m[2] === undefined ? 0 : Number(m[2])
+  if (hours > 23 || minutes > 59) return null
+  return hours * 60 + minutes
+}
+
+/** The usual lunch break in minutes: a working day is 8 net hours, the lunch is not counted. */
+export const DEFAULT_LUNCH_MINUTES = 60
+export const QUICK_LUNCH_MINUTES: readonly number[] = [0, 30, 45, 60]
+export const MAX_LUNCH_MINUTES = 240
+
+/** The lunch break typed by a person, whole minutes from 0 to 240; null when it is not that. */
+export function parseLunch(text: string): number | null {
+  const t = text.trim()
+  if (!/^\d{1,3}$/.test(t)) return null
+  const minutes = Number(t)
+  return minutes <= MAX_LUNCH_MINUTES ? minutes : null
+}
+
+/** Minutes between "came" and "left"; a departure earlier than the arrival means the next day (a night shift). */
+export function minutesBetweenClock(from: string, to: string): number | null {
+  const a = parseClock(from)
+  const b = parseClock(to)
+  if (a === null || b === null || a === b) return null
+  return b > a ? b - a : b + 24 * 60 - a
+}
+
+/**
+ * Net hours of the shift, to the hundredth: the time at work minus the lunch break. The same time twice is not a shift,
+ * and a lunch as long as the shift or longer leaves nothing. null when either time is not a time or nothing is left.
+ */
+export function hoursBetweenClock(from: string, to: string, lunchMinutes = 0): number | null {
+  const gross = minutesBetweenClock(from, to)
+  if (gross === null || !Number.isFinite(lunchMinutes) || lunchMinutes < 0) return null
+  const net = gross - lunchMinutes
+  return net > 0 ? Math.round((net / 60) * 100) / 100 : null
+}

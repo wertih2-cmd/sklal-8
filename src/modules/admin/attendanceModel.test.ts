@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   cairoToday, monthOf, shiftMonth, monthDays, monthRange, weekdayOf, markKey, indexMarks, dayEditable,
   workedCount, hoursPerStaff, formatHours, validateMark, hoursToSend, parseHours, parseOutcome, sortedStaff,
-  QUICK_HOURS, type AttendanceRow, type StaffEntry,
+  QUICK_HOURS, parseClock, hoursBetweenClock, minutesBetweenClock, parseLunch, DEFAULT_LUNCH_MINUTES, type AttendanceRow, type StaffEntry,
 } from './attendanceModel'
 
 const row = (p: Partial<AttendanceRow> = {}): AttendanceRow => ({
@@ -122,5 +122,85 @@ describe('staff list', () => {
       { id: 2, full_name: 'Omar', role: 'housekeeper', active: false },
     ]
     expect(sortedStaff(staff).map((s) => s.id)).toEqual([1, 3])
+  })
+})
+
+describe('time of the day instead of hours', () => {
+  it('reads an hour, hours and minutes with a colon, a dot or a comma', () => {
+    expect(parseClock('8')).toBe(480)
+    expect(parseClock('08:30')).toBe(510)
+    expect(parseClock(' 21.15 ')).toBe(1275)
+    expect(parseClock('9,05')).toBe(545)
+    expect(parseClock('0')).toBe(0)
+    expect(parseClock('23:59')).toBe(1439)
+  })
+  it('refuses what is not a time', () => {
+    expect(parseClock('')).toBeNull()
+    expect(parseClock('24')).toBeNull()
+    expect(parseClock('8:60')).toBeNull()
+    expect(parseClock('8.5')).toBeNull()
+    expect(parseClock('abc')).toBeNull()
+    expect(parseClock('-1')).toBeNull()
+    expect(parseClock('8:3')).toBeNull()
+  })
+  it('counts the hours between came and left', () => {
+    expect(hoursBetweenClock('8', '9')).toBe(1)
+    expect(hoursBetweenClock('8', '21')).toBe(13)
+    expect(hoursBetweenClock('08:00', '16:30')).toBe(8.5)
+    expect(hoursBetweenClock('8:00', '8:20')).toBe(0.33)
+    expect(hoursBetweenClock('9:10', '17:00')).toBe(7.83)
+  })
+  it('a departure earlier than the arrival is the next day', () => {
+    expect(hoursBetweenClock('22', '6')).toBe(8)
+    expect(hoursBetweenClock('23:30', '0:30')).toBe(1)
+  })
+  it('the same time twice, or a bad time, gives nothing', () => {
+    expect(hoursBetweenClock('8', '8')).toBeNull()
+    expect(hoursBetweenClock('8', 'x')).toBeNull()
+    expect(hoursBetweenClock('', '9')).toBeNull()
+  })
+  it('the result is always a valid mark: above 0 and below 24', () => {
+    for (const [from, to] of [['0:00', '23:59'], ['23:59', '0:00'], ['12', '11:59']]) {
+      const h = hoursBetweenClock(from, to)
+      expect(h !== null && h > 0 && h < 24).toBe(true)
+    }
+  })
+})
+
+describe('the lunch break is not counted', () => {
+  it('a day of 8 net hours is 9 hours at work with the usual lunch', () => {
+    expect(DEFAULT_LUNCH_MINUTES).toBe(60)
+    expect(hoursBetweenClock('8', '17', DEFAULT_LUNCH_MINUTES)).toBe(8)
+    expect(hoursBetweenClock('08:00', '17:00', 60)).toBe(8)
+  })
+  it('subtracts any lunch, to the hundredth', () => {
+    expect(hoursBetweenClock('8', '16:30', 30)).toBe(8)
+    expect(hoursBetweenClock('8', '12', 0)).toBe(4)
+    expect(hoursBetweenClock('8', '18:20', 45)).toBe(9.58)
+  })
+  it('a night shift loses the lunch too', () => {
+    expect(hoursBetweenClock('22', '6', 60)).toBe(7)
+  })
+  it('a lunch as long as the shift or longer leaves nothing', () => {
+    expect(hoursBetweenClock('8', '9', 60)).toBeNull()
+    expect(hoursBetweenClock('8', '8:30', 45)).toBeNull()
+  })
+  it('a negative lunch is refused', () => {
+    expect(hoursBetweenClock('8', '17', -1)).toBeNull()
+  })
+  it('the gross minutes are still available', () => {
+    expect(minutesBetweenClock('8', '17')).toBe(540)
+    expect(minutesBetweenClock('22', '6')).toBe(480)
+    expect(minutesBetweenClock('8', '8')).toBeNull()
+  })
+  it('lunch is whole minutes from 0 to 240', () => {
+    expect(parseLunch('60')).toBe(60)
+    expect(parseLunch(' 0 ')).toBe(0)
+    expect(parseLunch('240')).toBe(240)
+    expect(parseLunch('241')).toBeNull()
+    expect(parseLunch('')).toBeNull()
+    expect(parseLunch('1.5')).toBeNull()
+    expect(parseLunch('-5')).toBeNull()
+    expect(parseLunch('abc')).toBeNull()
   })
 })

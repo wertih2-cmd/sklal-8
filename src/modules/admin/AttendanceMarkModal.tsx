@@ -6,7 +6,7 @@ import { errorMessage, toast } from '@/lib/toast'
 import { formatDateTime } from '@/lib/format'
 import { markAttendance, clearAttendance } from './attendanceApi'
 import {
-  QUICK_HOURS, formatHours, hoursToSend, parseHours, validateMark,
+  DEFAULT_LUNCH_MINUTES, QUICK_HOURS, QUICK_LUNCH_MINUTES, formatHours, hoursBetweenClock, hoursToSend, minutesBetweenClock, parseClock, parseHours, parseLunch, validateMark,
   type AttendanceKind, type AttendanceRow,
 } from './attendanceModel'
 
@@ -31,6 +31,10 @@ export function AttendanceMarkModal({ staffId, staffName, day, existing, onClose
   const a = t.admin.attendance
   const [kind, setKind] = useState<AttendanceKind>(existing?.kind ?? 'work')
   const [hoursText, setHoursText] = useState(existing && existing.kind !== 'leave' ? formatHours(existing.hours) : '8')
+  // Came / left: an aid to fill the hours (the mark stores the hours only)
+  const [fromText, setFromText] = useState('')
+  const [toText, setToText] = useState('')
+  const [lunchText, setLunchText] = useState(String(DEFAULT_LUNCH_MINUTES))
   const [sharesPool, setSharesPool] = useState(existing?.shares_pool ?? true)
   const [note, setNote] = useState(existing?.note ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -38,6 +42,29 @@ export function AttendanceMarkModal({ staffId, staffName, day, existing, onClose
   const [conflict, setConflict] = useState<Conflict | null>(null)
 
   const kindLabel: Record<AttendanceKind, string> = { work: a.kindWork, weekend: a.kindWeekend, leave: a.kindLeave }
+  // Net hours: the time at work minus the lunch break (a working day is 8 net hours)
+  const lunch = parseLunch(lunchText)
+  const grossMinutes = minutesBetweenClock(fromText, toText)
+  const timesHours = lunch === null ? null : hoursBetweenClock(fromText, toText, lunch)
+  const timesFilled = fromText.trim() !== '' && toText.trim() !== ''
+  const timeSyntaxBad = (fromText.trim() !== '' && parseClock(fromText) === null) || (toText.trim() !== '' && parseClock(toText) === null) || (timesFilled && grossMinutes === null)
+  const lunchBad = lunch === null
+  const lunchTooLong = !timeSyntaxBad && !lunchBad && timesFilled && grossMinutes !== null && timesHours === null
+
+  const onTimes = (nextFrom: string, nextTo: string, nextLunch: string = lunchText) => {
+    setFromText(nextFrom)
+    setToText(nextTo)
+    setLunchText(nextLunch)
+    const l = parseLunch(nextLunch)
+    const h = l === null ? null : hoursBetweenClock(nextFrom, nextTo, l)
+    if (h !== null) setHoursText(formatHours(h))
+  }
+  // Hours set by hand or by a quick button: the times typed before no longer explain them
+  const onHours = (text: string) => {
+    setHoursText(text)
+    setFromText('')
+    setToText('')
+  }
 
   const run = async (action: 'save' | 'clear', force: boolean) => {
     const hours = parseHours(hoursText)
@@ -88,13 +115,43 @@ export function AttendanceMarkModal({ staffId, staffName, day, existing, onClose
 
           {kind !== 'leave' && (
             <div>
-              <label className="block text-xs text-muted mb-1.5" htmlFor="att-hours">{a.hoursLabel}</label>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-xs text-muted mb-1.5" htmlFor="att-from">{a.timeFrom}</label>
+                  <input id="att-from" inputMode="decimal" placeholder="08:00" value={fromText} onChange={(e) => onTimes(e.target.value, toText)} aria-invalid={timeSyntaxBad} className="well w-full rounded-xl px-3 min-h-[44px] text-ink text-sm" data-testid="att-from" />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted mb-1.5" htmlFor="att-to">{a.timeTo}</label>
+                  <input id="att-to" inputMode="decimal" placeholder="17:00" value={toText} onChange={(e) => onTimes(fromText, e.target.value)} aria-invalid={timeSyntaxBad} className="well w-full rounded-xl px-3 min-h-[44px] text-ink text-sm" data-testid="att-to" />
+                </div>
+              </div>
+              <div className="mt-2">
+                <label className="block text-xs text-muted mb-1.5" htmlFor="att-lunch">{a.lunchLabel}</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {QUICK_LUNCH_MINUTES.map((m) => (
+                    <button key={m} type="button" onClick={() => onTimes(fromText, toText, String(m))} className={`min-w-[48px] min-h-[44px] rounded-xl px-3 text-sm font-medium ${lunch === m ? 'bg-accent-soft text-accent' : 'well text-ink'}`}>{m}</button>
+                  ))}
+                  <input id="att-lunch" inputMode="numeric" value={lunchText} onChange={(e) => onTimes(fromText, toText, e.target.value)} aria-invalid={lunchBad} className="well w-20 rounded-xl px-3 min-h-[44px] text-ink text-sm" data-testid="att-lunch" />
+                </div>
+              </div>
+              {timeSyntaxBad ? (
+                <p className="text-xs text-bad mt-1.5" role="alert">{a.timeInvalid}</p>
+              ) : lunchBad ? (
+                <p className="text-xs text-bad mt-1.5" role="alert">{a.lunchInvalid}</p>
+              ) : lunchTooLong ? (
+                <p className="text-xs text-bad mt-1.5" role="alert">{a.lunchTooLong}</p>
+              ) : timesHours !== null && grossMinutes !== null ? (
+                <p className="text-xs text-ok mt-1.5">{a.timeResult}: {formatHours(timesHours)} ({a.timeAtWork} {formatHours(Math.round((grossMinutes / 60) * 100) / 100)}, {a.lunchShort} {lunch})</p>
+              ) : (
+                <p className="text-xs text-muted mt-1.5">{a.timeHint}</p>
+              )}
+              <label className="block text-xs text-muted mt-3 mb-1.5" htmlFor="att-hours">{a.hoursLabel}</label>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {QUICK_HOURS.map((h) => (
                   <button
                     key={h}
                     type="button"
-                    onClick={() => setHoursText(String(h))}
+                    onClick={() => onHours(String(h))}
                     className={`min-w-[48px] min-h-[44px] rounded-xl px-3 text-sm font-medium ${parseHours(hoursText) === h ? 'bg-accent-soft text-accent' : 'well text-ink'}`}
                   >
                     {h}
@@ -105,7 +162,7 @@ export function AttendanceMarkModal({ staffId, staffName, day, existing, onClose
                 id="att-hours"
                 inputMode="decimal"
                 value={hoursText}
-                onChange={(e) => setHoursText(e.target.value)}
+                onChange={(e) => onHours(e.target.value)}
                 className="well w-full rounded-xl px-3 min-h-[44px] text-ink text-sm"
               />
             </div>

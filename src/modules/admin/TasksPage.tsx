@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { MessageCircle, Plus, Trash2, Undo2 } from 'lucide-react'
+import { FileCheck, MessageCircle, Plus, Trash2, Undo2 } from 'lucide-react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useI18n } from '@/i18n'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { friendlyMessage } from '@/lib/errors'
@@ -10,10 +11,11 @@ import { whatsappUrl } from '@/lib/whatsappNotify'
 import { useAuth } from '@/modules/core/store'
 import { fetchApartmentsAdmin } from './api'
 import { cairoToday } from './attendanceModel'
+import { areaOf, inspectionsPath } from './checklistsModel'
 import { TaskFormModal } from './TaskFormModal'
 import { deleteTask, fetchTasks, setTaskStatus } from './tasksApi'
 import {
-  canCreateTask, canDeleteTask, countOpen, filterTasks, isOverdue, nextStatus, prevStatus, sortTasks, taskWhatsappText,
+  canCreateTask, canDeleteTask, countOpen, filterTasks, isClosed, isOverdue, nextStatus, prevStatus, sortTasks, taskWhatsappText,
   type Task, type TaskFilter, type TaskKind, type TaskRole, type TaskStatus,
 } from './tasksModel'
 
@@ -23,6 +25,7 @@ const FILTERS: readonly TaskFilter[] = ['active', 'done', 'all']
 export function TasksPage() {
   const { t } = useI18n()
   const k = t.tasks
+  const { pathname } = useLocation()
   const role = useAuth((s) => s.profile?.role) as TaskRole | undefined
   const [tasks, setTasks] = useState<Task[]>([])
   const [codes, setCodes] = useState<ReadonlyMap<number, string>>(new Map())
@@ -56,10 +59,10 @@ export function TasksPage() {
   const shown = useMemo(() => sortTasks(filterTasks(tasks, filter), today), [tasks, filter, today])
   if (!role) return null
 
-  const kindName: Record<TaskKind, string> = { cleaning: k.kindCleaning, inspection: k.kindInspection, other: k.kindOther }
-  const statusName: Record<TaskStatus, string> = { new: k.statusNew, accepted: k.statusAccepted, done: k.statusDone }
+  const kindName: Record<TaskKind, string> = { cleaning: k.kindCleaning, inspection: k.kindInspection, other: k.kindOther, rework: k.kindRework }
+  const statusName: Record<TaskStatus, string> = { new: k.statusNew, accepted: k.statusAccepted, done: k.statusDone, verified: k.statusVerified }
   const filterName: Record<TaskFilter, string> = { active: k.filterActive, done: k.filterDone, all: k.filterAll }
-  const stepName: Record<TaskStatus, string> = { new: k.back, accepted: k.accept, done: k.complete }
+  const stepName: Record<TaskStatus, string> = { new: k.back, accepted: k.accept, done: k.complete, verified: k.complete }
   const labels = { title: k.messageTitle, apartment: k.fieldApartment, date: k.fieldDate, due: k.fieldDue, kindName }
 
   const change = async (task: Task, next: TaskStatus) => {
@@ -94,11 +97,14 @@ export function TasksPage() {
 
   return (
     <div className="px-4 py-4 max-w-3xl mx-auto pb-28">
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <div>
+      <div className="flex flex-wrap items-center gap-3 mb-3">
+        <div className="me-auto">
           <h1 className="text-lg font-semibold text-ink">{k.title}</h1>
           <p className="text-xs text-muted">{k.openCount}: {countOpen(tasks)}</p>
         </div>
+        <NavLink to={inspectionsPath(areaOf(pathname))} className={`${btn} well text-accent`}>
+          <FileCheck className="w-4 h-4" />{t.inspections.title}
+        </NavLink>
         {canCreateTask(role) && (
           <button type="button" onClick={() => setCreating(true)} className={`${btn} bg-accent text-on-accent`}>
             <Plus className="w-4 h-4" />{k.newTask}
@@ -136,7 +142,7 @@ export function TasksPage() {
               <li key={task.id} className="tile rounded-[20px] p-4">
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <span className="text-xs font-medium rounded-md px-2 py-0.5 bg-accent-soft text-accent">{kindName[task.kind]}</span>
-                  <span className={`text-xs ${task.status === 'done' ? 'text-ok' : 'text-muted'}`}>{statusName[task.status]}</span>
+                  <span className={`text-xs ${isClosed(task) ? 'text-ok' : 'text-muted'}`}>{statusName[task.status]}</span>
                   {overdue && <span className="text-xs font-medium rounded-md px-2 py-0.5 bg-bad-soft text-bad">{k.overdue}</span>}
                   {code && <b className="text-sm text-ink ms-auto">{code}</b>}
                 </div>
@@ -148,6 +154,8 @@ export function TasksPage() {
                 <p className="text-xs text-muted">{k.createdBy}: {task.created_by_name ?? '—'}</p>
                 {task.accepted_at && <p className="text-xs text-muted">{k.acceptedBy}: {task.accepted_by_name ?? '—'}, {formatDateTime(task.accepted_at)}</p>}
                 {task.done_at && <p className="text-xs text-muted">{k.doneBy}: {task.done_by_name ?? '—'}, {formatDateTime(task.done_at)}</p>}
+                {task.verified_at && <p className="text-xs text-ok">{k.verifiedBy}: {task.verified_by_name ?? '—'}, {formatDateTime(task.verified_at)}</p>}
+                {task.return_note && task.status === 'accepted' && <p className="text-xs text-warn">{k.returnNote}: {task.return_note}</p>}
 
                 <div className="flex flex-wrap items-center gap-2 mt-3">
                   {next && (
@@ -158,7 +166,7 @@ export function TasksPage() {
                       <Undo2 className="w-4 h-4" />{k.back}
                     </button>
                   )}
-                  {canCreateTask(role) && task.status !== 'done' && (
+                  {canCreateTask(role) && !isClosed(task) && (
                     <a href={whatsappUrl('', taskWhatsappText(task, code, labels, formatDate))} target="_blank" rel="noopener noreferrer" className={`${btn} bg-ok text-on-accent`}>
                       <MessageCircle className="w-4 h-4" />{k.sendWhatsapp}
                     </a>

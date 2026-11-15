@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase'
 import { toApiError } from '@/lib/errors'
 import { parseTask, type Task, type TaskKind, type TaskStatus } from './tasksModel'
 
-const COLUMNS = 'id,apartment_id,task_date,kind,body,due_date,status,created_by_name,created_at,accepted_by_name,accepted_at,done_by_name,done_at'
+const COLUMNS = 'id,apartment_id,task_date,kind,body,due_date,status,created_by_name,created_at,accepted_by_name,accepted_at,done_by_name,done_at,verified_by_name,verified_at,return_note'
 
 /** All tasks the person may read (admin, manager, supervisor): the newest 500. */
 export async function fetchTasks(): Promise<Task[]> {

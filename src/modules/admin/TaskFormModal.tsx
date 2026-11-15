@@ -4,7 +4,7 @@ import { Modal } from '@/components/Modal'
 import { friendlyMessage } from '@/lib/errors'
 import { toast } from '@/lib/toast'
 import { createTask } from './tasksApi'
-import { TASK_BODY_MAX, TASK_KINDS, validateTaskForm, type TaskFormError, type TaskKind } from './tasksModel'
+import { TASK_BODY_MAX, MANUAL_TASK_KINDS, validateTaskForm, type TaskFormError, type TaskKind } from './tasksModel'
 
 /** A new task: the manager or the admin. The apartment is optional; the text has no photo. */
 export function TaskFormModal({ apartments, today, defaultApartmentId = null, onClose, onDone }: {
@@ -24,7 +24,7 @@ export function TaskFormModal({ apartments, today, defaultApartmentId = null, on
   const [error, setError] = useState<TaskFormError | null>(null)
   const [busy, setBusy] = useState(false)
 
-  const kindName: Record<TaskKind, string> = { cleaning: k.kindCleaning, inspection: k.kindInspection, other: k.kindOther }
+  const kindName: Record<TaskKind, string> = { cleaning: k.kindCleaning, inspection: k.kindInspection, other: k.kindOther, rework: k.kindRework }
   const errorText: Record<TaskFormError, string> = { body: k.errBody, bodyLong: k.errBodyLong, date: k.errDate, due: k.errDue }
   const field = 'well w-full rounded-xl px-3 min-h-[44px] text-ink text-sm mt-1 disabled:opacity-60'
 
@@ -49,7 +49,7 @@ export function TaskFormModal({ apartments, today, defaultApartmentId = null, on
       <div className="grid gap-3 sm:grid-cols-2 mb-3">
         <label className="block text-sm text-ink">{k.fieldKind}
           <select value={kind} disabled={busy} onChange={(e) => setKind(e.target.value as TaskKind)} className={field}>
-            {TASK_KINDS.map((x) => <option key={x} value={x}>{kindName[x]}</option>)}
+            {MANUAL_TASK_KINDS.map((x) => <option key={x} value={x}>{kindName[x]}</option>)}
           </select>
         </label>
         <label className="block text-sm text-ink">{k.fieldApartment}

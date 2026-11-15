@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
-  canCreateTask, canDeleteTask, countOpen, filterTasks, isOverdue, nextStatus, parseTask, prevStatus,
-  sortTasks, taskWhatsappText, validateTaskForm, type Task,
+  canCreateTask, canDeleteTask, countOpen, filterTasks, isClosed, isOverdue, MANUAL_TASK_KINDS, nextStatus, parseTask, prevStatus,
+  sortTasks, TASK_KINDS, taskWhatsappText, validateTaskForm, type Task,
 } from './tasksModel'
 
 const mk = (over: Partial<Task>): Task => ({
   id: 1, apartment_id: null, task_date: '2026-11-10', kind: 'other', body: 'x', due_date: null, status: 'new',
-  created_by_name: null, created_at: '', accepted_by_name: null, accepted_at: null, done_by_name: null, done_at: null, ...over,
+  created_by_name: null, created_at: '', accepted_by_name: null, accepted_at: null, done_by_name: null, done_at: null,
+  verified_by_name: null, verified_at: null, return_note: null, ...over,
 })
 const today = '2026-11-14'
 
@@ -75,10 +76,53 @@ describe('validateTaskForm', () => {
 
 describe('taskWhatsappText', () => {
   it('builds the message with the apartment and the due date only when they exist', () => {
-    const l = { title: 'Task', apartment: 'Apt', date: 'Date', due: 'Due', kindName: { cleaning: 'Cleaning', inspection: 'Check', other: 'Other' } }
+    const l = { title: 'Task', apartment: 'Apt', date: 'Date', due: 'Due', kindName: { cleaning: 'Cleaning', inspection: 'Check', other: 'Other', rework: 'Rework' } }
     const f = (s: string) => s
     expect(taskWhatsappText(mk({ kind: 'cleaning', body: 'Do it', due_date: '2026-11-15' }), 'A/1', l, f))
       .toBe('Task: Cleaning\nApt: A/1\nDate: 2026-11-10\nDue: 2026-11-15\n\nDo it')
     expect(taskWhatsappText(mk({ body: 'B' }), null, l, f)).toBe('Task: Other\nDate: 2026-11-10\n\nB')
+  })
+})
+
+describe('rework tasks and the verified status', () => {
+  const base = {
+    id: 1, task_date: '2026-11-10', kind: 'rework', body: 'x', due_date: null, status: 'new', created_by_name: null, created_at: '',
+    accepted_by_name: null, accepted_at: null, done_by_name: null, done_at: null,
+  }
+  it('parseTask knows the rework kind and the verified status and reads the new fields', () => {
+    const t = parseTask({ ...base, kind: 'rework', status: 'verified', verified_by_name: 'Ann', verified_at: '2026-11-11T10:00:00Z', return_note: '' })
+    expect(t?.kind).toBe('rework')
+    expect(t?.status).toBe('verified')
+    expect(t?.verified_by_name).toBe('Ann')
+    expect(t?.return_note).toBeNull()
+  })
+  it('parseTask still rejects an unknown kind or status', () => {
+    expect(parseTask({ ...base, kind: 'weird' })).toBeNull()
+    expect(parseTask({ ...base, status: 'weird' })).toBeNull()
+  })
+  it('a verified task is closed: not open, not overdue, in the done filter', () => {
+    const t = parseTask({ ...base, status: 'verified', due_date: '2026-11-01' })!
+    expect(isClosed(t)).toBe(true)
+    expect(isOverdue(t, '2026-11-14')).toBe(false)
+    expect(filterTasks([t], 'done')).toHaveLength(1)
+    expect(filterTasks([t], 'active')).toHaveLength(0)
+    expect(countOpen([t])).toBe(0)
+  })
+  it('nobody steps a verified task forward or back, and only the admin deletes it', () => {
+    const t = parseTask({ ...base, status: 'verified' })!
+    expect(nextStatus(t)).toBeNull()
+    expect(prevStatus('manager', t)).toBeNull()
+    expect(prevStatus('admin', t)).toBeNull()
+    expect(canDeleteTask('manager', t)).toBe(false)
+    expect(canDeleteTask('admin', t)).toBe(true)
+  })
+  it('closed tasks go after the open ones', () => {
+    const open = parseTask({ ...base, id: 1, status: 'accepted' })!
+    const verified = parseTask({ ...base, id: 2, status: 'verified' })!
+    expect(sortTasks([verified, open], '2026-11-14').map((x) => x.id)).toEqual([1, 2])
+  })
+  it('manual kinds do not include rework', () => {
+    expect(MANUAL_TASK_KINDS).not.toContain('rework')
+    expect(TASK_KINDS).toContain('rework')
   })
 })

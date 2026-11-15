@@ -1,9 +1,12 @@
-export type TaskKind = 'cleaning' | 'inspection' | 'other'
-export type TaskStatus = 'new' | 'accepted' | 'done'
+export type TaskKind = 'cleaning' | 'inspection' | 'other' | 'rework'
+/** verified: a rework task the inspector has checked again (set only by the re-check, never by hand). */
+export type TaskStatus = 'new' | 'accepted' | 'done' | 'verified'
 export type TaskRole = 'admin' | 'manager' | 'supervisor'
 export type TaskFilter = 'active' | 'done' | 'all'
 
-export const TASK_KINDS: readonly TaskKind[] = ['cleaning', 'inspection', 'other']
+export const TASK_KINDS: readonly TaskKind[] = ['cleaning', 'inspection', 'other', 'rework']
+/** What the manager can pick when creating a task; a rework task is made by an inspection. */
+export const MANUAL_TASK_KINDS: readonly TaskKind[] = ['cleaning', 'inspection', 'other']
 export const TASK_BODY_MAX = 2000
 
 export interface Task {
@@ -20,10 +23,14 @@ export interface Task {
   accepted_at: string | null
   done_by_name: string | null
   done_at: string | null
+  verified_by_name: string | null
+  verified_at: string | null
+  /** Why a rework task was sent back (set by a failed re-check). */
+  return_note: string | null
 }
 
 const KINDS = new Set<string>(TASK_KINDS)
-const STATUSES = new Set<string>(['new', 'accepted', 'done'])
+const STATUSES = new Set<string>(['new', 'accepted', 'done', 'verified'])
 
 /** A row of the table into a task; null when the row is not a task (a wrong kind or status). */
 export function parseTask(r: Record<string, unknown>): Task | null {
@@ -44,22 +51,30 @@ export function parseTask(r: Record<string, unknown>): Task | null {
     accepted_at: s(r.accepted_at),
     done_by_name: s(r.done_by_name),
     done_at: s(r.done_at),
+    verified_by_name: s(r.verified_by_name),
+    verified_at: s(r.verified_at),
+    return_note: s(r.return_note),
   }
+}
+
+/** Done or verified: nothing left to do. */
+export function isClosed(t: Pick<Task, 'status'>): boolean {
+  return t.status === 'done' || t.status === 'verified'
 }
 
 /** Not done and past its due date (days compared as YYYY-MM-DD, Cairo today). */
 export function isOverdue(t: Task, today: string): boolean {
-  return t.status !== 'done' && t.due_date !== null && t.due_date < today
+  return !isClosed(t) && t.due_date !== null && t.due_date < today
 }
 
 export function filterTasks(list: readonly Task[], f: TaskFilter): Task[] {
   if (f === 'all') return [...list]
-  return list.filter((t) => (f === 'done' ? t.status === 'done' : t.status !== 'done'))
+  return list.filter((t) => (f === 'done' ? isClosed(t) : !isClosed(t)))
 }
 
 /** Open tasks first: overdue, then by due date (no due date last), newest first; done tasks after them, newest first. */
 export function sortTasks(list: readonly Task[], today: string): Task[] {
-  const rank = (t: Task) => (t.status === 'done' ? 2 : isOverdue(t, today) ? 0 : 1)
+  const rank = (t: Task) => (isClosed(t) ? 2 : isOverdue(t, today) ? 0 : 1)
   return [...list].sort((a, b) => {
     const ra = rank(a)
     const rb = rank(b)
@@ -74,7 +89,7 @@ export function sortTasks(list: readonly Task[], today: string): Task[] {
 }
 
 export function countOpen(list: readonly Task[]): number {
-  return list.filter((t) => t.status !== 'done').length
+  return list.filter((t) => !isClosed(t)).length
 }
 
 export const canCreateTask = (role: TaskRole) => role === 'admin' || role === 'manager'

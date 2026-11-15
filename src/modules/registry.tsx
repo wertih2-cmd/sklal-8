@@ -21,6 +21,8 @@ const WarehousePage = lazy(() => import('@/modules/admin/WarehousePage').then(m 
 const AdminApartmentList = lazy(() => import('@/modules/admin/AdminApartmentList').then(m => ({ default: m.AdminApartmentList })))
 const AdminApartmentDetail = lazy(() => import('@/modules/admin/AdminApartmentDetail').then(m => ({ default: m.AdminApartmentDetail })))
 const AdminMore = lazy(() => import('@/modules/admin/AdminMore').then(m => ({ default: m.AdminMore })))
+const InspectionsPage = lazy(() => import('@/modules/admin/InspectionsPage').then(m => ({ default: m.InspectionsPage })))
+const ChecklistTemplatesPage = lazy(() => import('@/modules/admin/ChecklistTemplatesPage').then(m => ({ default: m.ChecklistTemplatesPage })))
 const StaffPage = lazy(() => import('@/modules/admin/StaffPage').then(m => ({ default: m.StaffPage })))
 const UsersPage = lazy(() => import('@/modules/admin/UsersPage').then(m => ({ default: m.UsersPage })))
 const AdminIncidents = lazy(() => import('@/modules/admin/AdminIncidents').then(m => ({ default: m.AdminIncidents })))
@@ -98,6 +100,8 @@ export function AdminRoutes() {
           <Route path="more/chessboard" element={<ChessboardRoute />} />
           <Route path="more/attendance" element={<AttendancePage />} />
           <Route path="more/tasks" element={<TasksPage />} />
+          <Route path="more/inspections" element={<InspectionsPage />} />
+          <Route path="more/inspections/templates" element={<ChecklistTemplatesPage />} />
           <Route path="more/attendance/payroll" element={<PayrollPage timesheetPath="/admin/more/attendance" />} />
           <Route path="more/reports" element={<ReportsPage />} />
           <Route path="more/history" element={<HistoryPage />} />
@@ -123,6 +127,8 @@ export function ManagerRoutes() {
           <Route path="chessboard" element={<ChessboardRoute apartmentPath={(id) => `/sv/apartments/${id}`} />} />
           <Route path="attendance" element={<AttendancePage />} />
           <Route path="tasks" element={<TasksPage />} />
+          <Route path="inspections" element={<InspectionsPage />} />
+          <Route path="inspections/templates" element={<ChecklistTemplatesPage />} />
           <Route path="attendance/payroll" element={<PayrollPage timesheetPath="/manager/attendance" />} />
           <Route path="*" element={<Navigate to="/manager" replace />} />
         </Routes>
@@ -147,6 +153,7 @@ export function SvRoutes() {
           <Route path="incidents/new" element={<IncidentForm />} />
           <Route path="attendance" element={<AttendancePage />} />
           <Route path="tasks" element={<TasksPage />} />
+          <Route path="inspections" element={<InspectionsPage />} />
           <Route path="contacts" element={<ContactsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="*" element={<Navigate to="/sv" replace />} />

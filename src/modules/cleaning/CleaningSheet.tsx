@@ -15,6 +15,7 @@ import { validateCleaningMedia, isVideoFile, isHeicFile } from '@/lib/files'
 import { compressImage } from '@/lib/compress'
 import { X, Check, Loader as Loader2, TriangleAlert as AlertTriangle, Star, RefreshCw, Camera, Video as VideoIcon } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
+import { Modal } from '@/components/Modal'
 import { useModalLayer } from '@/components/useModalLayer'
 
 const writeoffTypes: NormType[] = ['turnover_replenish', 'cleaning_consumption']
@@ -79,8 +80,11 @@ export function CleaningSheet({ backTo }: { backTo?: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aptId, profile?.id])
 
-  // Escape asks before discarding input and reaches only the topmost layer (the confirmation, if open).
-  useModalLayer(!loading, handleBackdropClick)
+  // After a successful save the sheet just leaves; before that it asks before discarding input.
+  const handleClose = () => (result || notifyText ? goBack() : handleBackdropClick())
+
+  // While the data loads there is no dialog yet: Escape still leaves. The dialog below closes itself (Modal).
+  useModalLayer(loading, handleBackdropClick)
 
   useEffect(() => {
     previewsRef.current = mediaPreviews
@@ -258,18 +262,9 @@ export function CleaningSheet({ backTo }: { backTo?: string }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-modal flex flex-col justify-end anim-scrim" onClick={handleBackdropClick} role="dialog" aria-modal="true" aria-label={t.cleaning.title}>
-      <div className="bg-surface rounded-t-2xl max-h-[90dvh] overflow-y-auto anim-sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--line)' }} />
-        </div>
-        <div className="px-5 py-3 flex items-center justify-between border-b border-line">
-          <h2 className="text-base font-semibold text-ink">{t.cleaning.title}</h2>
-          <button onClick={goBack} className="p-2.5 -me-1 rounded-lg hover:bg-app transition-colors" aria-label={t.common.close}>
-            <X className="w-5 h-5 text-muted" />
-          </button>
-        </div>
-        <div className="px-5 py-4 space-y-5">
+    <>
+      <Modal open title={t.cleaning.title} onClose={handleClose}>
+        <div className="space-y-5">
           {loadError && (
             <div className="flex items-start gap-2 bg-warn-soft border border-line rounded-xl px-3 py-2.5">
               <AlertTriangle className="w-4 h-4 text-warn mt-0.5 shrink-0" />
@@ -388,7 +383,7 @@ export function CleaningSheet({ backTo }: { backTo?: string }) {
             </div>
           )}
         </div>
-        <div className="sticky bottom-0 bg-surface border-t border-line px-5 py-3 flex gap-3">
+        <div className="sticky bottom-0 bg-surface border-t border-line -mx-5 -mb-5 mt-5 px-5 py-3 flex gap-3">
           {notifyText ? (
             <button onClick={goBack} className="flex-1 bg-accent text-on-accent rounded-xl py-3.5 min-h-[48px] font-medium">{t.notify.done}</button>
           ) : (<>
@@ -402,7 +397,7 @@ export function CleaningSheet({ backTo }: { backTo?: string }) {
           </button>
           </>)}
         </div>
-      </div>
+      </Modal>
       {confirmClose && (
         <ConfirmDialog
           open={true}
@@ -412,6 +407,6 @@ export function CleaningSheet({ backTo }: { backTo?: string }) {
           onCancel={() => setConfirmClose(false)}
         />
       )}
-    </div>
+    </>
   )
 }

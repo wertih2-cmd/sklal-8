@@ -8,6 +8,7 @@ import { useI18n } from '@/i18n'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 import { friendlyMessage } from '@/lib/errors'
 import { ErrorState } from '@/components/ErrorState'
+import { Modal } from '@/components/Modal'
 import { useModalLayer } from '@/components/useModalLayer'
 import { resolveMime, isHeicFile } from '@/lib/files'
 import { compressImage } from '@/lib/compress'
@@ -210,8 +211,8 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
     else navigate(-1)
   }
 
-  // Escape closes the sheet (not on the success screen, which has its own button).
-  useModalLayer(!sentText, handleClose)
+  // While the data loads there is no dialog yet: Escape still leaves. The dialogs below close themselves (Modal).
+  useModalLayer(loading, handleClose)
 
   if (loading) {
     return (
@@ -222,12 +223,9 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
   }
   if (loadError) {
     return (
-      <div className="fixed inset-0 bg-black/50 z-modal flex items-end sm:items-center justify-center">
-        <div className="absolute inset-0" onClick={handleClose} />
-        <div className="relative bg-surface w-full sm:max-w-md max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border border-line p-4">
-          <ErrorState onRetry={loadReferenceData} />
-        </div>
-      </div>
+      <Modal open title={t.incidents.title} onClose={handleClose}>
+        <ErrorState onRetry={loadReferenceData} />
+      </Modal>
     )
   }
 
@@ -237,8 +235,8 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
       else navigate('/sv/incidents')
     }
     return (
-      <div className="fixed inset-0 bg-black/40 z-modal flex flex-col justify-end anim-scrim" role="dialog" aria-modal="true" aria-label={t.incidents.title}>
-        <div className="bg-surface rounded-t-2xl px-5 pt-6 pb-6 space-y-3 anim-sheet">
+      <Modal open title={t.incidents.title} onClose={finish} dismissible={false}>
+        <div className="space-y-3">
           <div className="flex items-center gap-2 bg-ok-soft border border-line rounded-xl px-3 py-2.5">
             <Check className="w-4 h-4 text-ok" />
             <p className="text-sm text-ok">{t.incidents.success}</p>
@@ -246,23 +244,13 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
           <WhatsappNotify contacts={notifyContacts} text={sentText} />
           <button onClick={finish} className="w-full bg-app text-ink rounded-xl py-3.5 min-h-[48px] font-medium">{t.notify.done}</button>
         </div>
-      </div>
+      </Modal>
     )
   }
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-modal flex flex-col justify-end anim-scrim" onClick={handleClose} role="dialog" aria-modal="true" aria-label={t.incidents.title}>
-      <div className="bg-surface rounded-t-2xl max-h-[92dvh] overflow-y-auto anim-sheet" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 rounded-full" style={{ background: 'var(--line)' }} />
-        </div>
-        <div className="px-5 py-3 flex items-center justify-between border-b border-line">
-          <h2 className="text-base font-semibold text-ink">{t.incidents.title}</h2>
-          <button onClick={handleClose} className="p-2.5 -me-1 rounded-lg hover:bg-app transition-colors" aria-label={t.common.close}>
-            <X className="w-5 h-5 text-muted" />
-          </button>
-        </div>
-        <div className="px-5 py-4 space-y-5">
+    <Modal open title={t.incidents.title} onClose={handleClose} closeOnBackdrop={false}>
+        <div className="space-y-5">
           <Field label={t.incidents.apartment}>
             <select value={aptId ?? ''} onChange={(e) => { const v = e.target.value; setAptId(v ? Number(v) : null); setItemId(null); setFreeText(''); setShowAllItems(false) }}
               className="w-full well rounded-xl px-4 py-3 text-sm border border-line focus:border-accent focus:outline-none">
@@ -379,7 +367,7 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
             </div>
           )}
         </div>
-        <div className="sticky bottom-0 bg-surface border-t border-line px-5 py-3 flex gap-3">
+        <div className="sticky bottom-0 bg-surface border-t border-line -mx-5 -mb-5 mt-5 px-5 py-3 flex gap-3">
           <button onClick={handleClose} className="flex-1 bg-app text-ink rounded-xl py-3.5 min-h-[48px] font-medium">{t.incidents.cancel}</button>
           <button
             onClick={handleSubmit}
@@ -389,8 +377,7 @@ export function IncidentForm({ backTo }: { backTo?: string }) {
             {isOnline ? t.incidents.submit : t.errors.needsNetworkAction}
           </button>
         </div>
-      </div>
-    </div>
+    </Modal>
   )
 }
 

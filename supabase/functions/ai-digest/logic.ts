@@ -145,6 +145,7 @@ export interface AiDigestText {
 function cleanText(v: unknown, max: number): string | null {
   if (typeof v !== 'string') return null
   // Plain text only: drop control characters and angle brackets, collapse whitespace.
+  // eslint-disable-next-line no-control-regex -- the control characters are exactly what is removed here
   const s = v.replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim()
   if (!s) return null
   return s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s

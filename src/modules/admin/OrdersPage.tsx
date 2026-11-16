@@ -19,6 +19,7 @@ import {
 } from '@/modules/admin/api'
 import { ShoppingCart, ChevronRight, Loader } from 'lucide-react'
 import { useCatalogName } from '@/modules/core/useCatalogName'
+import { isRecvInvalid, isOverReceipt } from '@/modules/admin/receiveModel'
 
 type Filter = 'all' | PurchaseOrderStatus
 
@@ -221,11 +222,8 @@ function OrderSheet({ order, onClose, onChanged }: { order: PurchaseOrderRow; on
     loadLines()
   }, t.admin.orders.saved)
 
-  const recvInvalid = lines.some((l) => {
-    const r = Number(l.recvStr)
-    const left = Math.max(l.qty - l.received_qty, 0) / l.pack_size
-    return !(r >= 0) || r > left + 1e-9
-  })
+  const recvInvalid = lines.some((l) => isRecvInvalid(l.recvStr))
+  const recvOver = lines.some((l) => isOverReceipt(l.recvStr, Math.max(l.qty - l.received_qty, 0) / l.pack_size))
   const recvTotal = lines.reduce((s, l) => s + (Number(l.recvStr) > 0 ? 1 : 0), 0)
 
   const receive = () => run(async () => {
@@ -278,7 +276,7 @@ function OrderSheet({ order, onClose, onChanged }: { order: PurchaseOrderRow; on
                       </label>
                     </div>
                   )}
-                  {isSent && left > 0 && (
+                  {isSent && (
                     <div className="grid grid-cols-2 gap-2">
                       <label className="block">
                         <span className="block text-xs text-muted mb-1">{t.admin.orders.receiveNow}</span>
@@ -300,7 +298,10 @@ function OrderSheet({ order, onClose, onChanged }: { order: PurchaseOrderRow; on
           <p className="text-xs text-muted mt-3">{t.admin.orders.draftHint}</p>
         )}
         {isSent && recvInvalid && (
-          <p className="text-xs text-bad mt-3">{t.admin.orders.overReceive}</p>
+          <p className="text-xs text-bad mt-3">{t.admin.orders.receiveInvalid}</p>
+        )}
+        {isSent && !recvInvalid && recvOver && (
+          <p className="text-xs text-muted mt-3">{t.admin.orders.overReceive}</p>
         )}
 
         <div className="flex gap-2 mt-4 flex-wrap">

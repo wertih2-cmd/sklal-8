@@ -26,12 +26,26 @@ jobs:
     env:
       HAS_E2E: ${{ secrets.E2E_SUPABASE_URL != '' }}
     steps:
+      - name: Предупреждение о пропуске e2e
+        if: env.HAS_E2E != 'true'
+        run: |
+          echo "::warning title=E2E не запускался::Секрет E2E_SUPABASE_URL не задан (или это pull request из форка). Playwright пропущен: зелёный CI не означает, что e2e прошёл."
+          {
+            echo "## ⚠️ E2E не запускался"
+            echo
+            echo "Секрет \`E2E_SUPABASE_URL\` не задан (или это pull request из форка, где секреты недоступны)."
+            echo "Задача e2e завершилась зелёной, но **ни один тест Playwright не выполнялся**."
+            echo "Порядок настройки: docs/test-database.md."
+          } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/checkout@v4
+        if: env.HAS_E2E == 'true'
       - uses: actions/setup-node@v4
+        if: env.HAS_E2E == 'true'
         with:
           node-version: 20
           cache: npm
       - run: npm ci
+        if: env.HAS_E2E == 'true'
       - run: npx playwright install --with-deps chromium
         if: env.HAS_E2E == 'true'
       - run: npm run build

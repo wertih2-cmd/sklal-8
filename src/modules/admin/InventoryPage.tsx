@@ -217,6 +217,7 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
   const [search, setSearch] = useState('')
   const [confirm, setConfirm] = useState<'close' | 'cancel' | null>(null)
   const [stock, setStock] = useState<WarehouseStockRow[]>([])
+  const [stockFailed, setStockFailed] = useState(false)
   const [addId, setAddId] = useState('')
   const [addQty, setAddQty] = useState('')
 
@@ -236,9 +237,15 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
   }, [inv.id])
 
   useEffect(() => { loadLines() }, [loadLines])
+  const loadStock = useCallback(() => {
+    setStockFailed(false)
+    fetchWarehouseStock()
+      .then(setStock)
+      .catch((e) => { setStockFailed(true); toast(errorMessage(e), 'error') })
+  }, [])
   useEffect(() => {
-    if (isOpen) fetchWarehouseStock().then(setStock).catch(() => setStock([]))
-  }, [isOpen])
+    if (isOpen) loadStock()
+  }, [isOpen, loadStock])
 
   const patch = (itemId: number, p: Partial<LineState>) =>
     setLines((prev) => prev.map((l) => (l.item_id === itemId ? { ...l, ...p } : l)))
@@ -373,7 +380,14 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
           </div>
         )}
 
-        {isOpen && (
+        {isOpen && stockFailed && (
+          <div className="flex items-center gap-2 mt-3 text-sm text-bad">
+            <span className="flex-1">{t.errors.loadFailed}</span>
+            <button onClick={loadStock} className="bg-app text-ink rounded-lg px-4 py-2 text-sm font-medium">{t.retry}</button>
+          </div>
+        )}
+
+        {isOpen && !stockFailed && (
           <div className="flex gap-2 mt-3">
             <select value={addId} onChange={(e) => setAddId(e.target.value)} className="flex-1 well rounded-lg px-3 py-2.5 text-sm border border-line focus:border-accent focus:outline-none min-w-0">
               <option value="">{t.admin.inventory.addItem}</option>

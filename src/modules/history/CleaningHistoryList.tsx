@@ -33,16 +33,21 @@ export function CleaningHistoryList({ apartmentId, canDelete, onRecalculate, onR
   const pageRef = useRef(0)
   const reqIdRef = useRef(0)
 
-  const activeFilters: Filters = {
-    dateFrom: filters.dateFrom,
-    dateTo: filters.dateTo,
-    hasMedia: filters.hasMedia,
-    status: filters.status,
-    leadStaff: filters.leadStaff,
-    search: debouncedSearch,
-  }
+  const fDateFrom = filters.dateFrom
+  const fDateTo = filters.dateTo
+  const fHasMedia = filters.hasMedia
+  const fStatus = filters.status
+  const fLeadStaff = filters.leadStaff
 
   const load = useCallback(async (resetPage: boolean, silent = false) => {
+    const activeFilters: Filters = {
+      dateFrom: fDateFrom,
+      dateTo: fDateTo,
+      hasMedia: fHasMedia,
+      status: fStatus,
+      leadStaff: fLeadStaff,
+      search: debouncedSearch,
+    }
     const p = resetPage ? 0 : pageRef.current + 1
     if (resetPage) { pageRef.current = 0; if (!silent) setListLoading(true) } else { setLoadingMore(true) }
     setError(null)
@@ -71,7 +76,7 @@ export function CleaningHistoryList({ apartmentId, canDelete, onRecalculate, onR
         setLoadingMore(false)
       }
     }
-  }, [apartmentId, activeFilters.dateFrom, activeFilters.dateTo, activeFilters.hasMedia, activeFilters.status, activeFilters.leadStaff, activeFilters.search])
+  }, [apartmentId, fDateFrom, fDateTo, fHasMedia, fStatus, fLeadStaff, debouncedSearch])
 
   useEffect(() => {
     load(true)

@@ -34,16 +34,21 @@ export function IncidentHistoryList({ apartmentId, canDelete, refreshKey }: Prop
   const pageRef = useRef(0)
   const reqIdRef = useRef(0)
 
-  const activeFilters: Filters = {
-    dateFrom: filters.dateFrom,
-    dateTo: filters.dateTo,
-    hasMedia: filters.hasMedia,
-    status: filters.status,
-    kind: filters.kind,
-    search: debouncedSearch,
-  }
+  const fDateFrom = filters.dateFrom
+  const fDateTo = filters.dateTo
+  const fHasMedia = filters.hasMedia
+  const fStatus = filters.status
+  const fKind = filters.kind
 
   const load = useCallback(async (resetPage: boolean, silent = false) => {
+    const activeFilters: Filters = {
+      dateFrom: fDateFrom,
+      dateTo: fDateTo,
+      hasMedia: fHasMedia,
+      status: fStatus,
+      kind: fKind,
+      search: debouncedSearch,
+    }
     const p = resetPage ? 0 : pageRef.current + 1
     if (resetPage) { pageRef.current = 0; if (!silent) setListLoading(true) } else { setLoadingMore(true) }
     setError(null)
@@ -72,7 +77,7 @@ export function IncidentHistoryList({ apartmentId, canDelete, refreshKey }: Prop
         setLoadingMore(false)
       }
     }
-  }, [apartmentId, activeFilters.dateFrom, activeFilters.dateTo, activeFilters.hasMedia, activeFilters.status, activeFilters.kind, activeFilters.search])
+  }, [apartmentId, fDateFrom, fDateTo, fHasMedia, fStatus, fKind, debouncedSearch])
 
   useEffect(() => {
     load(true)

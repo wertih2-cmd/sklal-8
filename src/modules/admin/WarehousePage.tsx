@@ -12,6 +12,7 @@ import { OwnerBadge } from '@/components/OwnerBadge'
 import { ErrorState } from '@/components/ErrorState'
 import { useCatalogName } from '@/modules/core/useCatalogName'
 import { mergeCompany, mergeOwner, type MergedStockRow, type MergedOwnerRow } from './stockRows'
+import { createRequestGuard } from './requestGuard'
 import { summarize, formatPct, stockFillPct } from './stockMetrics'
 import { parseGuestPrice, parseCost } from './guestPrice'
 import { canAddToSelection, getIneligibleReason, type IneligibleReason, type TransferCandidate, type TransferSelection } from './transferSelection'
@@ -271,6 +272,7 @@ function StockView({ scope }: { scope: 'company' | 'owner' }) {
   const [movesLoading, setMovesLoading] = useState(false)
   const [movesOffset, setMovesOffset] = useState(0)
   const [hasMoreMoves, setHasMoreMoves] = useState(false)
+  const [movesGuard] = useState(createRequestGuard)
   const [searchParams, setSearchParams] = useSearchParams()
   const belowOnly = searchParams.get('below') === '1'
   const noGuestPrice = searchParams.get('noprice') === '1'
@@ -333,12 +335,12 @@ function StockView({ scope }: { scope: 'company' | 'owner' }) {
     if (isOwner) {
       const valPromise = fetchValuation('owner').catch((e) => { if (!quiet) toast(errorMessage(e), 'error'); return null })
       const ownerPromise = fetchOwnerStock().catch((e) => { if (!quiet) { setError(true); toast(errorMessage(e), 'error') }; return null })
-      const stockPromise = fetchWarehouseStock().catch(() => null)
+      const stockPromise = fetchWarehouseStock().catch((e) => { if (!quiet) { setError(true); toast(errorMessage(e), 'error') }; return null })
       Promise.allSettled([valPromise, ownerPromise, stockPromise]).then(([valRes, ownerRes, stockRes]) => {
         const valuation = valRes.status === 'fulfilled' ? valRes.value : null
         const ownerStock = ownerRes.status === 'fulfilled' ? ownerRes.value : null
         const warehouseStock = stockRes.status === 'fulfilled' ? stockRes.value : null
-        if (ownerStock == null) { if (!quiet) setLoading(false); return }
+        if (ownerStock == null || warehouseStock == null) { if (!quiet) setLoading(false); return }
         const meta = new Map<number, { category: string; kind: ItemKind }>()
         for (const s of warehouseStock ?? []) {
           meta.set(s.item_id, { category: s.category, kind: s.kind })
@@ -482,19 +484,23 @@ function StockView({ scope }: { scope: 'company' | 'owner' }) {
   }
 
   const loadMoves = (itemId: number, offset: number, append: boolean) => {
+    const requestId = movesGuard.next()
     setMovesLoading(true)
     fetchStockMoves(itemId, offset)
       .then((nextMoves) => {
+        if (!movesGuard.isCurrent(requestId)) return
         setMoves((previous) => append ? [...previous, ...nextMoves] : nextMoves)
         setMovesOffset(offset + nextMoves.length)
         setHasMoreMoves(nextMoves.length === 50)
       })
-      .catch((error) => toast(errorMessage(error), 'error'))
-      .finally(() => setMovesLoading(false))
+      .catch((error) => { if (movesGuard.isCurrent(requestId)) toast(errorMessage(error), 'error') })
+      .finally(() => { if (movesGuard.isCurrent(requestId)) setMovesLoading(false) })
   }
 
   const toggleExpand = (itemId: number) => {
     if (expandedId === itemId) {
+      movesGuard.invalidate()
+      setMovesLoading(false)
       setExpandedId(null)
       return
     }

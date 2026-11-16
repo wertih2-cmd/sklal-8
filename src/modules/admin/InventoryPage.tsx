@@ -12,7 +12,7 @@ import {
   fetchApartmentsAdmin,
   fetchWarehouseStock,
   startInventory,
-  setInventoryActual,
+  setInventoryActualBulk,
   closeInventory,
   cancelInventory,
   type InventoryRow,
@@ -22,10 +22,12 @@ import {
 import type { Apartment, WarehouseStockRow } from '@/lib/database.types'
 import { ClipboardCheck, ChevronRight, Loader } from 'lucide-react'
 import { useCatalogName } from '@/modules/core/useCatalogName'
+import {
+  round3, baseline, lineDiff, isInvalid, needsSave, uncountedCount, countProgress, canClose,
+} from '@/modules/admin/inventoryModel'
 
 type Filter = 'all' | InventoryStatus
 
-const round3 = (x: number) => Math.round(x * 1000) / 1000
 const fmt = (x: number) => String(round3(x))
 
 function statusClass(s: InventoryStatus): string {
@@ -203,6 +205,7 @@ function StartModal({ onClose, onStarted }: { onClose: () => void; onStarted: (i
 interface LineState extends InventoryLine {
   actStr: string
   reject: boolean
+  touched: boolean
 }
 
 function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClose: () => void; onChanged: () => void }) {
@@ -215,6 +218,7 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
   const [confirm, setConfirm] = useState<'close' | 'cancel' | null>(null)
   const [stock, setStock] = useState<WarehouseStockRow[]>([])
   const [addId, setAddId] = useState('')
+  const [addQty, setAddQty] = useState('')
 
   const isOpen = inv.status === 'open'
 
@@ -225,6 +229,7 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
         ...l,
         actStr: fmt(l.actual / l.pack_size),
         reject: l.decision === 'rejected',
+        touched: false,
       }))))
       .catch((e) => toast(errorMessage(e), 'error'))
       .finally(() => setLoading(false))
@@ -238,9 +243,11 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
   const patch = (itemId: number, p: Partial<LineState>) =>
     setLines((prev) => prev.map((l) => (l.item_id === itemId ? { ...l, ...p } : l)))
 
-  const isChanged = (l: LineState) => Number(l.actStr) !== round3(l.actual / l.pack_size)
-  const dirty = lines.some(isChanged)
-  const invalid = lines.some((l) => l.actStr.trim() === '' || !(Number(l.actStr) >= 0))
+  const dirty = lines.some(needsSave)
+  const invalid = lines.some(isInvalid)
+  const uncounted = uncountedCount(lines)
+  const progress = countProgress(lines)
+  const closable = canClose(lines)
 
   const run = async (fn: () => Promise<string | void>, okMsg: string): Promise<boolean> => {
     if (busy) return false
@@ -259,15 +266,20 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
   }
 
   const saveFact = () => run(async () => {
-    for (const l of lines) {
-      if (isChanged(l)) await setInventoryActual(inv.id, l.item_id, round3(Number(l.actStr) * l.pack_size))
-    }
+    const batch = lines
+      .filter(needsSave)
+      .map((l) => ({ item_id: l.item_id, actual: round3(Number(l.actStr) * l.pack_size) }))
+    if (batch.length > 0) await setInventoryActualBulk(inv.id, batch)
     loadLines()
   }, t.admin.inventory.factSaved)
 
   const addItem = () => run(async () => {
-    await setInventoryActual(inv.id, Number(addId), 0)
+    const row = stock.find((s) => s.item_id === Number(addId))
+    await setInventoryActualBulk(inv.id, [
+      { item_id: Number(addId), actual: round3(Number(addQty) * (row?.pack_size ?? 1)) },
+    ])
     setAddId('')
+    setAddQty('')
     loadLines()
   }, t.admin.inventory.itemAdded)
 
@@ -293,6 +305,11 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
           {formatDate(inv.created_at)}{inv.note ? ` · ${inv.note}` : ''}
         </p>
         {isOpen && <p className="text-xs text-muted well rounded-lg px-3 py-2 mb-3">{t.admin.inventory.countHint}</p>}
+        {isOpen && lines.length > 0 && (
+          <p className={`text-xs mb-3 ${uncounted > 0 ? 'text-muted' : 'text-ok'}`}>
+            {t.admin.inventory.progress}: {n(String(progress.counted))} / {n(String(progress.total))}
+          </p>
+        )}
 
         {lines.length > 6 && (
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t.admin.inventory.search}
@@ -306,14 +323,19 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
         ) : (
           <div className="space-y-2">
             {shown.map((l) => {
-              const diff = round3(Number(l.actStr || 0) * l.pack_size - l.expected)
+              const diff = lineDiff(l)
               return (
                 <div key={l.item_id} className="border border-line rounded-xl p-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-sm font-medium text-ink">{cat.itemName(l.name)}</div>
-                      <div className="text-xs text-muted">{t.admin.inventory.expected}: {n(formatQty(l.expected, l))}</div>
+                      <div className="text-xs text-muted">{t.admin.inventory.expected}: {n(formatQty(baseline(l), l))}</div>
                     </div>
+                    {isOpen && !l.reject && (
+                      <span className={`text-xs shrink-0 ${l.counted ? 'text-ok' : 'text-muted'}`}>
+                        {l.counted ? t.admin.inventory.counted : t.admin.inventory.notCounted}
+                      </span>
+                    )}
                     {!isOpen && (
                       <span className={`text-xs shrink-0 ${l.decision === 'accepted' ? 'text-ok' : 'text-muted'}`}>
                         {l.decision === 'accepted' ? t.admin.inventory.accepted : l.decision === 'rejected' ? t.admin.inventory.rejected : ''}
@@ -325,7 +347,7 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
                       <label className="block flex-1">
                         <span className="block text-xs text-muted mb-1">{t.admin.inventory.actual}</span>
                         <input type="number" min="0" step="any" value={l.actStr}
-                          onChange={(e) => patch(l.item_id, { actStr: e.target.value })} className={inputCls} />
+                          onChange={(e) => patch(l.item_id, { actStr: e.target.value, touched: true })} className={inputCls} />
                       </label>
                       <div className={`text-sm w-24 text-end pb-2 ${diff < 0 ? 'text-bad' : diff > 0 ? 'text-ok' : 'text-muted'}`}>
                         {diff === 0 ? '0' : `${diff > 0 ? '+' : '−'}${n(formatQty(Math.abs(diff), l))}`}
@@ -333,6 +355,10 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
                     </div>
                   ) : (
                     <div className="mt-1 text-xs text-ink">{t.admin.inventory.actualShort}: {n(formatQty(l.actual, l))}</div>
+                  )}
+                  {isOpen && !l.counted && !l.touched && !l.reject && (
+                    <button onClick={() => patch(l.item_id, { touched: true })}
+                      className="mt-2 text-xs text-accent font-medium">{t.admin.inventory.confirmMatch}</button>
                   )}
                   {isOpen && (
                     <label className="flex items-center gap-2 text-xs text-muted mt-2">
@@ -353,18 +379,22 @@ function InventorySheet({ inv, onClose, onChanged }: { inv: InventoryRow; onClos
               <option value="">{t.admin.inventory.addItem}</option>
               {addable.map((s) => <option key={s.item_id} value={s.item_id}>{cat.itemName(s.name)}</option>)}
             </select>
-            <button onClick={addItem} disabled={busy || !addId || dirty}
+            <input type="number" min="0" step="any" value={addQty} onChange={(e) => setAddQty(e.target.value)}
+              placeholder={t.admin.inventory.addQty} aria-label={t.admin.inventory.addQty}
+              className="w-24 well rounded-lg px-3 py-2.5 text-sm border border-line focus:border-accent focus:outline-none" />
+            <button onClick={addItem} disabled={busy || !addId || dirty || addQty.trim() === '' || !(Number(addQty) >= 0)}
               className="bg-app text-ink rounded-lg px-4 text-sm font-medium disabled:opacity-40">{t.admin.inventory.add}</button>
           </div>
         )}
 
         {isOpen && dirty && <p className="text-xs text-muted mt-3">{t.admin.inventory.unsaved}</p>}
+        {isOpen && !dirty && uncounted > 0 && <p className="text-xs text-muted mt-3">{t.admin.inventory.uncountedBlock}</p>}
 
         {isOpen && (
           <div className="flex gap-2 mt-4 flex-wrap">
             <button onClick={saveFact} disabled={busy || !dirty || invalid}
               className="flex-1 bg-app text-ink rounded-xl py-3 text-sm font-medium disabled:opacity-40">{t.admin.inventory.saveFact}</button>
-            <button onClick={() => setConfirm('close')} disabled={busy || dirty || invalid || lines.length === 0}
+            <button onClick={() => setConfirm('close')} disabled={busy || !closable}
               className="flex-1 bg-accent text-on-accent rounded-xl py-3 text-sm font-medium disabled:opacity-40">{t.admin.inventory.closeInv}</button>
             <button onClick={() => setConfirm('cancel')} disabled={busy}
               className="bg-bad-soft text-bad rounded-xl px-4 py-3 text-sm font-medium disabled:opacity-40">{t.admin.inventory.cancelInv}</button>

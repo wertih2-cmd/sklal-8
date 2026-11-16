@@ -646,6 +646,8 @@ export interface InventoryLine extends Pick<Item, 'base_unit' | 'pack_size' | 'p
   expected: number
   actual: number
   decision: 'pending' | 'accepted' | 'rejected'
+  counted: boolean
+  system_qty_at_count: number | null
 }
 
 export async function fetchInventories(): Promise<InventoryRow[]> {
@@ -665,7 +667,7 @@ export async function fetchInventories(): Promise<InventoryRow[]> {
 export async function fetchInventoryLines(inventoryId: string): Promise<InventoryLine[]> {
   const { data, error, status } = await supabase
     .from('inventory_lines')
-    .select('item_id,expected,actual,decision,items(name,base_unit,pack_size,pack_label)')
+    .select('item_id,expected,actual,decision,counted,system_qty_at_count,items(name,base_unit,pack_size,pack_label)')
     .eq('inventory_id', inventoryId)
     .order('id')
   if (error) throw toApiError(error, status)
@@ -675,6 +677,8 @@ export async function fetchInventoryLines(inventoryId: string): Promise<Inventor
     expected: number | string
     actual: number | string
     decision: InventoryLine['decision']
+    counted: boolean | null
+    system_qty_at_count: number | string | null
     items: ItemPart | ItemPart[] | null
   }>).map((r) => {
     const it = Array.isArray(r.items) ? r.items[0] : r.items
@@ -687,6 +691,8 @@ export async function fetchInventoryLines(inventoryId: string): Promise<Inventor
       expected: Number(r.expected),
       actual: Number(r.actual),
       decision: r.decision,
+      counted: r.counted === true,
+      system_qty_at_count: r.system_qty_at_count == null ? null : Number(r.system_qty_at_count),
     } as InventoryLine
   })
 }
@@ -708,6 +714,18 @@ export async function setInventoryActual(inventoryId: string, itemId: number, ac
     p_actual: actual,
   })
   if (error) throw toApiError(error, status)
+}
+
+export async function setInventoryActualBulk(
+  inventoryId: string,
+  lines: Array<{ item_id: number; actual: number }>,
+): Promise<number> {
+  const { data, error, status } = await supabase.rpc('inventory_set_actual_bulk', {
+    p_inventory: inventoryId,
+    p_lines: lines,
+  })
+  if (error) throw toApiError(error, status)
+  return Number(data ?? 0)
 }
 
 export async function closeInventory(inventoryId: string, rejectItems: number[]): Promise<number> {

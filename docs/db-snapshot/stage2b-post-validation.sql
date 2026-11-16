@@ -281,7 +281,7 @@ declare
   v_ow_stk int; v_apt_loc int;
   v_serials text[];
   v_unit_ids uuid[];
-  e jsonb; v_item_n numeric;
+  v_line jsonb; v_item_n numeric;
 begin
   if not is_admin() then raise exception 'Только администратор' using errcode = '42501'; end if;
   if p_lines is null or jsonb_typeof(p_lines) <> 'array' or jsonb_array_length(p_lines) = 0 then
@@ -289,17 +289,17 @@ begin
   end if;
   -- Этап 2b: каждая исходная строка проверяется ДО агрегации по товару
   -- (иначе строка с минусом гасится плюсовой, а пропущенное qty молча выпадает из суммы).
-  for e in select value from jsonb_array_elements(p_lines) loop
-    if jsonb_typeof(e) is distinct from 'object'
-       or jsonb_typeof(e->'item_id') is distinct from 'number'
-       or jsonb_typeof(e->'qty') is distinct from 'number' then
+  for v_line in select value from jsonb_array_elements(p_lines) loop
+    if jsonb_typeof(v_line) is distinct from 'object'
+       or jsonb_typeof(v_line->'item_id') is distinct from 'number'
+       or jsonb_typeof(v_line->'qty') is distinct from 'number' then
       raise exception 'Некорректная строка документа';
     end if;
-    v_item_n := (e->>'item_id')::numeric;
+    v_item_n := (v_line->>'item_id')::numeric;
     if v_item_n <> trunc(v_item_n) then raise exception 'Некорректная строка документа'; end if;
-    if (e->>'qty')::numeric <= 0 then raise exception 'Количество в строке должно быть больше нуля'; end if;
-    if jsonb_typeof(e->'unit_cost') is not null and jsonb_typeof(e->'unit_cost') <> 'null' then
-      if jsonb_typeof(e->'unit_cost') <> 'number' or (e->>'unit_cost')::numeric < 0 then
+    if (v_line->>'qty')::numeric <= 0 then raise exception 'Количество в строке должно быть больше нуля'; end if;
+    if jsonb_typeof(v_line->'unit_cost') is not null and jsonb_typeof(v_line->'unit_cost') <> 'null' then
+      if jsonb_typeof(v_line->'unit_cost') <> 'number' or (v_line->>'unit_cost')::numeric < 0 then
         raise exception 'Стоимость не может быть отрицательной';
       end if;
     end if;
